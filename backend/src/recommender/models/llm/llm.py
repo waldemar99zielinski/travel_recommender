@@ -23,7 +23,7 @@ def create_llama_chat_model(cfg: LLMConfig) -> BaseChatModel:
     from langchain_ollama import ChatOllama
 
     params: dict[str, Any] = {
-        "model": cfg.model or "llama3.1:8b",
+        "model": cfg.model,
         **cfg.get_common(),
     }
     if cfg.base_url is not None:
