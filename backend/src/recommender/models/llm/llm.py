@@ -1,7 +1,7 @@
 from langchain_core.language_models.chat_models import BaseChatModel
-from typing import Any, Literal, Optional
+from typing import Any
 
-from llm_config import LLMConfig
+from recommender.models.llm.llm_config import LLMConfig
 
 def create_chat_gpt_chat_model(cfg: LLMConfig) -> BaseChatModel:
     from langchain_openai import ChatOpenAI
@@ -40,3 +40,10 @@ def create_llm_chat_model(cfg: LLMConfig) -> BaseChatModel:
     if cfg.provider == "ollama":
         return create_llama_chat_model(cfg)
     raise ValueError(f"Unsupported LLM provider: {cfg.provider}")
+
+
+if __name__ == "__main__":
+    llm = create_llm_chat_model(LLMConfig())
+
+    result = llm.invoke("Hello, world!")
+    print("result:", result)

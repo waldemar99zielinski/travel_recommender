@@ -17,9 +17,8 @@ class LLMConfig:
       - ollama  → langchain-ollama
     """
 
-    # Defaults (Llama 3.1)
     provider: LLMProvider = "ollama"
-    model: str = "llama3.1:8b"
+    model: str = "llama3.1"
 
     # Common
     temperature: float = 0.2
