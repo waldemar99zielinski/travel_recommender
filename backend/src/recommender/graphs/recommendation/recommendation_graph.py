@@ -1,41 +1,49 @@
-import logging
 from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 
-from recommender.models.data_flow.user_preferences import UserPreferences
-from recommender.agents.preference_extraction.preference_extraction_agent import PreferenceExtractionAgent
+from recommender.graphs.recommendation.nodes.preference_extraction_node import preference_extraction_node
+from recommender.graphs.recommendation.nodes.preference_validation_router import preference_validation_router
+from recommender.graphs.recommendation.nodes.recommendation_generation_node import recommendation_generation_node
+from recommender.graphs.recommendation.nodes.response_node import response_node
 
-logger = logging.getLogger(__name__)
+from recommender.graphs.recommendation.models import RecommendationGraphState
 
-class GraphState(TypedDict):
-    user_input: str
-    extracted_preferences: UserPreferences
+from utils.logger import get_logger, setup_logging
 
-def preference_extraction_node(state: GraphState) -> GraphState:
-    agent = PreferenceExtractionAgent.builder().build()
-    
-    user_preferences = agent.invoke(state["user_input"])
-    return GraphState(extracted_preferences=user_preferences)
+
+# TODO change with single base initialization
+setup_logging("verbose")
+logger = get_logger(__name__)
+
 
 def build_recommendation_graph():
-    logger.debug("Building recommendation graph...")
-    graph_builder = StateGraph(GraphState)
+    logger.verbose("Building recommendation graph...")
+    graph_builder = StateGraph(RecommendationGraphState)
+
+    graph_builder.add_node(preference_extraction_node.__name__, preference_extraction_node)
+    graph_builder.add_node(recommendation_generation_node.__name__, recommendation_generation_node)
+    graph_builder.add_node(response_node.__name__, response_node)
+
+    graph_builder.add_conditional_edges(
+        preference_extraction_node.__name__,
+        preference_validation_router,
+        [recommendation_generation_node.__name__, response_node.__name__]
+    )
 
     graph_builder.add_edge(START, preference_extraction_node.__name__)
-    graph_builder.add_edge(preference_extraction_node.__name__, END)
-    graph_builder.add_node(preference_extraction_node.__name__, preference_extraction_node)
+    graph_builder.add_edge(recommendation_generation_node.__name__, END)
+    graph_builder.add_edge(response_node.__name__, END)
 
     graph = graph_builder.compile()
 
-    logger.debug("Recommendation graph compiledsuccessfully.")
+    logger.verbose("Recommendation graph compiled successfully")
 
     return graph
 
 if __name__ == "__main__":
-    # TODO make reasonable logger
-    logging.basicConfig(level=logging.DEBUG)
     graph = build_recommendation_graph()
-    result = graph.invoke({"user_input": "I want to walk and explore nature, but I dislike crowded places."})
+    # result = graph.invoke({"user_input": "I want to walk and explore nature, but I dislike crowded places."})
+    result = graph.invoke({"user_input": "I want to sleep"})
 
-    print("Graph invocation result:")
-    print(result["extracted_preferences"])
+    logger.verbose("Graph execution result:")
+    logger.verbose("%r", result["extracted_preferences"])

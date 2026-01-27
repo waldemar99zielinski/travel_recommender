@@ -1,5 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
 
+# TODO improve prompt
 prompt_tempalate = ChatPromptTemplate.from_messages([
     (
         "system",

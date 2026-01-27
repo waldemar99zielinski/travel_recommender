@@ -3,7 +3,6 @@ from pydantic_settings import BaseSettings
 from pydantic import (
     Field,
 )
-from typing import Literal
 
 class Environment(str, Enum):
     development = "development"
@@ -12,6 +11,7 @@ class Environment(str, Enum):
 
 class LogLevel(str, Enum):
     debug = "debug"
+    verbose = "verbose"
     info = "info"
     warning = "warning"
     error = "error"

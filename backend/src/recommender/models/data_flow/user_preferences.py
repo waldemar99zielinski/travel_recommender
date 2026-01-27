@@ -45,7 +45,6 @@ class UserPreferences(BaseModel):
     """
     Structured representation of user preferences extracted from a raw user query.
 
-    This model is designed for use in LangChain / LangGraph agents and serves as:
     - the primary output of a preference extraction step
     - the input for preference validation and correction
     - a reliable, explainable representation of user intent
@@ -112,9 +111,20 @@ class UserPreferences(BaseModel):
         description="Preference related to shopping, markets, malls, and retail experiences"
     )
 
-    # TODO fix this one works weird
+
+    def are_preferences_present(self) -> bool:
+        """
+        Returns True if any category field (except raw_user_query) is present, else False.
+        """
+        for field_name in UserPreferences.model_fields:
+            if field_name == "raw_user_query":
+                continue
+            if getattr(self, field_name) is not None:
+                return True
+        return False
+
     def __repr__(self) -> str:
-        lines = ["UserPreferences - XDDD("]
+        lines = ["UserPreferences("]
 
         lines.append(f"  raw_user_query={self.raw_user_query!r},")
 
