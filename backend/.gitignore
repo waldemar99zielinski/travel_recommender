@@ -2,3 +2,6 @@
 .venv
 .pytest_cache/
 __pycache__/
+
+AGENTS.md
+travel_db_index/
