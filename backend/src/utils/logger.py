@@ -26,36 +26,41 @@ class CustomFormatter(logging.Formatter):
     }
 
     def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
+        log_fmt = self.FORMATS.get(record.levelno, self.fmt)
         formatter = logging.Formatter(log_fmt, datefmt='%Y-%m-%d %H:%M:%S')
         return formatter.format(record)
 
+
+def _verbose_method(self, message, *args, **kwargs):
+    if self.isEnabledFor(VERBOSE_LEVEL_NUM):
+        kwargs.setdefault('stacklevel', 2)
+        self._log(VERBOSE_LEVEL_NUM, message, args, **kwargs)
+
+
 class LoggerManager(metaclass=SingletonMeta):
-    def __init__(self):
-        self._loggers = {}
+    _loggers: dict[str, logging.Logger] = {}
+    _log_level: int | str = logging.DEBUG
+
+    def __init__(self, log_level: int | str = VERBOSE_LEVEL_NUM):
+        self._log_level = log_level
+        LoggerManager._log_level = log_level
+
         if not hasattr(logging.Logger, "verbose"):
             logging.addLevelName(VERBOSE_LEVEL_NUM, VERBOSE_LEVEL_NAME)
-            logging.Logger.verbose = self._verbose_method
+            setattr(logging.Logger, "verbose", _verbose_method)
 
-    def get_logger(self, name: str):
-        if name not in self._loggers:
+    @classmethod
+    def get_logger(cls, name: str) -> logging.Logger:
+        cls()
+        if name not in cls._loggers:
             logger = logging.getLogger(name)
-            logger.setLevel(logging.DEBUG)
-            
-            handler = logging.StreamHandler()
-            handler.setFormatter(CustomFormatter())
-            
-            if not logger.handlers:
-                logger.addHandler(handler)
-            
-            logger.addHandler(handler)
-            
-            self._loggers[name] = logger
-        
-        return self._loggers[name]
+            logger.setLevel(cls._log_level)
 
-    @staticmethod
-    def _verbose_method(self, message, *args, **kwargs):
-        if self.isEnabledFor(VERBOSE_LEVEL_NUM):
-            kwargs.setdefault('stacklevel', 2)
-            self._log(VERBOSE_LEVEL_NUM, message, args, **kwargs)
+            if not logger.handlers:
+                handler = logging.StreamHandler()
+                handler.setFormatter(CustomFormatter())
+                logger.addHandler(handler)
+            logger.propagate = False
+            cls._loggers[name] = logger
+
+        return cls._loggers[name]

@@ -11,7 +11,7 @@ from recommender.embeddings.travel_csv_document_parser import TravelDataParser
 from recommender.models.data_flow.recommendation_output import RecommendationOutput
 from utils.logger import LoggerManager
 
-logger = LoggerManager().get_logger(__name__)
+logger = LoggerManager.get_logger(__name__)
 
 
 class TravelVectorStore:
