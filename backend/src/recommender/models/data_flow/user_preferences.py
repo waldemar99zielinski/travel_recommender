@@ -59,10 +59,6 @@ class PricePreference(BaseModel):
         None,
         description="Budget tier hint such as low, medium, or high",
     )
-    budget_range_label: Optional[str] = Field(
-        None,
-        description="Free-text budget range phrase such as budget, mid-range, or luxury",
-    )
     extracted_text: str = Field(
         ...,
         description="Phrase extracted from user input supporting budget preference",
@@ -225,12 +221,9 @@ class UserLogisticalPreferences(BaseModel):
         lines = ["UserLogisticalPreferences("]
         lines.append(f"  raw_user_query={self.raw_user_query!r},")
 
-        if self.price is not None:
-            lines.append(f"  price={self.price!r},")
-        if self.popularity is not None:
-            lines.append(f"  popularity={self.popularity!r},")
-        if self.time_of_year is not None:
-            lines.append(f"  time_of_year={self.time_of_year!r},")
+        lines.append(f"  price={self.price!r},")
+        lines.append(f"  popularity={self.popularity!r},")
+        lines.append(f"  time_of_year={self.time_of_year!r},")
 
         lines.append(")")
         return "\n".join(lines)

@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
+from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
 from recommender.embeddings.travel_vector_store import TravelVectorStore
 
 from recommender.graphs.recommendation.nodes.preference_extraction_node import create_preference_extraction_node 
@@ -21,10 +22,13 @@ def build_recommendation_graph():
     logger.verbose("Building recommendation graph...")
     graph_builder = StateGraph(RecommendationGraphState)
 
-    preference_extraction_agent = UserInterestPreferenceExtractionAgent.builder().build()
+    user_interest_preference_extraction_agent = UserInterestPreferenceExtractionAgent.builder().build()
+    user_logistical_preference_extraction_agent = UserLogisticalPreferenceExtractionAgent.builder().build()
+
 
     preference_extraction_node = create_preference_extraction_node(
-        preference_extraction_agent
+        user_interest_preference_extraction_agent,
+        user_logistical_preference_extraction_agent,
     )
 
     travel_vector_store = TravelVectorStore()
@@ -59,7 +63,7 @@ def build_recommendation_graph():
 
 if __name__ == "__main__":
     graph = build_recommendation_graph()
-    result = graph.invoke({"user_input": "I want to walk and explore nature, but I dislike crowded places."})
+    result = graph.invoke({"user_input": "I want to walk and explore nature in August with 200 euro, but I dislike crowded places."})
     # result = graph.invoke({"user_input": "I want to sleep"})
 
     parsed_result  = RecommendationGraphState.model_validate(result)
