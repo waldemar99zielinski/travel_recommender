@@ -4,18 +4,18 @@ from recommender.agents.base.base_agent import BaseAgent, BaseAgentBuilder
 from recommender.models.data_flow.user_preferences import UserInterestPreferences
 from recommender.models.llm.llm import create_llm_chat_model
 from recommender.models.llm.llm_config import LLMConfig
-from recommender.agents.preference_extraction.preference_extraction_prompt import prompt_tempalate
+from recommender.agents.preference_extraction.user_interest_preference_extraction_prompt import user_interest_preference_extraction_prompt_template
 
 
-class PreferenceExtractionAgentBuilder(BaseAgentBuilder):
+class UserInterestPreferenceExtractionAgentBuilder(BaseAgentBuilder):
     """
-    Builder for PreferenceExtractionAgent.
+    Builder for UserInterestPreferenceExtractionAgent.
     """
 
     def __init__(self):
-        super().__init__('PreferenceExtractionAgentBuilder')
+        super().__init__('UserInterestPreferenceExtractionAgentBuilder')
 
-    def build(self) -> 'PreferenceExtractionAgent':
+    def build(self) -> 'UserInterestPreferenceExtractionAgent':
         """
         Implementation of the abstract build method.
         Applies defaults specific to Preference Extraction.
@@ -23,18 +23,18 @@ class PreferenceExtractionAgentBuilder(BaseAgentBuilder):
         llm = self._llm or create_llm_chat_model(LLMConfig())
 
         if not self._prompt:
-            self._prompt = prompt_tempalate
+            self._prompt = user_interest_preference_extraction_prompt_template
 
         if not self._output_type:
             self._output_type = UserInterestPreferences
 
-        return PreferenceExtractionAgent(
+        return UserInterestPreferenceExtractionAgent(
             llm=llm,
             prompt=self._prompt,
             output_type=self._output_type
         )
 
-class PreferenceExtractionAgent(BaseAgent):
+class UserInterestPreferenceExtractionAgent(BaseAgent):
     """
     Agent to extract user category preferences from chat transcripts.
     Uses a structured output Pydantic model for UserPreferenceEvaluation.
@@ -45,5 +45,5 @@ class PreferenceExtractionAgent(BaseAgent):
         return super().invoke(input)
 
     @classmethod
-    def builder(cls) -> PreferenceExtractionAgentBuilder:
-        return PreferenceExtractionAgentBuilder()
+    def builder(cls) -> UserInterestPreferenceExtractionAgentBuilder:
+        return UserInterestPreferenceExtractionAgentBuilder()

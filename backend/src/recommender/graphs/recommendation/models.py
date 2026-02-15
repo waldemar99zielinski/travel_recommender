@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from recommender.models.data_flow.user_preferences import UserPreferences
+from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
 from recommender.models.data_flow.recommendation_output import RecommendationBase
 from recommender.models.data_flow.recommendation_response import RecommendationResponse
 
@@ -22,9 +22,13 @@ class RecommendationGraphState(BaseModel):
         RecommendationStatusEnum.IN_PROGRESS,
         description="Current status of the recommendation process"
     )
-    extracted_preferences: Optional[UserPreferences] = Field(
+    extracted_user_interests_preferences: Optional[UserInterestPreferences] = Field(
         None,
-        description="Extracted user preferences"
+        description="Extracted user interest preferences"
+    )
+    extracted_user_logistical_preferences: Optional[UserLogisticalPreferences] = Field(
+        None,
+        description="Extracted user logistical preferences"
     )
     recommendation: Optional[list[RecommendationBase]] = Field(
         None,
@@ -40,11 +44,20 @@ class RecommendationGraphState(BaseModel):
         lines.append(f"  user_input={self.user_input!r},")
         lines.append(f"  status={self.status.value!r},")
 
-        if self.extracted_preferences is None:
-            lines.append("  extracted_preferences=None,")
+        if self.extracted_user_interests_preferences is None:
+            lines.append("  extracted_user_interests_preferences=None,")
         else:
-            preferences_repr = repr(self.extracted_preferences).replace("\n", "\n  ")
-            lines.append(f"  extracted_preferences={preferences_repr},")
+            preferences_repr = repr(self.extracted_user_interests_preferences).replace("\n", "\n  ")
+            lines.append(f"  extracted_user_interests_preferences={preferences_repr},")
+
+        if self.extracted_user_logistical_preferences is None:
+            lines.append("  extracted_user_logistical_preferences=None,")
+        else:
+            logistical_preferences_repr = repr(self.extracted_user_logistical_preferences).replace("\n", "\n  ")
+            lines.append(
+                "  extracted_user_logistical_preferences="
+                f"{logistical_preferences_repr},"
+            )
 
         recommendation_count = len(self.recommendation) if self.recommendation else 0
         lines.append(f"  recommendation_count={recommendation_count},")
@@ -60,7 +73,7 @@ class RecommendationGraphState(BaseModel):
         else:
             lines.append(
                 "  response="
-                f"{{type={self.response.response_type.value!r}, message={self.response.message!r}, "
+                f"{{message={self.response.message!r}, "
                 f"recommendations={len(self.response.recommendations)}}},"
             )
 
