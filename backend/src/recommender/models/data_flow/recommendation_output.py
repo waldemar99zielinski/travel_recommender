@@ -45,4 +45,34 @@ class RecommendationBase(BaseModel):
     architecture: Optional[str] = Field(None, description="Architecture preference signal")
     shopping: Optional[str] = Field(None, description="Shopping preference signal")
 
-    description: str = Field(None, description="Destination description")
+    description: Optional[str] = Field(None, description="Destination description")
+
+    def __repr__(self) -> str:
+        lines: list[str] = ["RecommendationBase("]
+        lines.append(f"  score={self.score:.4f},")
+        lines.append(f"  region={self.region!r},")
+        lines.append(f"  parent_region={self.parent_region!r},")
+        lines.append(f"  u_name={self.u_name!r},")
+        lines.append(f"  popularity={self.popularity!r},")
+        lines.append(f"  cost_per_week={self.cost_per_week!r},")
+
+        seasonality = {
+            "jan": self.jan,
+            "feb": self.feb,
+            "mar": self.mar,
+            "apr": self.apr,
+            "may": self.may,
+            "jun": self.jun,
+            "jul": self.jul,
+            "aug": self.aug,
+            "sep": self.sep,
+            "oct": self.oct,
+            "nov": self.nov,
+            "dec": self.dec,
+        }
+        lines.append(f"  seasonality={seasonality!r},")
+
+        lines.append(f"  source={self.source!r},")
+        lines.append(f"  content_preview={self.content[:120]!r},")
+        lines.append(")")
+        return "\n".join(lines)
