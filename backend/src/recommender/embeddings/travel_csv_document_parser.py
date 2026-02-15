@@ -5,7 +5,7 @@ from typing import Optional
 
 from langchain_core.documents import Document
 
-from recommender.models.data_flow.recommendation_output import RecommendationOutput
+from recommender.models.data_flow.recommendation_output import RecommendationBase
 
 class TravelDataParser:
     """
@@ -96,8 +96,8 @@ class TravelDataParser:
         except ValueError:
             return None
 
-    def convert_to_recommendation_output(self, doc: Document, score: float, source: str) -> RecommendationOutput:
-        return RecommendationOutput(
+    def convert_to_recommendation_output(self, doc: Document, score: float, source: str) -> RecommendationBase:
+        return RecommendationBase(
             score=float(score),
             content=doc.page_content,
             source=str(doc.metadata.get("source", source)),
