@@ -16,14 +16,17 @@ def create_recommendation_generation_node(
     def recommendation_generation_node(
         state: RecommendationGraphState,
     ) -> RecommendationGraphState:
-        logger.verbose("Getting best matches based on user query...")
+        logger.info("Getting best matches based on user query...")
 
-        results = travel_vector_store.search_all_ranked(state["user_input"])
-        logger.verbose("Found %s ranked travel results.", len(results))
+        user_input = state.user_input
+
+        logger.verbose("Searching travel vector store with user input: %s", user_input)
+
+        results = travel_vector_store.search_all_ranked(user_input)
+        logger.info("Found %s ranked travel results.", len(results))
 
         return {
-            **state,
-            "recommendation": "This is a placeholder recommendation based on user preferences.",
+            "recommendation": results,
         }
 
     return recommendation_generation_node

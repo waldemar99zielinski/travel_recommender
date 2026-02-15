@@ -1,6 +1,6 @@
 import unittest
 
-from src.recommender.models.data_flow.user_preferences import UserPreferences
+from recommender.models.data_flow.user_preferences import Preference, UserPreferences
 
 class TestUserPreferencesModel(unittest.TestCase):
     def test_preference_presence_detection(self):
@@ -10,7 +10,6 @@ class TestUserPreferencesModel(unittest.TestCase):
         self.assertFalse(prefs.are_preferences_present())
 
     def test_are_preferences_present_one(self):
-        from src.recommender.models.data_flow.user_preferences import Preference
         prefs = UserPreferences(
             raw_user_query="I like hiking.",
             hiking=Preference(strength=5, extracted_text="hiking")
@@ -18,7 +17,6 @@ class TestUserPreferencesModel(unittest.TestCase):
         self.assertTrue(prefs.are_preferences_present())
 
     def test_are_preferences_present_multiple(self):
-        from src.recommender.models.data_flow.user_preferences import Preference
         prefs = UserPreferences(
             raw_user_query="I like hiking and nature.",
             hiking=Preference(strength=4, extracted_text="hiking"),

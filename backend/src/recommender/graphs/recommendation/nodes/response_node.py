@@ -1,19 +1,26 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, cast
 
 from recommender.graphs.recommendation.models import RecommendationGraphState
+from recommender.models.data_flow.recommendation_response import (
+    RecommendationResponse,
+    RecommendationResponseType,
+)
+from recommender.models.data_flow.user_preferences import UserPreferences
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
 
 def create_response_node() -> Callable[[RecommendationGraphState], RecommendationGraphState]:
-    """Create response node without default initialization wrappers."""
+    """Create final response node for all graph exits."""
 
     def response_node(state: RecommendationGraphState) -> RecommendationGraphState:
-        logger.warning("This is a placeholder response node. No preferences were extracted, so no recommendations can be made.")
-        return {**state}
+        # TOOD implement response agent that will create natural language response based on extracted preferences.
+
+        logger.warning("Response node placeholder.")
+
+        return {}
 
     return response_node
-
