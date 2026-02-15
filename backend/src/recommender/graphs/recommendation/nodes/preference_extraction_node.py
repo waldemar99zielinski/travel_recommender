@@ -19,7 +19,7 @@ def create_preference_extraction_node(
         user_preferences = preference_extraction_agent.invoke(state.user_input)
 
         status = RecommendationStatusEnum.IN_PROGRESS if \
-            user_preferences and user_preferences.are_preferences_present \
+            user_preferences and user_preferences.are_preferences_present() \
             else RecommendationStatusEnum.NO_PREFERENCES
 
         logger.info("Preference extraction status: %s", status)

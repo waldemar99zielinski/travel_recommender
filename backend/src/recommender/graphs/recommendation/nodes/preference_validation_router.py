@@ -20,7 +20,7 @@ PreferenceValidationRoute = Literal[
 def preference_validation_router(state: RecommendationGraphState) -> PreferenceValidationRoute:
     user_preferences = state.extracted_preferences
 
-    if user_preferences is None or not user_preferences.are_preferences_present:
+    if user_preferences is None or not user_preferences.are_preferences_present():
         logger.verbose("No extracted preferences in state. Routing directly to response node.")
         return ROUTE_RESPONSE
 

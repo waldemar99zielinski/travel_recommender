@@ -35,26 +35,21 @@ def build_recommendation_graph():
 
     response_node = create_response_node()
 
-    preference_extraction_node_name = create_preference_extraction_node.__name__
-    recommendation_generation_node_name = create_recommendation_generation_node.__name__
-    response_node_name = create_response_node.__name__
-
-    graph_builder.add_node(preference_extraction_node_name, preference_extraction_node)
-    graph_builder.add_node(recommendation_generation_node_name, recommendation_generation_node)
-    graph_builder.add_node(response_node_name, response_node)
+    graph_builder.add_node(create_preference_extraction_node.__name__, preference_extraction_node)
+    graph_builder.add_node(create_recommendation_generation_node.__name__, recommendation_generation_node)
+    graph_builder.add_node(create_response_node.__name__, response_node)
 
     graph_builder.add_conditional_edges(
-        preference_extraction_node_name,
+        create_preference_extraction_node.__name__,
         preference_validation_router,
         {
-            ROUTE_RECOMMENDATION_GENERATION: recommendation_generation_node_name,
-            ROUTE_RESPONSE: response_node_name,
+            ROUTE_RECOMMENDATION_GENERATION: create_recommendation_generation_node.__name__,
+            ROUTE_RESPONSE: create_response_node.__name__,
         },
     )
 
-    graph_builder.add_edge(START, preference_extraction_node_name)
-    graph_builder.add_edge(recommendation_generation_node_name, response_node_name)
-    graph_builder.add_edge(response_node_name, END)
+    graph_builder.add_edge(START, create_preference_extraction_node.__name__)
+    graph_builder.add_edge(create_response_node.__name__, END)
 
     graph = graph_builder.compile()
 
@@ -64,8 +59,8 @@ def build_recommendation_graph():
 
 if __name__ == "__main__":
     graph = build_recommendation_graph()
-    result = graph.invoke({"user_input": "I want to walk and explore nature, but I dislike crowded places."})
-    # result = graph.invoke({"user_input": "I want to sleep"})
+    # result = graph.invoke({"user_input": "I want to walk and explore nature, but I dislike crowded places."})
+    result = graph.invoke({"user_input": "I want to sleep"})
 
     logger.verbose("Graph execution result:\n%r", result)
     # logger.verbose("%r", result)

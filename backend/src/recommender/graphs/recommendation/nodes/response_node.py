@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-from typing import Callable, cast
+from typing import Callable 
 
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from recommender.models.data_flow.recommendation_response import (
-    RecommendationResponse,
-    RecommendationResponseType,
-)
 from recommender.models.data_flow.user_preferences import UserPreferences
 from utils.logger import LoggerManager
 
