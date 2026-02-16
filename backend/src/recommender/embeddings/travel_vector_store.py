@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from recommender.embeddings.travel_csv_document_parser import TravelDataParser
-from recommender.models.data_flow.recommendation_output import RecommendationBase
+from recommender.models.data_flow.recommendation_output import Recommendation
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -75,10 +75,10 @@ class TravelVectorStore:
     def _convert_results_to_recommendation_outputs(
         self,
         results: list[tuple[Document, float]],
-    ) -> list[RecommendationBase]:
+    ) -> list[Recommendation]:
         return [self.csv_document_parser.convert_to_recommendation_output(doc=doc, score=score, source=self.db_path) for doc, score in results]
 
-    def search(self, query: str, k: int = 5) -> list[RecommendationBase]:
+    def search(self, query: str, k: int = 5) -> list[Recommendation]:
         self._load_db_to_memory()
         self._check_if_db_loaded()
 
@@ -86,7 +86,7 @@ class TravelVectorStore:
         logger.verbose("Search for query '%s' returned %s results.", query, len(results))
         return self._convert_results_to_recommendation_outputs(results=results)
 
-    def search_all_ranked(self, query: str) -> list[RecommendationBase]:
+    def search_all_ranked(self, query: str) -> list[Recommendation]:
         self._load_db_to_memory()
         self._check_if_db_loaded()
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     for result in results:
         logger.info(
             "Score: %.4f, Region: %s, Content: %.100s...",
-            result.score,
+            result.embedding_score,
             result.region,
             result.content,
         )

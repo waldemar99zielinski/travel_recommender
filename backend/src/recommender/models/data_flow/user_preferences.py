@@ -67,16 +67,15 @@ class PricePreference(BaseModel):
 
 class PopularityPreference(BaseModel):
     """Popularity or crowding preference extracted from user query."""
-
-    mode: str = Field(
-        ...,
-        description="Preference mode, for example prefer_popular or avoid_crowds",
-    )
     strength: int = Field(
         ...,
         ge=0,
         le=5,
-        description="Strength of popularity preference from 0 to 5",
+        description="""
+            Strength of popularity preference from 0 to 5,
+            where 0 = prefers less known/quieter places,
+            5 = prefers popular/crowded places
+        """,
     )
     extracted_text: str = Field(
         ...,
@@ -201,7 +200,7 @@ class UserLogisticalPreferences(BaseModel):
     )
     popularity: Optional[PopularityPreference] = Field(
         None,
-        description="User preference for crowded/popular or quieter places",
+        description="User preference for popularity",
     )
     time_of_year: Optional[TimeOfYearPreference] = Field(
         None,

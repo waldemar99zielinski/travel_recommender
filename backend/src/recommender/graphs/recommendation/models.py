@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
-from recommender.models.data_flow.recommendation_output import RecommendationBase
+from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.models.data_flow.recommendation_response import RecommendationResponse
 
 class RecommendationStatusEnum(str, Enum):
@@ -30,7 +30,7 @@ class RecommendationGraphState(BaseModel):
         None,
         description="Extracted user logistical preferences"
     )
-    recommendation: Optional[list[RecommendationBase]] = Field(
+    recommendation: Optional[list[Recommendation]] = Field(
         None,
         description="Ranked recommendations returned from vector search"
     )
@@ -65,7 +65,8 @@ class RecommendationGraphState(BaseModel):
             top_recommendation = self.recommendation[0]
             lines.append(
                 "  top_recommendation="
-                f"{{region={top_recommendation.region!r}, score={top_recommendation.score:.4f}}},"
+                f"{{region={top_recommendation.region!r}, embedding_score={top_recommendation.embedding_score:.4f}, "
+                f"ranking_score={top_recommendation.ranking_score!r}}},"
             )
 
         if self.response is None:
