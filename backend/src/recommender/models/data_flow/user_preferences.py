@@ -194,6 +194,7 @@ class UserLogisticalPreferences(BaseModel):
         ...,
         description="Original unmodified user input from which preferences were extracted",
     )
+    #TODO ensure that cost is correctly casted for a week
     price: Optional[PricePreference] = Field(
         None,
         description="User budget preference for weekly trip cost",
