@@ -10,6 +10,8 @@ dependencies = [
     "pydantic-settings>=2.12.0",
     "langchain-openai>=1.1.6",
     "langchain-ollama>=1.0.1",
+    "pandas>=3.0.0",
+    "sqlmodel>=0.0.33",
 ]
 
 [build-system]
