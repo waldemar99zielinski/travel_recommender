@@ -1,0 +1,4 @@
+parent_region;region;u_name;popularity;cost_per_week;jan;feb;mar;apr;may;jun;jul;aug;sep;oct;nov;dec;safety;nature;hiking;beach;watersports;entertainment;wintersports;culture;culinary;architecture;shopping;description
+Asia;Japan;JPN;++;1500;o;o;+;+;+;+;+;+;+;o;o;o;+;+;+;o;o;+;+;+;+;+;+;Sushi food markets and modern city culture.
+Europe;Portugal;PRT;+;900;+;+;+;+;+;+;+;+;+;o;o;o;+;+;o;++;+;+;--;o;+;o;+;Sunny beaches and ocean relaxation.
+Europe;Norway;NOR;-;1700;--;-;o;o;+;+;+;o;o;-;--;--;++;++;++;-;--;--;--;++;++;o;o;Mountain hiking fjords and snow adventures.
