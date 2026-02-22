@@ -12,6 +12,9 @@ dependencies = [
     "langchain-ollama>=1.0.1",
     "pandas>=3.0.0",
     "sqlmodel>=0.0.33",
+    "langchain-community>=0.4.1",
+    "faiss-cpu>=1.13.2",
+    "langchain-core>=1.2.14",
 ]
 
 [build-system]
