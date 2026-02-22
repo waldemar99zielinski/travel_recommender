@@ -27,7 +27,7 @@ class TravelDestinationTable(SQLModel, table=True):
     nov: float
     dec: float
 
-    safety: float
+    # safety: float
     nature: float
     hiking: float
     beach: float

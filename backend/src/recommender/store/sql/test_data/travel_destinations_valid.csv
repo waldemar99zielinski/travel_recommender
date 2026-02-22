@@ -1,4 +1,4 @@
-Parent_region;Region;u_name;popularity;costPerWeek;jan;feb;mar;apr;may;jun;jul;aug;sep;oct;nov;dec;safety;nature;hiking;beach;watersports;entertainment;wintersports;culture;culinary;architecture;shopping;Description
+parent_region;region;u_name;popularity;cost_per_week;jan;feb;mar;apr;may;jun;jul;aug;sep;oct;nov;dec;safety;nature;hiking;beach;watersports;entertainment;wintersports;culture;culinary;architecture;shopping;description
 Europe;Portugal;PRT;+;900;--; -;o;+;++;o;+;+;o;-;--;o;++;+;o;++;+;o;--;+;++;o;-;Sunny beaches and coastal towns.
 Asia;Japan;JPN;++;1500;o;o;+;++;++;++;++;++;+;o;-;--;++;o;+;-;o;++;+;o;++;++;++;Food, culture, and modern cities.
 Europe;Norway;NOR;-;1700;--;-;o;o;+;+;+;o;o;-;--;--;++;++;++;-;--;--;--;++;++;o;o;Fjords, mountains, and hiking routes.

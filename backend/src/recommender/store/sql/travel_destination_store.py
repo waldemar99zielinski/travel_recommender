@@ -12,7 +12,7 @@ from sqlmodel.sql.expression import SelectOfScalar
 
 from recommender.store.sql.base_sql_store import BaseSqlStore
 from recommender.store.sql.base_sql_store import TableModel
-from recommender.store.sql.travel_destination_csv_loader import TravelDestinationCsvLoader
+from recommender.store.sql.travel_destination_sql_csv_loader import TravelDestinationSqlCsvLoader
 from recommender.store.sql.travel_destination_table import TravelDestinationTable
 from utils.logger import LoggerManager
 
@@ -26,7 +26,7 @@ class SqlStore(BaseSqlStore):
         self.db_url = db_url
         self.engine = create_engine(self.db_url)
         self._loaded = False
-        self.travel_destination_loader = TravelDestinationCsvLoader()
+        self.travel_destination_loader = TravelDestinationSqlCsvLoader()
 
     def load(self) -> None:
         SQLModel.metadata.create_all(self.engine)
