@@ -7,6 +7,9 @@ from typing import TypeVar
 from sqlmodel import SQLModel
 from sqlmodel.sql.expression import SelectOfScalar
 
+from recommender.models.data_flow.user_preferences import UserLogisticalPreferences
+from recommender.models.data_flow.recommendation_output import Recommendation
+
 TableModel = TypeVar("TableModel", bound=SQLModel)
 
 
@@ -32,3 +35,11 @@ class BaseSqlStore(ABC):
     @abstractmethod
     def all(self, table_model: type[TableModel]) -> list[TableModel]:
         """Return all rows for a table."""
+
+    @abstractmethod
+    def rank_travel_destinations_by_logistical_preferences(
+        self,
+        recommendation: list[Recommendation],
+        logistical_preferences: UserLogisticalPreferences,
+    ) -> list[Recommendation]:
+        """Return ranked destination IDs with final scores."""

@@ -21,13 +21,13 @@ class TravelDestinationDocumentMapper:
         }
         return Document(page_content=content, metadata=metadata)
 
-    def to_recommendation(self, doc: Document, embedding_score: float, source: str) -> Recommendation:
+    def to_recommendation(self, doc: Document, embedding_score: float) -> Recommendation:
         metadata = doc.metadata
         return Recommendation(
             embedding_score=float(embedding_score),
+            interest_score=None,
+            logistical_score=None,
             ranking_score=None,
-            content=doc.page_content,
-            source=str(metadata.get("source", source)),
             parent_region=str(metadata["parent_region"]),
             region=str(metadata["region"]),
             u_name=str(metadata["u_name"]),

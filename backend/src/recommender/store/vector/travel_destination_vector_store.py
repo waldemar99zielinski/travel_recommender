@@ -36,7 +36,7 @@ class TravelDestinationVectorStore(BaseVectorStore):
             document_mapper=self.document_mapper,
         )
         self.embeddings = embeddings or OllamaEmbeddings(model="nomic-embed-text")
-        self.vector_db: Any | None = None
+        self.vector_db: FAISS | None = None
 
     def build_from_csv(self, csv_file_path: str) -> None:
         if not os.path.exists(csv_file_path):
@@ -91,7 +91,7 @@ class TravelDestinationVectorStore(BaseVectorStore):
             for doc, score in results
         ]
 
-    def _get_vector_db(self) -> Any:
+    def _get_vector_db(self) -> FAISS:
         self.load()
         if self.vector_db is None:
             raise RuntimeError("Vector database is not loaded. Call load() first.")
