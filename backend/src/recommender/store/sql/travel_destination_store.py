@@ -139,7 +139,7 @@ class SqlStore(BaseSqlStore):
                 final_score_expr.label("ranking_score"),
             )
             .where(col(TravelDestinationTable.id).in_(recommendation_ids))
-            .order_by(col(final_score_expr).desc())
+            .order_by(final_score_expr.desc())
         )
 
         with Session(self.engine) as session:
@@ -148,11 +148,14 @@ class SqlStore(BaseSqlStore):
         ranked: list[Recommendation] = []
         seen_ids: set[str] = set()
         for row, logistical_score, ranking_score in rows:
+            embedding_score = embedding_score_by_id.get(row.id)
+            if embedding_score is None:
+                continue
             seen_ids.add(row.id)
             ranked.append(
                 self.travel_destination_mapper.to_recommendation(
                     row=row,
-                    embedding_score=embedding_score_by_id.get(row.id),
+                    embedding_score=embedding_score,
                     interest_score=interest_score_by_id.get(row.id),
                     logistical_score=logistical_score,
                     ranking_score=ranking_score,
