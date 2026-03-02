@@ -2,7 +2,9 @@ from langgraph.graph import StateGraph, START, END
 
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
 from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
-from recommender.embeddings.travel_vector_store import TravelVectorStore
+from recommender.store.vector.travel_destination_vector_store import (
+    TravelDestinationVectorStore,
+)
 
 from recommender.graphs.recommendation.nodes.preference_extraction_node import create_preference_extraction_node 
 from recommender.graphs.recommendation.nodes.preference_validation_router import (
@@ -31,7 +33,7 @@ def build_recommendation_graph():
         user_logistical_preference_extraction_agent,
     )
 
-    travel_vector_store = TravelVectorStore()
+    travel_vector_store = TravelDestinationVectorStore()
 
     recommendation_generation_node = create_recommendation_generation_node(
         travel_vector_store 

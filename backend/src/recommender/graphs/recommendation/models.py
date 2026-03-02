@@ -10,10 +10,10 @@ class RecommendationStatusEnum(str, Enum):
     """Status of the recommendation process, used for routing and response handling."""
 
     IN_PROGRESS = "in_progress"
-
-    SUCCESS = "success"
+    RECOMMENDATION_GENERATED = "recommendation_generated"
 
     NO_PREFERENCES = "no_preferences"
+    SUCCESS = "success"
     ERROR = "error"
 
 class RecommendationGraphState(BaseModel):
@@ -63,10 +63,20 @@ class RecommendationGraphState(BaseModel):
         lines.append(f"  recommendation_count={recommendation_count},")
         if self.recommendation:
             top_recommendation = self.recommendation[0]
+            interest_score_repr = (
+                f"{top_recommendation.interest_score:.4f}"
+                if top_recommendation.interest_score is not None
+                else "None"
+            )
+            logistical_score_repr = (
+                f"{top_recommendation.logistical_score:.4f}"
+                if top_recommendation.logistical_score is not None
+                else "None"
+            )
             lines.append(
                 "  top_recommendation="
-                f"{{region={top_recommendation.region!r}, embedding_score={top_recommendation.embedding_score:.4f}, "
-                f"ranking_score={top_recommendation.ranking_score!r}}},"
+                f"{{region={top_recommendation.region!r}, interest_score={interest_score_repr}, "
+                f"logistical_score={logistical_score_repr}, ranking_score={top_recommendation.ranking_score!r}}},"
             )
 
         if self.response is None:

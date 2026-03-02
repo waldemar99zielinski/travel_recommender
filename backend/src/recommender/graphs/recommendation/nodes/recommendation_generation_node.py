@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import Callable
 
-from recommender.embeddings.travel_vector_store import TravelVectorStore
 from recommender.graphs.recommendation.models import RecommendationGraphState
+from recommender.store.vector.travel_destination_vector_store import (
+    TravelDestinationVectorStore,
+)
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
 def create_recommendation_generation_node(
-    travel_vector_store: TravelVectorStore,
+    travel_vector_store: TravelDestinationVectorStore,
 ) -> Callable[[RecommendationGraphState], RecommendationGraphState]:
     """Create recommendation node with an injected vector store dependency."""
 
