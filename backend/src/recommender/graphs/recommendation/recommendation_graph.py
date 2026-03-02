@@ -1,7 +1,14 @@
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import StateGraph
+
+from recommender.common.configuration import Configuration
 
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
 from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
+from recommender.agents.response_generation.recommendation_response_generation_agent import (
+    RecommendationResponseGenerationAgent,
+)
 from recommender.store.vector.travel_destination_vector_store import (
     TravelDestinationVectorStore,
 )
@@ -13,19 +20,27 @@ from recommender.graphs.recommendation.nodes.preference_validation_router import
     preference_validation_router,
 )
 from recommender.graphs.recommendation.nodes.recommendation_generation_node import create_recommendation_generation_node
+from recommender.graphs.recommendation.nodes.recommendation_ranking_node import create_recommendation_ranking_node
 from recommender.graphs.recommendation.nodes.response_node import create_response_node
 from recommender.graphs.recommendation.models import RecommendationGraphState
+from recommender.store.sql.travel_destination_store import SqlStore
+from recommender.store.sql.travel_destination_table import TravelDestinationTable
 
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
-def build_recommendation_graph():
+
+def build_recommendation_graph(
+    travel_vector_store: TravelDestinationVectorStore,
+    sql_store: SqlStore,
+):
     logger.verbose("Building recommendation graph...")
     graph_builder = StateGraph(RecommendationGraphState)
 
     user_interest_preference_extraction_agent = UserInterestPreferenceExtractionAgent.builder().build()
     user_logistical_preference_extraction_agent = UserLogisticalPreferenceExtractionAgent.builder().build()
+    recommendation_response_generation_agent = RecommendationResponseGenerationAgent.builder().build()
 
 
     preference_extraction_node = create_preference_extraction_node(
@@ -33,16 +48,16 @@ def build_recommendation_graph():
         user_logistical_preference_extraction_agent,
     )
 
-    travel_vector_store = TravelDestinationVectorStore()
-
     recommendation_generation_node = create_recommendation_generation_node(
         travel_vector_store 
     )
+    recommendation_ranking_node = create_recommendation_ranking_node(sql_store)
 
-    response_node = create_response_node()
+    response_node = create_response_node(recommendation_response_generation_agent)
 
     graph_builder.add_node(create_preference_extraction_node.__name__, preference_extraction_node)
     graph_builder.add_node(create_recommendation_generation_node.__name__, recommendation_generation_node)
+    graph_builder.add_node(create_recommendation_ranking_node.__name__, recommendation_ranking_node)
     graph_builder.add_node(create_response_node.__name__, response_node)
 
     graph_builder.add_conditional_edges(
@@ -55,6 +70,11 @@ def build_recommendation_graph():
     )
 
     graph_builder.add_edge(START, create_preference_extraction_node.__name__)
+    graph_builder.add_edge(
+        create_recommendation_generation_node.__name__,
+        create_recommendation_ranking_node.__name__,
+    )
+    graph_builder.add_edge(create_recommendation_ranking_node.__name__, create_response_node.__name__)
     graph_builder.add_edge(create_response_node.__name__, END)
 
     graph = graph_builder.compile()
@@ -64,7 +84,26 @@ def build_recommendation_graph():
     return graph
 
 if __name__ == "__main__":
-    graph = build_recommendation_graph()
+
+    config = Configuration() 
+
+    sql_store = SqlStore(store_config=config.stores.sql)
+    sql_store.load()
+    if sql_store.size(TravelDestinationTable) == 0:
+        sql_store.load_travel_destinations_data_from_csv(
+            str(config.stores.bootstrap.seed_csv_path),
+            mode="replace",
+        )
+
+    travel_vector_store = TravelDestinationVectorStore(store_config=config.stores.vector)
+
+    # travel_vector_store.build_from_csv(config.stores.bootstrap.seed_csv_path)
+    travel_vector_store.load()
+
+    graph = build_recommendation_graph(
+        travel_vector_store=travel_vector_store,
+        sql_store=sql_store,
+    )
     result = graph.invoke({"user_input": "I want to walk and explore nature in August with 200 euro, but I dislike crowded places."})
     # result = graph.invoke({"user_input": "I want to sleep"})
 

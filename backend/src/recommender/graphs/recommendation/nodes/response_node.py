@@ -1,21 +1,41 @@
 from __future__ import annotations
 
-from typing import Callable 
+from typing import Callable
 
+from recommender.agents.response_generation.recommendation_response_generation_agent import (
+    RecommendationResponseGenerationInput,
+    RecommendationResponseGenerationAgent,
+)
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from utils.logger import LoggerManager
+from recommender.graphs.recommendation.models import RecommendationStatusEnum
+from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
 
-logger = LoggerManager.get_logger(__name__)
-
-
-def create_response_node() -> Callable[[RecommendationGraphState], RecommendationGraphState]:
+def create_response_node(
+    response_generation_agent: RecommendationResponseGenerationAgent,
+) -> Callable[[RecommendationGraphState], dict[str, object]]:
     """Create final response node for all graph exits."""
 
-    def response_node(state: RecommendationGraphState) -> RecommendationGraphState:
-        # TOOD implement response agent that will create natural language response based on extracted preferences.
+    def response_node(state: RecommendationGraphState) -> dict[str, object]:
+        recommendations = state.recommendation or []
+        generation_input = RecommendationResponseGenerationInput(
+            user_input=state.user_input,
+            status=state.status,
+            interest_preferences=state.extracted_user_interests_preferences,
+            logistical_preferences=state.extracted_user_logistical_preferences,
+            recommendations=recommendations,
+        )
 
-        logger.warning("Response node placeholder.")
+        generation_result = response_generation_agent.invoke(
+            generation_input,
+        )
 
-        return {}
+        response_payload = RecommendationMessageOutput(
+            message=generation_result.message,
+        )
+
+        return {
+            "response": response_payload,
+            "status": RecommendationStatusEnum.SUCCESS,
+        }
 
     return response_node

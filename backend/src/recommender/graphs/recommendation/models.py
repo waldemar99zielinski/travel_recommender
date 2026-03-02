@@ -4,7 +4,7 @@ from enum import Enum
 
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
 from recommender.models.data_flow.recommendation_output import Recommendation
-from recommender.models.data_flow.recommendation_response import RecommendationResponse
+from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
 
 class RecommendationStatusEnum(str, Enum):
     """Status of the recommendation process, used for routing and response handling."""
@@ -34,7 +34,7 @@ class RecommendationGraphState(BaseModel):
         None,
         description="Ranked recommendations returned from vector search"
     )
-    response: Optional[RecommendationResponse] = Field(
+    response: Optional[RecommendationMessageOutput] = Field(
         None,
         description="Final response payload shared across graph branches"
     )
@@ -84,8 +84,7 @@ class RecommendationGraphState(BaseModel):
         else:
             lines.append(
                 "  response="
-                f"{{message={self.response.message!r}, "
-                f"recommendations={len(self.response.recommendations)}}},"
+                f"{{message={self.response.message!r}}}"
             )
 
         lines.append(")")
