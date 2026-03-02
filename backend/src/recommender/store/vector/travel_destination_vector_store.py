@@ -8,6 +8,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.embeddings import Embeddings
 from langchain_ollama import OllamaEmbeddings
 
+from recommender.common.configuration import VectorStoreConfiguration
 from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.store.vector.base_vector_store import BaseVectorStore
 from recommender.store.vector.travel_destination_document_mapper import (
@@ -25,12 +26,17 @@ class TravelDestinationVectorStore(BaseVectorStore):
 
     def __init__(
         self,
-        db_path: str = "travel_db_index",
+        store_config: VectorStoreConfiguration | None = None,
         vector_csv_loader: TravelDestinationVectorCsvLoader | None = None,
         document_mapper: TravelDestinationDocumentMapper | None = None,
         embeddings: Embeddings | None = None,
     ) -> None:
-        self.db_path = db_path
+        if store_config is None:
+            raise ValueError(
+                "TravelDestinationVectorStore requires VectorStoreConfiguration via store_config.",
+            )
+
+        self.store_config = store_config
         self.document_mapper = document_mapper or TravelDestinationDocumentMapper()
         self.vector_csv_loader = vector_csv_loader or TravelDestinationVectorCsvLoader(
             document_mapper=self.document_mapper,
@@ -49,20 +55,24 @@ class TravelDestinationVectorStore(BaseVectorStore):
 
         vector_db = FAISS.from_documents(documents, self.embeddings)
         self.vector_db = vector_db
-        vector_db.save_local(self.db_path)
-        logger.info("Vector index built with %s documents at %s", len(documents), self.db_path)
+        vector_db.save_local(self.store_config.db_path)
+        logger.info(
+            "Vector index built with %s documents at %s",
+            len(documents),
+            self.store_config.db_path,
+        )
 
     def load(self) -> None:
         if self.vector_db is not None:
             return
 
-        if not os.path.exists(self.db_path):
+        if not os.path.exists(self.store_config.db_path):
             raise FileNotFoundError(
-                f"Database folder '{self.db_path}' not found. Run build_from_csv() first."
+                f"Database folder '{self.store_config.db_path}' not found. Run build_from_csv() first."
             )
 
         self.vector_db = FAISS.load_local(
-            self.db_path,
+            self.store_config.db_path,
             self.embeddings,
             allow_dangerous_deserialization=True,
         )
@@ -78,7 +88,7 @@ class TravelDestinationVectorStore(BaseVectorStore):
         vector_db = self._get_vector_db()
         results = vector_db.similarity_search_with_score(query, k=k)
         return [
-            self.document_mapper.to_recommendation(doc=doc, embedding_score=score, source=self.db_path)
+            self.document_mapper.to_recommendation(doc=doc, embedding_score=score)
             for doc, score in results
         ]
 
@@ -87,7 +97,7 @@ class TravelDestinationVectorStore(BaseVectorStore):
         total_docs = int(vector_db.index.ntotal)
         results = vector_db.similarity_search_with_score(query, k=total_docs)
         return [
-            self.document_mapper.to_recommendation(doc=doc, embedding_score=score, source=self.db_path)
+            self.document_mapper.to_recommendation(doc=doc, embedding_score=score)
             for doc, score in results
         ]
 
@@ -101,10 +111,12 @@ class TravelDestinationVectorStore(BaseVectorStore):
 if __name__ == "__main__":
     project_root = Path(__file__).resolve().parents[4]
     csv_path = str(project_root / "data" / "regionmodel_with_detailed_descriptions.csv")
-    db_path = str(project_root / "travel_db_index")
+    store_config = VectorStoreConfiguration(
+        db_path=str(project_root / "store_data" / "travel_destinations_vector_index"),
+    )
     query = "beach ocean sunshine"
 
-    store = TravelDestinationVectorStore(db_path=db_path)
+    store = TravelDestinationVectorStore(store_config=store_config)
     store.build_from_csv(csv_path)
     logger.info("Vector store loaded=%s size=%s", store.is_loaded(), store.size())
 
