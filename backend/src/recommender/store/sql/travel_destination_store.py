@@ -14,6 +14,7 @@ from sqlmodel import delete
 from sqlmodel import select
 from sqlmodel.sql.expression import SelectOfScalar
 
+from recommender.common.configuration import SqlStoreConfiguration
 from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.models.data_flow.user_preferences import UserLogisticalPreferences
 from recommender.store.sql.base_sql_store import BaseSqlStore
@@ -43,9 +44,15 @@ POPULARITY_WEIGHT = 0.20
 class SqlStore(BaseSqlStore):
     """SQLite implementation of a multi-table SQLModel store."""
 
-    def __init__(self, db_url: str) -> None:
-        self.db_url = db_url
-        self.engine = create_engine(self.db_url)
+    def __init__(
+        self,
+        store_config: SqlStoreConfiguration | None = None,
+    ) -> None:
+        if store_config is None:
+            raise ValueError("SqlStore requires SqlStoreConfiguration via store_config.")
+
+        self.store_config = store_config
+        self.engine = create_engine(self.store_config.db_url)
         self._loaded = False
         #TODO dependency injection
         self.travel_destination_loader = TravelDestinationSqlCsvLoader()

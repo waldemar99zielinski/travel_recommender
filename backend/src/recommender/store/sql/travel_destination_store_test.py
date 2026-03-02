@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from sqlalchemy import func
 from sqlmodel import select
 
+from recommender.common.configuration import SqlStoreConfiguration
 from recommender.store.sql.travel_destination_store import SqlStore
 from recommender.store.sql.travel_destination_table import TravelDestinationTable
 
@@ -14,7 +15,7 @@ class TestSqlStoreCsvLoading(unittest.TestCase):
         self.test_data_dir = Path(__file__).parent / "test_data"
         self.temp_dir = TemporaryDirectory()
         db_file = Path(self.temp_dir.name) / "travel_destinations.db"
-        self.store = SqlStore(f"sqlite:///{db_file}")
+        self.store = SqlStore(store_config=SqlStoreConfiguration(db_url=f"sqlite:///{db_file}"))
         self.store.load()
 
     def tearDown(self) -> None:
@@ -51,7 +52,7 @@ class TestSqlStoreQuerying(unittest.TestCase):
         self.test_data_dir = Path(__file__).parent / "test_data"
         self.temp_dir = TemporaryDirectory()
         db_file = Path(self.temp_dir.name) / "travel_destinations.db"
-        self.store = SqlStore(f"sqlite:///{db_file}")
+        self.store = SqlStore(store_config=SqlStoreConfiguration(db_url=f"sqlite:///{db_file}"))
         self.store.load()
 
         valid_csv = self.test_data_dir / "travel_destinations_valid.csv"
