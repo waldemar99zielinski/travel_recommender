@@ -2,7 +2,7 @@ from recommender.store.sql.base_sql_store import BaseSqlStore
 from recommender.store.sql.base_sql_store import TableModel
 from recommender.store.sql.travel_destination_store import SqlStore
 from recommender.store.sql.travel_destination_sql_csv_loader import TravelDestinationSqlCsvLoader
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 
 __all__ = [
     "BaseSqlStore",

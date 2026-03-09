@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from recommender.models.data_flow.travel_destination import TravelDestination as TravelDestinationModel
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 from recommender.store.utils.travel_destination_csv_data_loader import (
     TravelDestinationCsvDataLoader,
 )

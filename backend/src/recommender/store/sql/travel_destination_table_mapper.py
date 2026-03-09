@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from recommender.models.data_flow.recommendation_output import Recommendation
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
-
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 
 class TravelDestinationTableMapper:
     """Maps SQL travel destination rows to recommendation models."""

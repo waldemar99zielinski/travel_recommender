@@ -7,7 +7,7 @@ from sqlmodel import select
 
 from recommender.common.configuration import SqlStoreConfiguration
 from recommender.store.sql.travel_destination_store import SqlStore
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 
 
 class TestSqlStoreCsvLoading(unittest.TestCase):

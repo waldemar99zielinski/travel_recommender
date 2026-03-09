@@ -16,12 +16,17 @@ from sqlmodel.sql.expression import SelectOfScalar
 
 from recommender.common.configuration import SqlStoreConfiguration
 from recommender.models.data_flow.recommendation_output import Recommendation
+from recommender.models.data_flow.recommendation_session_history import RecommendationSessionHistory
 from recommender.models.data_flow.user_preferences import UserLogisticalPreferences
 from recommender.store.sql.base_sql_store import BaseSqlStore
 from recommender.store.sql.base_sql_store import TableModel
+from recommender.store.sql.recommendation_session_memory_table_mapper import (
+    RecommendationSessionMemoryTableMapper,
+)
+from recommender.store.sql.tables.recommendation_session_memory_table import RecommendationSessionMemoryTable
 from recommender.store.sql.travel_destination_sql_csv_loader import TravelDestinationSqlCsvLoader
 from recommender.store.sql.travel_destination_table_mapper import TravelDestinationTableMapper
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -57,6 +62,7 @@ class SqlStore(BaseSqlStore):
         #TODO dependency injection
         self.travel_destination_loader = TravelDestinationSqlCsvLoader()
         self.travel_destination_mapper = TravelDestinationTableMapper()
+        self.session_memory_mapper = RecommendationSessionMemoryTableMapper()
 
     def load(self) -> None:
         SQLModel.metadata.create_all(self.engine)
@@ -368,3 +374,97 @@ class SqlStore(BaseSqlStore):
     def _ensure_loaded(self) -> None:
         if not self._loaded:
             raise RuntimeError("SQLite SQLModel store is not loaded. Call load() first.")
+
+    def save_recommendation_session_history(
+        self,
+        user_id: str,
+        session_id: str,
+        history: RecommendationSessionHistory,
+    ) -> None:
+        """Save recommendation session history to the database.
+        
+        Handles duplicates by replacing existing entries for the same
+        (user_id, session_id, chat_history_number) combination.
+        """
+        self._ensure_loaded()
+        
+        tables = self.session_memory_mapper.to_tables(
+            user_id=user_id,
+            session_id=session_id,
+            history=history,
+        )
+        
+        if not tables:
+            return
+        
+        with Session(self.engine) as session:
+            for table in tables:
+                existing = session.exec(
+                    select(RecommendationSessionMemoryTable).where(
+                        col(RecommendationSessionMemoryTable.user_id) == user_id,
+                        col(RecommendationSessionMemoryTable.session_id) == session_id,
+                        col(RecommendationSessionMemoryTable.chat_history_number) == table.chat_history_number,
+                    )
+                ).first()
+                
+                if existing:
+                    existing.user_request = table.user_request
+                    existing.system_response = table.system_response
+                    existing.query = table.query
+                    existing.interest_preference = table.interest_preference
+                    existing.logistical_preference = table.logistical_preference
+                    existing.updated_at = table.updated_at
+                else:
+                    session.add(table)
+            
+            session.commit()
+        
+        logger.verbose(
+            f"Saved {len(tables)} session history entries for user_id={user_id}, session_id={session_id}",
+        )
+
+    def load_recommendation_session_history(
+        self,
+        user_id: str,
+        session_id: str,
+    ) -> RecommendationSessionHistory:
+        """Load recommendation session history from the database."""
+        self._ensure_loaded()
+        
+        with Session(self.engine) as session:
+            tables = session.exec(
+                select(RecommendationSessionMemoryTable).where(
+                    col(RecommendationSessionMemoryTable.user_id) == user_id,
+                    col(RecommendationSessionMemoryTable.session_id) == session_id,
+                ).order_by(col(RecommendationSessionMemoryTable.chat_history_number))
+            ).all()
+        
+        history = self.session_memory_mapper.to_history(list(tables))
+        
+        logger.verbose(
+            f"Loaded {len(tables)} session history entries for user_id={user_id}, session_id={session_id}"
+        )
+        
+        return history
+
+    def delete_recommendation_session_history(
+        self,
+        user_id: str,
+        session_id: str,
+    ) -> None:
+        """Delete all session history entries for a given user_id and session_id."""
+        self._ensure_loaded()
+        
+        with Session(self.engine) as session:
+            session.exec(
+                delete(RecommendationSessionMemoryTable).where(
+                    col(RecommendationSessionMemoryTable.user_id) == user_id,
+                    col(RecommendationSessionMemoryTable.session_id) == session_id,
+                )
+            )
+            session.commit()
+        
+        logger.verbose(
+            f"Deleted session history for user_id={user_id}, session_id={session_id}"
+        )
+
