@@ -5,6 +5,7 @@ from enum import Enum
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
 from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
+from recommender.models.session.session import Session
 
 class RecommendationStatusEnum(str, Enum):
     """Status of the recommendation process, used for routing and response handling."""
@@ -17,6 +18,7 @@ class RecommendationStatusEnum(str, Enum):
     ERROR = "error"
 
 class RecommendationGraphState(BaseModel):
+    session: Session = Field(..., description="Conversation scope identifiers")
     user_input: str = Field(..., description="Raw user query input")
     status: RecommendationStatusEnum = Field(
         RecommendationStatusEnum.IN_PROGRESS,
@@ -41,6 +43,8 @@ class RecommendationGraphState(BaseModel):
 
     def __repr__(self) -> str:
         lines: list[str] = ["RecommendationGraphState("]
+        session_repr = repr(self.session).replace("\n", "\n  ")
+        lines.append(f"  session={session_repr},")
         lines.append(f"  user_input={self.user_input!r},")
         lines.append(f"  status={self.status.value!r},")
 

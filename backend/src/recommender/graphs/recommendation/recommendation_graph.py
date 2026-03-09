@@ -103,6 +103,7 @@ if __name__ == "__main__":
     graph = build_recommendation_graph(
         travel_vector_store=travel_vector_store,
         sql_store=sql_store,
+        session_context_turn_window=config.session_memory.context_turn_window,
     )
     result = graph.invoke({"user_input": "I want to walk and explore nature in August with 200 euro, but I dislike crowded places."})
     # result = graph.invoke({"user_input": "I want to sleep"})
