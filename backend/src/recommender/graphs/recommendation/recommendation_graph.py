@@ -22,9 +22,12 @@ from recommender.graphs.recommendation.nodes.preference_validation_router import
 from recommender.graphs.recommendation.nodes.recommendation_generation_node import create_recommendation_generation_node
 from recommender.graphs.recommendation.nodes.recommendation_ranking_node import create_recommendation_ranking_node
 from recommender.graphs.recommendation.nodes.response_node import create_response_node
+from recommender.graphs.recommendation.nodes.session_memory_load_node import create_session_memory_load_node
+from recommender.graphs.recommendation.nodes.session_memory_update_node import create_session_memory_update_node
 from recommender.graphs.recommendation.models import RecommendationGraphState
+from recommender.models.session.session import Session
 from recommender.store.sql.travel_destination_store import SqlStore
-from recommender.store.sql.travel_destination_table import TravelDestinationTable
+from recommender.store.sql.tables.travel_destination_table import TravelDestinationTable
 
 from utils.logger import LoggerManager
 
@@ -55,10 +58,15 @@ def build_recommendation_graph(
 
     response_node = create_response_node(recommendation_response_generation_agent)
 
+    session_memory_load_node = create_session_memory_load_node(sql_store)
+    session_memory_update_node = create_session_memory_update_node(sql_store)
+
     graph_builder.add_node(create_preference_extraction_node.__name__, preference_extraction_node)
     graph_builder.add_node(create_recommendation_generation_node.__name__, recommendation_generation_node)
     graph_builder.add_node(create_recommendation_ranking_node.__name__, recommendation_ranking_node)
     graph_builder.add_node(create_response_node.__name__, response_node)
+    graph_builder.add_node(create_session_memory_load_node.__name__, session_memory_load_node)
+    graph_builder.add_node(create_session_memory_update_node.__name__, session_memory_update_node)
 
     graph_builder.add_conditional_edges(
         create_preference_extraction_node.__name__,
@@ -69,13 +77,15 @@ def build_recommendation_graph(
         },
     )
 
-    graph_builder.add_edge(START, create_preference_extraction_node.__name__)
+    graph_builder.add_edge(START, create_session_memory_load_node.__name__)
+    graph_builder.add_edge(create_session_memory_load_node.__name__, create_preference_extraction_node.__name__)
     graph_builder.add_edge(
         create_recommendation_generation_node.__name__,
         create_recommendation_ranking_node.__name__,
     )
     graph_builder.add_edge(create_recommendation_ranking_node.__name__, create_response_node.__name__)
-    graph_builder.add_edge(create_response_node.__name__, END)
+    graph_builder.add_edge(create_response_node.__name__, create_session_memory_update_node.__name__)
+    graph_builder.add_edge(create_session_memory_update_node.__name__, END)
 
     graph = graph_builder.compile()
 
@@ -103,9 +113,13 @@ if __name__ == "__main__":
     graph = build_recommendation_graph(
         travel_vector_store=travel_vector_store,
         sql_store=sql_store,
-        session_context_turn_window=config.session_memory.context_turn_window,
     )
-    result = graph.invoke({"user_input": "I want to walk and explore nature in August with 200 euro, but I dislike crowded places."})
+    
+    session = Session(user_id="user_1", session_id="session_1")
+    result = graph.invoke({
+        "session": session,
+        "user_input": "I want to walk and explore nature in August with 200 euro, but I dislike crowded places."
+    })
     # result = graph.invoke({"user_input": "I want to sleep"})
 
     parsed_result  = RecommendationGraphState.model_validate(result)

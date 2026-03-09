@@ -5,6 +5,7 @@ from enum import Enum
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
 from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
+from recommender.models.data_flow.recommendation_session_history import RecommendationSessionHistory
 from recommender.models.session.session import Session
 
 class RecommendationStatusEnum(str, Enum):
@@ -20,6 +21,10 @@ class RecommendationStatusEnum(str, Enum):
 class RecommendationGraphState(BaseModel):
     session: Session = Field(..., description="Conversation scope identifiers")
     user_input: str = Field(..., description="Raw user query input")
+    query: Optional[str] = Field(
+        None,
+        description="Synthesized query built from recent user input and session history",
+    )
     status: RecommendationStatusEnum = Field(
         RecommendationStatusEnum.IN_PROGRESS,
         description="Current status of the recommendation process"
@@ -40,12 +45,17 @@ class RecommendationGraphState(BaseModel):
         None,
         description="Final response payload shared across graph branches"
     )
+    history: Optional[RecommendationSessionHistory] = Field(
+        None,
+        description="Full session history for context and debugging purposes"
+    )
 
     def __repr__(self) -> str:
         lines: list[str] = ["RecommendationGraphState("]
         session_repr = repr(self.session).replace("\n", "\n  ")
         lines.append(f"  session={session_repr},")
         lines.append(f"  user_input={self.user_input!r},")
+        lines.append(f"  query={self.query!r},")
         lines.append(f"  status={self.status.value!r},")
 
         if self.extracted_user_interests_preferences is None:
@@ -90,6 +100,8 @@ class RecommendationGraphState(BaseModel):
                 "  response="
                 f"{{message={self.response.message!r}}}"
             )
+
+        lines.append(f"  history={self.history!r},")
 
         lines.append(")")
         return "\n".join(lines)
