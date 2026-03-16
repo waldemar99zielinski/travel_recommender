@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Mapping
+
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -7,8 +9,14 @@ from recommender.models.data_flow.user_preferences import UserInterestPreference
 from recommender.models.data_flow.user_preferences import UserLogisticalPreferences
 
 
-def _sorted_chat_numbers(values: dict[int, object]) -> list[int]:
+def _sorted_chat_numbers(values: Mapping[int, object]) -> list[int]:
     return sorted(values.keys())
+
+
+def _latest_chat_number(values: Mapping[int, object]) -> int | None:
+    if not values:
+        return None
+    return max(values)
 
 class RecommendationSessionHistory(BaseModel):
     """Data model for storing recommendation session history in SQL store."""
@@ -51,6 +59,17 @@ class RecommendationSessionHistory(BaseModel):
             self.query_by_chat_number[chat_number]
             for chat_number in _sorted_chat_numbers(self.query_by_chat_number)
         ]
+
+    def latest_query_chat_number(self) -> int | None:
+        """Return latest chat number with a synthesized query, if present."""
+        return _latest_chat_number(self.query_by_chat_number)
+
+    def latest_query(self) -> str | None:
+        """Return latest synthesized query, if present."""
+        latest_chat_number = self.latest_query_chat_number()
+        if latest_chat_number is None:
+            return None
+        return self.query_by_chat_number.get(latest_chat_number)
 
     def chat_history_list(self) -> list[str]:
         """Return alternating user and system chat history ordered by chat history number."""

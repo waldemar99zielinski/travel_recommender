@@ -6,6 +6,9 @@ from recommender.common.configuration import Configuration
 
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
 from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
+from recommender.agents.query_synthesis.recommendation_query_synthesis_agent import (
+    RecommendationQuerySynthesisAgent,
+)
 from recommender.agents.response_generation.recommendation_response_generation_agent import (
     RecommendationResponseGenerationAgent,
 )
@@ -43,10 +46,12 @@ def build_recommendation_graph(
 
     user_interest_preference_extraction_agent = UserInterestPreferenceExtractionAgent.builder().build()
     user_logistical_preference_extraction_agent = UserLogisticalPreferenceExtractionAgent.builder().build()
+    recommendation_query_synthesis_agent = RecommendationQuerySynthesisAgent.builder().build()
     recommendation_response_generation_agent = RecommendationResponseGenerationAgent.builder().build()
 
 
     preference_extraction_node = create_preference_extraction_node(
+        recommendation_query_synthesis_agent,
         user_interest_preference_extraction_agent,
         user_logistical_preference_extraction_agent,
     )
