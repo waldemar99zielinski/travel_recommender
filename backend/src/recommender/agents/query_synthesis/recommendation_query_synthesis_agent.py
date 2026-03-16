@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import cast
+
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -57,13 +60,18 @@ class RecommendationQuerySynthesisAgent(BaseAgent):
 
     def invoke(
         self,
-        input: RecommendationQuerySynthesisInput,
+        inputs: RecommendationQuerySynthesisInput,
     ) -> RecommendationQuerySynthesisResult:
         prompt_inputs = self.prompt.format_messages(
-            current_user_request=input.current_user_request,
-            previous_synthesized_query=input.previous_synthesized_query or "",
+            current_user_request=inputs.current_user_request,
+            previous_synthesized_query=inputs.previous_synthesized_query or "",
         )
-        return super().invoke(prompt_inputs)
+        result = super().invoke(prompt_inputs)
+
+        synthesized_query = result.synthesized_query.strip()
+        if not synthesized_query:
+            raise ValueError("RecommendationQuerySynthesisAgent returned an empty synthesized_query")
+        return RecommendationQuerySynthesisResult(synthesized_query=synthesized_query)
 
     @classmethod
     def builder(cls) -> RecommendationQuerySynthesisAgentBuilder:
