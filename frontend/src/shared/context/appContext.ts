@@ -1,5 +1,11 @@
 import { createContext } from "react";
 
-export type AppContextValue = Record<string, never>;
+import type { RecommendationContextValue } from "@/shared/context/recommendation/recommendationContext";
+import type { UserContextValue } from "@/shared/context/user/userContext";
+
+export interface AppContextValue {
+    recommendation: RecommendationContextValue;
+    user: UserContextValue;
+}
 
 export const AppContext = createContext<AppContextValue | undefined>(undefined);
