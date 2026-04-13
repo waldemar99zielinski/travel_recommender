@@ -1,16 +1,14 @@
 import type {
     RecommendationRequestDto,
     RecommendationResponseDto,
-} from "@/models/recommendation/model/types";
-
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+} from "@/models/recommendation.models";
+import { apiConfig } from "@/shared/api/api.config";
 
 export async function fetchRecommendations(
     payload: RecommendationRequestDto,
 ): Promise<RecommendationResponseDto> {
     const response = await fetch(
-        `${API_BASE_URL}/api/v1/recommendations/chat`,
+        `${apiConfig.baseUrl}/api/v1/recommendations/chat`,
         {
             method: "POST",
             headers: {
