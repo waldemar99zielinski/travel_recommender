@@ -2,8 +2,8 @@ import type {
     EnrichedRegionFeatureCollection,
     EnrichedRegionFeatureProperties,
     RegionFeatureCollection,
-} from "@/models/destination/model/types";
-import type { RecommendationItemDto } from "@/models/recommendation/model/types";
+} from "@/models/destination.models";
+import type { RecommendationItemDto } from "@/models/recommendation.models";
 
 export function enrichRegions(
     regions: RegionFeatureCollection,

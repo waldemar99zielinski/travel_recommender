@@ -5,14 +5,16 @@ import type { MapPopupCardProps } from "@/components/map/Map.interfaces";
 
 export function MapPopupCard({ properties }: MapPopupCardProps) {
     const { t } = useTranslation();
+    const regionTitle =
+        properties.display_name ?? properties.name ?? properties.u_name;
+    const regionDescription =
+        properties.name ?? properties.display_name ?? properties.u_name;
 
     return (
         <Box sx={{ minWidth: 200, p: 0.5 }}>
             <Stack spacing={0.5}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {properties.display_name ??
-                        properties.name ??
-                        properties.u_name}
+                    {regionTitle}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                     {t("map.popup.regionId", { id: properties.u_name })}
@@ -33,7 +35,7 @@ export function MapPopupCard({ properties }: MapPopupCardProps) {
                     </>
                 ) : (
                     <Typography variant="body2" color="text.secondary">
-                        {t("map.popup.noRecommendation")}
+                        {regionDescription}
                     </Typography>
                 )}
             </Stack>

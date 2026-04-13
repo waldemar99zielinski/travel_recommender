@@ -11,23 +11,22 @@ import {
 
 import type { MapCanvasProps } from "@/components/map/Map.interfaces";
 import { scoreToColor } from "@/components/map/model/mapColors";
+import {
+    MAP_BOUNDS,
+    MAP_CENTER,
+    MAP_COLORS,
+} from "@/components/map/map.config";
 import { MapLegend } from "@/components/map/components/MapLegend";
 import { MapPopupCard } from "@/components/map/components/MapPopupCard";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
-import type { EnrichedRegionFeatureProperties } from "@/models/destination/model/types";
-
-const MAP_CENTER: [number, number] = [20.3, 5.96];
-const MAP_BOUNDS: [[number, number], [number, number]] = [
-    [-85, -180],
-    [85, 180],
-];
+import type { EnrichedRegionFeatureProperties } from "@/models/destination.models";
 
 function getFillColor(
     properties: EnrichedRegionFeatureProperties,
     rankingConfig: MapCanvasProps["rankingConfig"],
 ): string {
     if (properties.recommendation == null) {
-        return "#cfdae5";
+        return MAP_COLORS.noRecommendationFill;
     }
 
     if (
@@ -84,7 +83,7 @@ export function MapCanvas({
                     ".leaflet-container": {
                         height: "100%",
                         width: "100%",
-                        background: "#a3ceff",
+                        background: MAP_COLORS.background,
                     },
                     ".leaflet-popup-content-wrapper, .leaflet-popup-tip": {
                         borderRadius: 10,
@@ -119,7 +118,9 @@ export function MapCanvas({
                                     feature.properties,
                                     rankingConfig,
                                 ),
-                                color: isSelected ? "#ffffff" : "#868686",
+                                color: isSelected
+                                    ? MAP_COLORS.selectedBorder
+                                    : MAP_COLORS.defaultBorder,
                                 weight: isSelected ? 3 : 1,
                             }}
                             eventHandlers={{
