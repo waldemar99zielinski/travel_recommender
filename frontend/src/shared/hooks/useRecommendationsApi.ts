@@ -3,8 +3,8 @@ import { useCallback } from "react";
 import type {
     RecommendationRequestDto,
     RecommendationResponseDto,
-} from "@/models/recommendation/model/types";
-import { fetchRecommendations } from "@/shared/api/recommendationApi";
+} from "@/models/recommendation.models";
+import { fetchRecommendations } from "@/shared/api/recommendation.api";
 import type { ApiHookTuple } from "@/shared/hooks/apiHookTypes";
 import { useApiRequest } from "@/shared/hooks/useApiRequest";
 
@@ -22,5 +22,8 @@ export function useRecommendationsApi(): ApiHookTuple<
 
     return useApiRequest<RecommendationResponseDto, RecommendationRequestDto>(
         request,
+        {
+            requestName: "recommendations",
+        },
     );
 }
