@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic import BaseModel
 from pydantic import Field
-
-DEFAULT_EMBEDDING_DIMENSION = 768
-DEFAULT_EMBEDDING_MODEL = "nomic-embed-text"
-
+from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
 class StorageEngineConfiguration(BaseModel):
     """Database engine settings for PostgreSQL-backed storage."""
 
     db_url: str = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/recommender",
+        ...,
+        min_length=1,
         description="SQLAlchemy database URL for PostgreSQL",
     )
     echo: bool = Field(default=False, description="Enable SQLAlchemy SQL logging")
@@ -33,24 +34,20 @@ class MigrationConfiguration(BaseModel):
     )
 
 
-class PgVectorConfiguration(BaseModel):
-    """pgvector tuning and embedding shape settings."""
+class StorageConfiguration(BaseSettings):
+    """Top-level storage configuration loaded from environment variables."""
 
-    embedding_dimension: int = Field(
-        default=DEFAULT_EMBEDDING_DIMENSION,
-        ge=1,
-        description="Embedding vector dimension used by vector similarity search",
-    )
-    embedding_model: str = Field(
-        default=DEFAULT_EMBEDDING_MODEL,
-        min_length=1,
-        description="Default embedding model identifier used for vector generation",
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[2] / ".env",
+        env_prefix="STORAGE_",
+        env_nested_delimiter="__",
+        extra="ignore",
     )
 
-
-class StorageConfiguration(BaseModel):
-    """Top-level storage configuration."""
-
-    engine: StorageEngineConfiguration = Field(default_factory=StorageEngineConfiguration)
+    engine: StorageEngineConfiguration = Field(...)
     migrations: MigrationConfiguration = Field(default_factory=MigrationConfiguration)
-    vector: PgVectorConfiguration = Field(default_factory=PgVectorConfiguration)
+
+
+def load_storage_configuration() -> StorageConfiguration:
+    """Load storage configuration from environment variables and defaults."""
+    return StorageConfiguration()  # pyright: ignore[reportCallIssue]
