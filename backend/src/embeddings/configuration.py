@@ -26,6 +26,12 @@ class OllamaTextEmbeddingModelConfiguration(BaseSettings):
     )
 
 
-def load_ollama_text_embedding_model_configuration() -> OllamaTextEmbeddingModelConfiguration:
+def load_ollama_text_embedding_model_configuration(
+    *,
+    env_file: Path | str | None = None,
+) -> OllamaTextEmbeddingModelConfiguration:
     """Load Ollama embedding settings from environment variables."""
-    return OllamaTextEmbeddingModelConfiguration()
+    if env_file is None:
+        return OllamaTextEmbeddingModelConfiguration()
+
+    return OllamaTextEmbeddingModelConfiguration(_env_file=env_file)

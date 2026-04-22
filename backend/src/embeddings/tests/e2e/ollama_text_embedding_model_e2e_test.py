@@ -7,12 +7,13 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from pydantic import ValidationError
-
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
-from embeddings.configuration import load_ollama_text_embedding_model_configuration
+from embeddings.configuration import OllamaTextEmbeddingModelConfiguration
 from embeddings.ollama_text_embedding_model import OllamaTextEmbeddingModel
+
+TEST_EMBEDDINGS_MODEL_NAME = "nomic-embed-text"
+TEST_EMBEDDINGS_BASE_URL = "http://localhost:11434"
 
 
 class TestOllamaTextEmbeddingModelE2E(unittest.TestCase):
@@ -21,12 +22,10 @@ class TestOllamaTextEmbeddingModelE2E(unittest.TestCase):
         if os.environ.get("RUN_EMBEDDINGS_E2E") != "1":
             raise unittest.SkipTest("Set RUN_EMBEDDINGS_E2E=1 to run embeddings e2e tests")
 
-        try:
-            configuration = load_ollama_text_embedding_model_configuration()
-        except ValidationError as error:
-            raise unittest.SkipTest(
-                "EMBEDDINGS_MODEL_NAME and EMBEDDINGS_BASE_URL are required for embeddings e2e tests"
-            ) from error
+        configuration = OllamaTextEmbeddingModelConfiguration(
+            model_name=TEST_EMBEDDINGS_MODEL_NAME,
+            base_url=TEST_EMBEDDINGS_BASE_URL,
+        )
 
         tags_endpoint = f"{configuration.base_url.rstrip('/')}/api/tags"
         try:
@@ -72,6 +71,9 @@ class TestOllamaTextEmbeddingModelE2E(unittest.TestCase):
     def test_embed_query_rejects_blank_text(self) -> None:
         with self.assertRaises(ValueError):
             self.embedding_model.embed_query("   ")
+
+    def test_check_health_returns_true_for_reachable_ollama(self) -> None:
+        self.assertTrue(self.embedding_model.check_health())
 
 
 if __name__ == "__main__":

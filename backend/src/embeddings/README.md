@@ -50,6 +50,7 @@ RUN_EMBEDDINGS_E2E=1 uv run python -m unittest src.embeddings.tests.e2e.ollama_t
 - reported dimension from `get_dimentions()` matches returned embedding length
 - dimension from `get_dimentions()` stays stable across multiple queries
 - blank input is rejected with a `ValueError`
+- `check_health()` returns `True` when Ollama is reachable and responding
 
 ## Troubleshooting
 
