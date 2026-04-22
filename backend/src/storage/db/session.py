@@ -35,6 +35,3 @@ def write_session_scope(session_factory: sessionmaker[Session]) -> Iterator[Sess
         raise
     finally:
         session.close()
-
-
-session_scope = write_session_scope

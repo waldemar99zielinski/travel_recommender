@@ -10,8 +10,6 @@ from sqlalchemy import text
 from sqlmodel import Field
 from sqlmodel import SQLModel
 
-from storage.configuration import DEFAULT_EMBEDDING_MODEL
-from storage.configuration import DEFAULT_EMBEDDING_DIMENSION
 from storage.models.vector_type import create_vector_column
 
 
@@ -53,9 +51,8 @@ class TravelDestinationRecord(SQLModel, table=True):
 
     description: str
     embedding: list[float] = Field(
-        sa_column=create_vector_column(DEFAULT_EMBEDDING_DIMENSION, nullable=False),
+        sa_column=create_vector_column(nullable=False),
     )
-    embedding_model: str = Field(default=DEFAULT_EMBEDDING_MODEL)
     embedding_version: int = Field(default=1, ge=1)
 
     created_at: datetime = Field(

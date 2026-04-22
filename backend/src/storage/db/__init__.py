@@ -15,7 +15,6 @@ __all__ = [
     "ensure_pgvector_extension",
     "read_session_scope",
     "run_storage_migrations",
-    "session_scope",
     "validate_storage_contract",
     "write_session_scope",
 ]

@@ -17,7 +17,7 @@ except Exception as error:
     _PGVECTOR_IMPORT_ERROR = error
 
 
-def create_vector_column(dimension: int, nullable: bool = False) -> Column[Any]:
+def create_vector_column(dimension: int | None = None, nullable: bool = False) -> Column[Any]:
     """Create a pgvector-backed column, failing fast when dependency is missing."""
     if PgVector is None:
         raise RuntimeError(

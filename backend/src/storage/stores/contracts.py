@@ -5,6 +5,7 @@ from typing import Protocol
 from uuid import UUID
 
 from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.models.storage_metadata import StorageMetadataRecord
 from storage.models.travel_destination import TravelDestinationRecord
 from storage.stores.search_models import ScoredTravelDestination
 from storage.stores.search_models import TravelSearchConstraints
@@ -23,22 +24,22 @@ class TravelDestinationStoreProtocol(Protocol):
 
     def semantic_search(
         self,
-        query_embedding: Sequence[float],
-        limit: int = 5,
+        query: str,
+        limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
     def vector_search(
         self,
-        query_embedding: Sequence[float],
-        limit: int = 5,
+        query: str,
+        limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
     def hybrid_search(
         self,
-        query_embedding: Sequence[float],
+        query: str,
         *,
         constraints: TravelSearchConstraints,
-        limit: int = 5,
+        limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
     ) -> list[ScoredTravelDestination]: ...
@@ -56,3 +57,19 @@ class RecommendationSessionStoreProtocol(Protocol):
     def upsert_many(self, rows: Sequence[RecommendationSessionMemoryRecord]) -> None: ...
 
     def delete_session(self, user_id: UUID | str, session_id: UUID | str) -> None: ...
+
+
+class StorageMetadataStoreProtocol(Protocol):
+    """Contract for storage metadata key-value store operations."""
+
+    def list_all(self) -> list[StorageMetadataRecord]: ...
+
+    def get(self, key: str) -> StorageMetadataRecord | None: ...
+
+    def get_value(self, key: str) -> str | None: ...
+
+    def upsert_many(self, rows: Sequence[StorageMetadataRecord]) -> None: ...
+
+    def upsert(self, key: str, value: str) -> None: ...
+
+    def delete(self, key: str) -> None: ...

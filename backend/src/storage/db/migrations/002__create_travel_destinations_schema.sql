@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS travel_destinations (
     shopping DOUBLE PRECISION NOT NULL,
     description TEXT NOT NULL,
     embedding vector({{embedding_dimension}}) NOT NULL,
-    embedding_model TEXT NOT NULL DEFAULT 'nomic-embed-text',
     embedding_version INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
