@@ -12,7 +12,6 @@ from sqlmodel import Session
 from sqlmodel import col
 from sqlmodel import select
 
-from storage.configuration import DEFAULT_EMBEDDING_DIMENSION
 from storage.models.travel_destination import TravelDestinationRecord
 from storage.stores.search_models import ScoredTravelDestination
 from storage.stores.search_models import TravelSearchConstraints
@@ -40,7 +39,7 @@ class TravelDestinationRepository:
         self,
         session: Session,
         *,
-        embedding_dimension: int = DEFAULT_EMBEDDING_DIMENSION,
+        embedding_dimension: int,
     ) -> None:
         if embedding_dimension <= 0:
             raise ValueError("embedding_dimension must be greater than zero")
@@ -92,7 +91,7 @@ class TravelDestinationRepository:
     def semantic_search(
         self,
         query_embedding: Sequence[float],
-        limit: int = 5,
+        limit: int | None = None,
     ) -> list[ScoredTravelDestination]:
         """Return nearest travel destinations with semantic-only ranking."""
         self._validate_embedding_dimension(query_embedding)
@@ -106,10 +105,11 @@ class TravelDestinationRepository:
             .add_columns(distance_expression.label("embedding_distance"))
             .add_columns(semantic_score_expression.label("semantic_score"))
             .order_by(distance_expression)
-            .limit(limit)
         )
+        if limit is not None:
+            statement = statement.limit(limit)
 
-        rows = self.session.exec(statement)
+        rows = self.session.connection().execute(statement).all()
         return [
             ScoredTravelDestination(
                 destination=row[0],
@@ -126,7 +126,7 @@ class TravelDestinationRepository:
         query_embedding: Sequence[float],
         *,
         constraints: TravelSearchConstraints,
-        limit: int = 5,
+        limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
     ) -> list[ScoredTravelDestination]:
@@ -152,10 +152,11 @@ class TravelDestinationRepository:
             .add_columns(logistics_score_expression.label("logistics_score"))
             .add_columns(ranking_score_expression.label("ranking_score"))
             .order_by(ranking_score_expression.desc(), distance_expression)
-            .limit(limit)
         )
+        if limit is not None:
+            statement = statement.limit(limit)
 
-        rows = self.session.execute(statement).all()
+        rows = self.session.connection().execute(statement).all()
         return [
             ScoredTravelDestination(
                 destination=row[0],
@@ -222,8 +223,8 @@ class TravelDestinationRepository:
                 f"expected {self.embedding_dimension}, got {len(embedding)}"
             )
 
-    def _validate_limit(self, limit: int) -> None:
-        if limit <= 0:
+    def _validate_limit(self, limit: int | None) -> None:
+        if limit is not None and limit <= 0:
             raise ValueError("limit must be greater than zero")
 
     def _validate_weight(self, weight: float, field_name: str) -> None:
