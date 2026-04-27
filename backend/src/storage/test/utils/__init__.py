@@ -9,6 +9,7 @@ from storage.test.utils.database_schema import create_schema
 from storage.test.utils.database_schema import drop_schema
 from storage.test.utils.database_schema import generate_schema_name
 from storage.test.utils.database_schema import load_persisted_destination_ids
+from storage.test.utils.query_embedding_support import KeywordTextEmbeddingModel
 
 __all__ = [
     "FakeTextEmbeddingModel",
@@ -18,6 +19,7 @@ __all__ = [
     "create_schema",
     "drop_schema",
     "generate_schema_name",
+    "KeywordTextEmbeddingModel",
     "load_persisted_destination_ids",
     "load_seed_destination_ids",
 ]

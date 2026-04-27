@@ -1,0 +1,6 @@
+parent_region;region;u_name;popularity;cost_per_week;jan;feb;mar;apr;may;jun;jul;aug;sep;oct;nov;dec;safety;nature;hiking;beach;watersports;entertainment;wintersports;culture;culinary;architecture;shopping;description
+Europe;Alpine Peaks;ALP_SKI;0.82;950.0;--;--;o;o;o;o;+;+;o;o;+;++ ;+;++;++;--;--;o;++ ;o;o;o;-;Alpine mountain ski snow winter trail hiking adventure with snowboard routes.
+Oceania;Island Escape;ISL_BEACH;0.78;680.0;o;o;o;+;+;++ ;++ ;++ ;+;o;o;o;+;+;o;++ ;++ ;+;--;o;+;o;o;Tropical island beach sea snorkeling watersport paradise with coastal sunsets.
+Europe;Luxury Coast;LUX_BEACH;0.86;1400.0;o;o;o;+;++ ;++ ;++ ;++ ;+;o;o;o;++ ;o;o;++ ;+;++ ;--;o;+;+;++ ;Luxury premium resort on a tropical beach coast with exclusive sea views.
+Europe;Culture Capital;CITY_CULT;0.80;620.0;o;o;o;o;+;+;+;+;+;o;o;o;+;o;o;-;--;++ ;--;++ ;++ ;+;++ ;Historic city museum culture architecture art and culinary restaurants.
+Europe;Budget Highlands;BUD_HIKE;0.65;320.0;o;o;o;o;+;+;+;+;o;o;o;o;+;++ ;++ ;--;--;o;--;o;o;--;o;Budget mountain hiking trail nature camp adventure for affordable trips.

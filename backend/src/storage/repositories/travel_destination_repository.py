@@ -109,7 +109,7 @@ class TravelDestinationRepository:
         if limit is not None:
             statement = statement.limit(limit)
 
-        rows = self.session.connection().execute(statement).all()
+        rows = self.session.execute(statement).all()
         return [
             ScoredTravelDestination(
                 destination=row[0],
@@ -156,7 +156,7 @@ class TravelDestinationRepository:
         if limit is not None:
             statement = statement.limit(limit)
 
-        rows = self.session.connection().execute(statement).all()
+        rows = self.session.execute(statement).all()
         return [
             ScoredTravelDestination(
                 destination=row[0],
