@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -19,9 +18,6 @@ TEST_EMBEDDINGS_BASE_URL = "http://localhost:11434"
 class TestOllamaTextEmbeddingModelE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        if os.environ.get("RUN_EMBEDDINGS_E2E") != "1":
-            raise unittest.SkipTest("Set RUN_EMBEDDINGS_E2E=1 to run embeddings e2e tests")
-
         configuration = OllamaTextEmbeddingModelConfiguration(
             model_name=TEST_EMBEDDINGS_MODEL_NAME,
             base_url=TEST_EMBEDDINGS_BASE_URL,
