@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -21,8 +20,6 @@ class MigrationStep:
 
 
 MIGRATIONS_DIRECTORY = Path(__file__).resolve().parent / "migrations"
-MIN_POSTGRESQL_SERVER_VERSION_NUM = 180000
-MIN_PGVECTOR_EXTENSION_VERSION = (0, 5, 0)
 
 logger = LoggerManager.get_logger(__name__)
 
@@ -33,7 +30,7 @@ def run_storage_migrations(
     embedding_dimension: int,
     migration_lock_key: int,
 ) -> None:
-    """Apply storage migrations with advisory locking and schema contract checks."""
+    """Apply storage SQL migrations with advisory locking and version tracking."""
     if embedding_dimension <= 0:
         raise ValueError("embedding_dimension must be greater than zero")
 
@@ -47,9 +44,6 @@ def run_storage_migrations(
     logger.info("Loaded %s storage migration step(s)", len(migration_steps))
 
     with engine.begin() as connection:
-        _validate_postgresql_compatibility(connection)
-        logger.info("PostgreSQL compatibility check passed")
-
         connection.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": migration_lock_key})
         logger.info("Acquired storage migration advisory lock")
         _ensure_migrations_table(connection)
@@ -93,29 +87,11 @@ def run_storage_migrations(
             applied_now += 1
             logger.info("Applied migration version=%s", step.version)
 
-        _validate_vector_extension_compatibility(connection)
-        logger.info("pgvector extension compatibility check passed")
-        _validate_embedding_dimension_contract(connection, expected_embedding_dimension=embedding_dimension)
-        logger.info("Embedding dimension contract validation passed")
-
     logger.info(
         "Storage migrations completed (applied=%s, skipped=%s)",
         applied_now,
         skipped,
     )
-
-
-def validate_storage_contract(engine: Engine, *, embedding_dimension: int) -> None:
-    """Validate that runtime embedding settings match persisted storage metadata."""
-    logger.info("Validating storage contract (embedding_dimension=%s)", embedding_dimension)
-    with engine.connect() as connection:
-        _validate_postgresql_compatibility(connection)
-        _validate_vector_extension_compatibility(connection)
-        _validate_embedding_dimension_contract(
-            connection,
-            expected_embedding_dimension=embedding_dimension,
-        )
-    logger.info("Storage contract validation passed")
 
 
 def _load_ordered_migration_steps(embedding_dimension: int) -> tuple[MigrationStep, ...]:
@@ -171,54 +147,6 @@ def _parse_migration_filename(migration_file: Path) -> tuple[int, str]:
     return version, description
 
 
-def _validate_postgresql_compatibility(connection: Connection) -> None:
-    server_version_num = int(connection.execute(text("SHOW server_version_num")).scalar_one())
-    logger.debug("Detected PostgreSQL server_version_num=%s", server_version_num)
-    if server_version_num < MIN_POSTGRESQL_SERVER_VERSION_NUM:
-        raise RuntimeError(
-            "Storage requires PostgreSQL 18 or newer. "
-            f"Detected server_version_num={server_version_num}."
-        )
-
-
-def _validate_vector_extension_compatibility(connection: Connection) -> None:
-    installed_version = connection.execute(
-        text(
-            """
-            SELECT installed_version
-            FROM pg_available_extensions
-            WHERE name = 'vector'
-            """
-        )
-    ).scalar_one_or_none()
-
-    if installed_version is None:
-        raise RuntimeError(
-            "pgvector extension is not available in this PostgreSQL 18 installation. "
-            "Install pgvector built for PostgreSQL 18."
-        )
-
-    version_tuple = _parse_extension_version(str(installed_version))
-    logger.debug("Detected pgvector extension version=%s", installed_version)
-    if version_tuple < MIN_PGVECTOR_EXTENSION_VERSION:
-        required = ".".join(str(part) for part in MIN_PGVECTOR_EXTENSION_VERSION)
-        raise RuntimeError(
-            "pgvector extension version is too old for required features. "
-            f"Detected={installed_version}, required>={required}."
-        )
-
-
-def _parse_extension_version(version: str) -> tuple[int, int, int]:
-    match = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?", version)
-    if match is None:
-        raise RuntimeError(f"Unable to parse extension version: {version}")
-
-    major = int(match.group(1))
-    minor = int(match.group(2))
-    patch = int(match.group(3) or 0)
-    return (major, minor, patch)
-
-
 def _ensure_migrations_table(connection: Connection) -> None:
     logger.debug("Ensuring storage_schema_migrations table exists")
     connection.execute(
@@ -237,27 +165,3 @@ def _ensure_migrations_table(connection: Connection) -> None:
 def _fetch_applied_versions(connection: Connection) -> set[int]:
     rows = connection.execute(text("SELECT version FROM storage_schema_migrations")).all()
     return {int(version) for (version,) in rows}
-
-
-def _validate_embedding_dimension_contract(
-    connection: Connection,
-    expected_embedding_dimension: int,
-) -> None:
-    result = connection.execute(
-        text("SELECT value FROM storage_metadata WHERE key = 'embedding_dimension'")
-    ).one_or_none()
-
-    if result is None:
-        raise RuntimeError("Storage metadata missing `embedding_dimension` contract.")
-
-    actual_embedding_dimension = int(result[0])
-    logger.debug(
-        "Embedding dimension contract values expected=%s actual=%s",
-        expected_embedding_dimension,
-        actual_embedding_dimension,
-    )
-    if actual_embedding_dimension != expected_embedding_dimension:
-        raise RuntimeError(
-            "Configured embedding dimension does not match database contract: "
-            f"expected={expected_embedding_dimension}, actual={actual_embedding_dimension}."
-        )

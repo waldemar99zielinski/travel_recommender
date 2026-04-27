@@ -46,6 +46,11 @@ class StorageConfiguration(BaseSettings):
 
     engine: StorageEngineConfiguration = Field(...)
     migrations: MigrationConfiguration = Field(default_factory=MigrationConfiguration)
+    schema_name: str = Field(
+        default="public",
+        min_length=1,
+        description="Target PostgreSQL schema for storage health checks",
+    )
 
 
 def load_storage_configuration() -> StorageConfiguration:

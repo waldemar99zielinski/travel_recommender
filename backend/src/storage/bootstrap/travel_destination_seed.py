@@ -11,9 +11,12 @@ def seed_travel_destinations(
     unit_of_work: StorageUnitOfWork,
     rows: Sequence[TravelDestinationRecord],
     *,
+    embedding_dimension: int,
     batch_size: int = 500,
 ) -> int:
     """Bulk seed travel destinations in batches using UPSERT semantics."""
+    if embedding_dimension <= 0:
+        raise ValueError("embedding_dimension must be greater than zero")
     if batch_size <= 0:
         raise ValueError("batch_size must be greater than zero")
 
@@ -26,7 +29,10 @@ def seed_travel_destinations(
         batch = rows[start_index:end_index]
 
         with unit_of_work.write() as session:
-            repository = TravelDestinationRepository(session)
+            repository = TravelDestinationRepository(
+                session,
+                embedding_dimension=embedding_dimension,
+            )
             repository.upsert_many(batch)
 
     return total_rows

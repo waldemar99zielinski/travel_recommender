@@ -25,7 +25,12 @@ class StorageHealthReport:
     details: str
 
 
-def check_storage_health(engine: Engine, expected_embedding_dimension: int) -> StorageHealthReport:
+def check_storage_health(
+    engine: Engine,
+    expected_embedding_dimension: int,
+    *,
+    schema_name: str,
+) -> StorageHealthReport:
     """Run a lightweight storage health check suite."""
     try:
         with engine.connect() as connection:
@@ -54,7 +59,10 @@ def check_storage_health(engine: Engine, expected_embedding_dimension: int) -> S
                 connection,
                 expected_embedding_dimension=expected_embedding_dimension,
             )
-            vector_index_present, vector_index_failure_message = _check_vector_index_present(connection)
+            vector_index_present, vector_index_failure_message = _check_vector_index_present(
+                connection,
+                schema_name=schema_name,
+            )
 
     except Exception as error:
         return StorageHealthReport(
@@ -101,11 +109,17 @@ def check_storage_health(engine: Engine, expected_embedding_dimension: int) -> S
     )
 
 
-def validate_storage_health(engine: Engine, *, expected_embedding_dimension: int) -> None:
+def validate_storage_health(
+    engine: Engine,
+    *,
+    expected_embedding_dimension: int,
+    schema_name: str,
+) -> None:
     """Raise when storage health checks fail for the expected embedding contract."""
     report = check_storage_health(
         engine,
         expected_embedding_dimension=expected_embedding_dimension,
+        schema_name=schema_name,
     )
     if not report.is_healthy:
         raise RuntimeError(report.details)
@@ -254,7 +268,7 @@ def _check_embedding_dimension_contract(
     return True, None
 
 
-def _check_vector_index_present(connection: Connection) -> tuple[bool, str | None]:
+def _check_vector_index_present(connection: Connection, *, schema_name: str) -> tuple[bool, str | None]:
     try:
         vector_index_present = bool(
             connection.execute(
@@ -263,19 +277,25 @@ def _check_vector_index_present(connection: Connection) -> tuple[bool, str | Non
                     SELECT EXISTS (
                         SELECT 1
                         FROM pg_indexes
-                        WHERE schemaname = 'public'
+                        WHERE schemaname = :schema_name
                           AND tablename = 'travel_destinations'
                           AND indexname = 'ix_travel_destinations_embedding_hnsw'
                     )
                     """
-                )
+                ),
+                {"schema_name": schema_name},
             ).scalar_one()
         )
     except Exception as error:
         return False, f"vector_index_present=false (failed to query index metadata: {error})"
 
     if not vector_index_present:
-        return False, "vector_index_present=false (missing index `ix_travel_destinations_embedding_hnsw`)"
+        return (
+            False,
+            "vector_index_present=false "
+            "(missing index `ix_travel_destinations_embedding_hnsw` "
+            f"in schema={schema_name!r})",
+        )
 
     return True, None
 

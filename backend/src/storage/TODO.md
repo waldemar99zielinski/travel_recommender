@@ -1,0 +1,2 @@
+- test bootstrap
+- e2e dla konkretnych modeli, zeby sprawdzic co i jak sie ma i czy to wgl dziala
