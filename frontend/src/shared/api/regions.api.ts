@@ -1,5 +1,8 @@
-import type { RegionFeatureCollection } from "@/models/destination.models";
-import { apiConfig } from "@/shared/api/api.config";
+import {
+    type RegionFeatureCollection,
+    validateRegionFeatureCollectionDto,
+} from "@/models/region.model";
+import { apiConfig } from "@/shared/api/config.api";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "RegionsApi" });
@@ -22,7 +25,8 @@ export async function fetchRegions(): Promise<RegionFeatureCollection> {
         );
     }
 
-    const regions: RegionFeatureCollection = await response.json();
+    const rawData: unknown = await response.json();
+    const regions = validateRegionFeatureCollectionDto(rawData);
     logger.debug("Regions data loaded", {
         regionsCount: regions.features.length,
         durationMs: Date.now() - startedAt,

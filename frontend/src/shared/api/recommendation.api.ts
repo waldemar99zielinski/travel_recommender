@@ -1,8 +1,10 @@
-import type {
-    RecommendationRequestDto,
-    RecommendationResponseDto,
+import {
+    type RecommendationRequestDto,
+    type RecommendationResponseDto,
+    validateRecommendationRequestDto,
+    validateRecommendationResponseDto,
 } from "@/models/recommendation.models";
-import { apiConfig } from "@/shared/api/api.config";
+import { recommendationApiUrlBuilder } from "@/shared/api/urls.api";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "RecommendationApi" });
@@ -10,23 +12,25 @@ const logger = createLogger({ scope: "RecommendationApi" });
 export async function fetchRecommendations(
     payload: RecommendationRequestDto,
 ): Promise<RecommendationResponseDto> {
+    const requestPayload = validateRecommendationRequestDto(payload);
     const startedAt = Date.now();
+    const url = recommendationApiUrlBuilder.fetchRecommendations();
+
     logger.trace("Sending recommendation request", {
-        userId: payload.user_id,
-        sessionId: payload.session_id,
-        messageLength: payload.message.length,
+        url,
+        userId: requestPayload.user_id,
+        sessionId: requestPayload.session_id,
+        messageLength: requestPayload.message.length,
+        payload: requestPayload,
     });
 
-    const response = await fetch(
-        `${apiConfig.baseUrl}/api/v1/recommendations/chat`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
         },
-    );
+        body: JSON.stringify(requestPayload),
+    });
 
     if (!response.ok) {
         logger.error("Recommendation request failed", {
@@ -39,10 +43,14 @@ export async function fetchRecommendations(
         );
     }
 
-    const responseData: RecommendationResponseDto = await response.json();
+    const rawResponseData: unknown = await response.json();
+    const responseData = validateRecommendationResponseDto(rawResponseData);
+
     logger.debug("Recommendation request succeeded", {
+        status: response.status,
         durationMs: Date.now() - startedAt,
-        recommendationsCount: responseData.recommendations.length,
+        requestPayload,
+        responseData,
     });
 
     return responseData;
