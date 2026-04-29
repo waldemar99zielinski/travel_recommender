@@ -1,12 +1,14 @@
-from typing import Optional
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel
+from pydantic import Field
 
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
-from recommender.models.data_flow.recommendation_output import Recommendation
-from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
-from recommender.models.data_flow.recommendation_session_history import RecommendationSessionHistory
 from recommender.models.session.session import Session
+from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.stores.search_models import ScoredTravelDestination
+
 
 class RecommendationStatusEnum(str, Enum):
     """Status of the recommendation process, used for routing and response handling."""
@@ -37,17 +39,17 @@ class RecommendationGraphState(BaseModel):
         None,
         description="Extracted user logistical preferences"
     )
-    recommendation: Optional[list[Recommendation]] = Field(
+    recommendation: Optional[list[ScoredTravelDestination]] = Field(
         None,
         description="Ranked recommendations returned from vector search"
     )
-    response: Optional[RecommendationMessageOutput] = Field(
+    response: Optional[str] = Field(
         None,
-        description="Final response payload shared across graph branches"
+        description="Final response message shared across graph branches"
     )
-    history: Optional[RecommendationSessionHistory] = Field(
+    history: Optional[list[RecommendationSessionMemoryRecord]] = Field(
         None,
-        description="Full session history for context and debugging purposes"
+        description="Persisted session turns loaded from storage"
     )
 
     def __repr__(self) -> str:
@@ -78,18 +80,18 @@ class RecommendationGraphState(BaseModel):
         if self.recommendation:
             top_recommendation = self.recommendation[0]
             interest_score_repr = (
-                f"{top_recommendation.interest_score:.4f}"
-                if top_recommendation.interest_score is not None
+                f"{top_recommendation.semantic_score:.4f}"
+                if top_recommendation.semantic_score is not None
                 else "None"
             )
             logistical_score_repr = (
-                f"{top_recommendation.logistical_score:.4f}"
-                if top_recommendation.logistical_score is not None
+                f"{top_recommendation.logistics_score:.4f}"
+                if top_recommendation.logistics_score is not None
                 else "None"
             )
             lines.append(
                 "  top_recommendation="
-                f"{{region={top_recommendation.region!r}, interest_score={interest_score_repr}, "
+                f"{{region={top_recommendation.destination.region!r}, interest_score={interest_score_repr}, "
                 f"logistical_score={logistical_score_repr}, ranking_score={top_recommendation.ranking_score!r}}},"
             )
 
@@ -98,7 +100,7 @@ class RecommendationGraphState(BaseModel):
         else:
             lines.append(
                 "  response="
-                f"{{message={self.response.message!r}}}"
+                f"{self.response!r}"
             )
 
         lines.append(f"  history={self.history!r},")

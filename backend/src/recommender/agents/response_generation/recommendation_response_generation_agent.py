@@ -14,12 +14,11 @@ from recommender.agents.response_generation.recommendation_response_generation_p
     recommendation_response_generation_prompt_template,
 )
 from recommender.graphs.recommendation.models import RecommendationStatusEnum
-from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
-from recommender.models.data_flow.recommendation_output import Recommendation
 from recommender.models.data_flow.user_preferences import UserInterestPreferences
 from recommender.models.data_flow.user_preferences import UserLogisticalPreferences
 from recommender.models.llm.llm import create_llm_chat_model
 from recommender.models.llm.llm_config import LLMConfig
+from storage.stores.search_models import ScoredTravelDestination
 
 TOP_K_FOR_MESSAGE = 3
 
@@ -37,7 +36,7 @@ class RecommendationResponseGenerationInput(BaseModel):
     status: RecommendationStatusEnum
     interest_preferences: UserInterestPreferences | None = None
     logistical_preferences: UserLogisticalPreferences | None = None
-    recommendations: list[Recommendation] = Field(default_factory=list)
+    recommendations: list[ScoredTravelDestination] = Field(default_factory=list)
 
 
 class RecommendationResponseGenerationAgentBuilder(BaseAgentBuilder):
@@ -49,7 +48,7 @@ class RecommendationResponseGenerationAgentBuilder(BaseAgentBuilder):
     def build(self) -> "RecommendationResponseGenerationAgent":
         llm = self._llm or create_llm_chat_model(LLMConfig())
         prompt = self._prompt or recommendation_response_generation_prompt_template
-        output_type = self._output_type or RecommendationMessageOutput
+        output_type = self._output_type or RecommendationResponseGenerationResult
 
         return RecommendationResponseGenerationAgent(
             llm=llm,
@@ -114,11 +113,11 @@ class RecommendationResponseGenerationAgent(BaseAgent):
         return "; ".join(parts) if parts else "None"
 
     @staticmethod
-    def _summarize_recommendations(recommendations: list[Recommendation]) -> str:
+    def _summarize_recommendations(recommendations: list[ScoredTravelDestination]) -> str:
         if not recommendations:
             return "None"
 
-        names = [item.u_name for item in recommendations[:TOP_K_FOR_MESSAGE]]
+        names = [item.destination.id for item in recommendations[:TOP_K_FOR_MESSAGE]]
         return (
             f"top_k={len(names)}; "
             f"total_results={len(recommendations)}; "

@@ -14,6 +14,17 @@ from utils.logger import LoggerManager
 logger = LoggerManager.get_logger(__name__)
 
 
+def _latest_query_from_history(state: RecommendationGraphState) -> str | None:
+    if state.history is None:
+        return None
+
+    for row in reversed(state.history):
+        if row.query.strip():
+            return row.query
+
+    return None
+
+
 def create_preference_extraction_node(
     recommendation_query_synthesis_agent: RecommendationQuerySynthesisAgent,
     user_interest_preference_extraction_agent: UserInterestPreferenceExtractionAgent,
@@ -28,7 +39,7 @@ def create_preference_extraction_node(
                 f"Session history is not loaded in state for session_id={state.session.session_id} and user_id={state.session.user_id} when running preference extraction node"
             )
 
-        previous_synthesized_query = state.history.latest_query()
+        previous_synthesized_query = _latest_query_from_history(state)
 
         query_synthesis_input = RecommendationQuerySynthesisInput(
             current_user_request=state.user_input,

@@ -3,28 +3,27 @@ from __future__ import annotations
 from typing import Callable
 
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from recommender.store.vector.travel_destination_vector_store import (
-    TravelDestinationVectorStore,
-)
+from storage.stores.travel_destination_store import TravelDestinationStore
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
+
 def create_recommendation_generation_node(
-    travel_vector_store: TravelDestinationVectorStore,
-) -> Callable[[RecommendationGraphState], RecommendationGraphState]:
-    """Create recommendation node with an injected vector store dependency."""
+    travel_destination_store: TravelDestinationStore,
+) -> Callable[[RecommendationGraphState], dict[str, object]]:
+    """Create recommendation node with an injected travel destination store."""
 
     def recommendation_generation_node(
         state: RecommendationGraphState,
-    ) -> RecommendationGraphState:
+    ) -> dict[str, object]:
         logger.info("Getting best matches based on user query...")
 
-        user_input = state.user_input
+        query = state.query if state.query is not None else state.user_input
 
-        logger.verbose("Searching travel vector store with user input: %s", user_input)
+        logger.verbose("Searching travel store with query: %s", query)
 
-        results = travel_vector_store.search_all_ranked(user_input)
+        results = travel_destination_store.semantic_search(query)
         logger.info("Found %s ranked travel results.", len(results))
 
         return {

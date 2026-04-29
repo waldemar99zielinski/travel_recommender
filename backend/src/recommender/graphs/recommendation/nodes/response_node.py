@@ -8,7 +8,7 @@ from recommender.agents.response_generation.recommendation_response_generation_a
 )
 from recommender.graphs.recommendation.models import RecommendationGraphState
 from recommender.graphs.recommendation.models import RecommendationStatusEnum
-from recommender.models.data_flow.recommendation_message_output import RecommendationMessageOutput
+
 
 def create_response_node(
     response_generation_agent: RecommendationResponseGenerationAgent,
@@ -29,12 +29,8 @@ def create_response_node(
             generation_input,
         )
 
-        response_payload = RecommendationMessageOutput(
-            message=generation_result.message,
-        )
-
         return {
-            "response": response_payload,
+            "response": generation_result.message,
             "status": RecommendationStatusEnum.SUCCESS,
         }
 
