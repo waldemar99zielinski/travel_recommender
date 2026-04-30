@@ -23,18 +23,18 @@ export function HealthContextProvider({
 
     useEffect(() => {
         const runInitialHealthCheck = async () => {
-            logger.trace("Triggering initial health check...")
+            logger.trace("Triggering initial health check...");
 
-            await contextValue.fetch();
+            await contextValue.fetchHealth();
 
             logger.trace("Initial health check completed", {
-                status: contextValue.status,
-                error: contextValue.error,
+                status: contextValue.healthStatus,
+                error: contextValue.healthError,
                 isOperational: contextValue.isOperational,
             });
         };
 
-        runInitialHealthCheck();
+        void runInitialHealthCheck();
     }, []);
 
     return (

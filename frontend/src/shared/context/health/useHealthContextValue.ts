@@ -1,27 +1,27 @@
 import { useCallback } from "react";
 
 import type { HealthResponseDto } from "@/models/health.models";
-import { fetchHealth } from "@/shared/api/health.api";
+import { fetchHealth as fetchHealthRequest } from "@/shared/api/health.api";
 import type { HealthContextValue } from "@/shared/context/health/healthContext";
 import { useApiRequest } from "@/shared/hooks/useApiRequest";
 
 export function useHealthContextValue(): HealthContextValue {
     const request = useCallback(async () => {
-        return fetchHealth();
+        return fetchHealthRequest();
     }, []);
-    const [data, status, error, fetch] = useApiRequest<
+    const [healthData, healthStatus, healthError, fetchHealth] = useApiRequest<
         HealthResponseDto
     >(request, {
         requestName: "health",
     });
 
-    const isOperational = data?.status === "ok";
+    const isOperational = healthData?.status === "ok";
 
     return {
-        data,
-        status,
-        error,
-        fetch,
+        healthData,
+        healthStatus,
+        healthError,
+        fetchHealth,
         isOperational,
-    }
+    };
 }

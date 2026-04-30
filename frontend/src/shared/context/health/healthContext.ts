@@ -4,10 +4,10 @@ import type { HealthResponseDto } from "@/models/health.models";
 import type { FetchStatus } from "@/shared/hooks/apiHookTypes";
 
 export interface HealthContextValue {
-    data: HealthResponseDto | null;
-    status: FetchStatus;
-    error: string | null;
-    fetch: () => Promise<HealthResponseDto | null>;
+    healthData: HealthResponseDto | null;
+    healthStatus: FetchStatus;
+    healthError: string | null;
+    fetchHealth: () => Promise<HealthResponseDto | null>;
     isOperational: boolean;
 }
 
