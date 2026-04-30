@@ -81,7 +81,10 @@ export function AppRouter() {
     ]);
 
     if (!hasCompletedInitialLoad) {
-        if (healthError != null || !isOperational) {
+        if (
+            healthStatus !== "idle" && healthStatus !== "loading" &&
+            (healthError != null || !isOperational)
+        ) {
             return <ErrorPage message={t("error.appNotOperational")} />;
         }
 
