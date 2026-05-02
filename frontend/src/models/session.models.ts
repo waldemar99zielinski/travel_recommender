@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export interface SessionRefDto {
+export interface SessionDto {
     user_id: string;
     session_id: string;
 }
@@ -10,21 +10,21 @@ export interface SessionCreateRequestDto {
 }
 
 export interface SessionCreateResponseDto {
-    session: SessionRefDto;
+    session: SessionDto;
 }
 
 export interface SessionStateResponseDto {
-    session: SessionRefDto;
+    session: SessionDto;
 }
 
 export interface SessionDeleteResponseDto {
-    session: SessionRefDto;
+    session: SessionDto;
 }
 
 export const sessionRefDtoSchema = z.object({
     user_id: z.string().trim().min(1),
     session_id: z.string().trim().min(1),
-}) satisfies z.ZodType<SessionRefDto>;
+}) satisfies z.ZodType<SessionDto>;
 
 export const sessionCreateRequestDtoSchema = z.object({
     user_id: z.string().optional(),
@@ -42,7 +42,7 @@ export const sessionDeleteResponseDtoSchema = z.object({
     session: sessionRefDtoSchema,
 }) satisfies z.ZodType<SessionDeleteResponseDto>;
 
-export function validateSessionRefDto(payload: unknown): SessionRefDto {
+export function validateSessionRefDto(payload: unknown): SessionDto {
     return sessionRefDtoSchema.parse(payload);
 }
 
