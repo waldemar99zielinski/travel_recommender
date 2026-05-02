@@ -2,7 +2,7 @@ import {
     type SessionCreateRequestDto,
     type SessionCreateResponseDto,
     type SessionDeleteResponseDto,
-    type SessionRefDto,
+    type SessionDto,
     type SessionStateResponseDto,
     validateSessionCreateRequestDto,
     validateSessionCreateResponseDto,
@@ -60,7 +60,7 @@ export async function createSession(
 }
 
 export async function getSession(
-    session: SessionRefDto,
+    session: SessionDto,
 ): Promise<SessionStateResponseDto> {
     const validSession = validateSessionRefDto(session);
     const startedAt = Date.now();
@@ -100,7 +100,7 @@ export async function getSession(
 }
 
 export async function removeSession(
-    session: SessionRefDto,
+    session: SessionDto,
 ): Promise<SessionDeleteResponseDto> {
     const validSession = validateSessionRefDto(session);
     const startedAt = Date.now();
