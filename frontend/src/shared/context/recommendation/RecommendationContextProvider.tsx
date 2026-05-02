@@ -1,24 +1,17 @@
 import type { ReactNode } from "react";
 
-import {
-    RecommendationContext,
-    type RecommendationContextValue,
-} from "@/shared/context/recommendation/recommendationContext";
+import { RecommendationContext } from "@/shared/context/recommendation/recommendationContext";
 import { useRecommendationContextValue } from "@/shared/context/recommendation/useRecommendationContextValue";
 
 type RecommendationContextProviderProps = {
     children: ReactNode;
-    value?: RecommendationContextValue;
 };
 
-export function RecommendationContextProvider({
-    children,
-    value,
-}: RecommendationContextProviderProps) {
-    const internalValue = useRecommendationContextValue();
+export function RecommendationContextProvider({ children }: RecommendationContextProviderProps) {
+    const contextValue = useRecommendationContextValue();
 
     return (
-        <RecommendationContext.Provider value={value ?? internalValue}>
+        <RecommendationContext.Provider value={contextValue}>
             {children}
         </RecommendationContext.Provider>
     );

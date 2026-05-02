@@ -28,7 +28,7 @@ export function useRecommendationContextValue(): RecommendationContextValue {
     const respondRecommendation = useCallback(
         (response: RecommendationResponseDto) => {
             logger.debug("Recommendation response stored", {
-                recommendationsCount: response.recommendations.length,
+                response,
             });
             setRecommendationResponse(response);
         },

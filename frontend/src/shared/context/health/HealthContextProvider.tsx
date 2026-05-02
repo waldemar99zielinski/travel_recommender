@@ -1,9 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
-import {
-    HealthContext,
-    type HealthContextValue,
-} from "@/shared/context/health/healthContext";
+import { HealthContext } from "@/shared/context/health/healthContext";
 import { useHealthContextValue } from "@/shared/context/health/useHealthContextValue";
 import { createLogger } from "@/shared/lib";
 
@@ -11,15 +8,10 @@ const logger = createLogger({ scope: "HealthContextProvider" });
 
 type HealthContextProviderProps = {
     children: ReactNode;
-    value?: HealthContextValue;
 };
 
-export function HealthContextProvider({
-    children,
-    value,
-}: HealthContextProviderProps) {
-    const internalValue = useHealthContextValue();
-    const contextValue = value ?? internalValue;
+export function HealthContextProvider({ children }: HealthContextProviderProps) {
+    const contextValue = useHealthContextValue();
 
     useEffect(() => {
         const runInitialHealthCheck = async () => {
