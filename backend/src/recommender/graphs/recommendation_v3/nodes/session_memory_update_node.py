@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from typing import Callable
 from uuid import UUID
 
@@ -7,6 +8,9 @@ from recommender.graphs.recommendation_v3.models import RecommendationV3GraphSta
 from storage.identifiers import normalize_identifier_to_uuid
 from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
 from storage.stores.recommendation_session_store import RecommendationSessionStore
+from utils.logger import LoggerManager
+
+logger: Any = LoggerManager.get_logger(__name__)
 
 
 def _coerce_uuid(value: str, *, field_name: str) -> UUID:
@@ -43,6 +47,14 @@ def create_session_memory_update_node(
             query=state.synthesized_query or state.user_input,
         )
         recommendation_session_store.upsert_many([persisted_row])
+
+        logger.verbose(
+            "session_memory_update_node: persisted turn %d, response_length=%d, query=%r",
+            len(previous_history),
+            len(state.response or ""),
+            persisted_row.query,
+        )
+
         return {"history": [*previous_history, persisted_row]}
 
     return session_memory_update_node

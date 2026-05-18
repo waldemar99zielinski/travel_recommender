@@ -22,9 +22,19 @@ def create_recommendation_generation_node(
             logger.warning("No query available for recommendation generation")
             return {"recommendation": []}
 
+        logger.verbose(
+            "recommendation_generation_node: generating recommendations for query=%r",
+            query,
+        )
+
         recommendations = recommendation_v3_generation_agent.invoke(query)
+
+        logger.verbose(
+            "recommendation_generation_node: produced %d results",
+            len(recommendations),
+        )
         logger.info(
-            "Recommendation generation produced %d results",
+            "Recommendation generation node produced %d results",
             len(recommendations),
         )
         return {"recommendation": recommendations}

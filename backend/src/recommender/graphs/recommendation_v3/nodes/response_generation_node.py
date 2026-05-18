@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from typing import Callable
 
 from recommender.agents.response_generation.recommendation_v3_response_generation_agent import (
@@ -11,6 +12,9 @@ from recommender.agents.response_generation.recommendation_v3_response_generatio
 from recommender.graphs.recommendation_v3.models import RecommendationV3GraphState
 from recommender.graphs.recommendation_v3.errors import RecommendationV3MissingQueryError
 from recommender.graphs.recommendation_v3.models import QuerySynthesisRoutingOutcome
+from utils.logger import LoggerManager
+
+logger: Any = LoggerManager.get_logger(__name__)
 
 DEFAULT_TOP_K = 3
 
@@ -28,6 +32,13 @@ def create_response_generation_node(
         scored_recommendations = state.recommendation or []
         top_k_destinations = [r.destination for r in scored_recommendations[:top_k]]
 
+        logger.verbose(
+            "response_generation_node: outcome=%s, recommendations=%d, synthesized_query=%r",
+            state.routing_outcome,
+            len(top_k_destinations),
+            state.synthesized_query,
+        )
+
         agent_input = RecommendationV3ResponseGenerationInput(
             user_input=state.user_input,
             outcome=state.routing_outcome,
@@ -37,6 +48,11 @@ def create_response_generation_node(
         )
 
         result = response_generation_agent.invoke(agent_input)
+
+        logger.verbose(
+            "response_generation_node: response_length=%d",
+            len(result.message) if result.message else 0,
+        )
 
         return {
             "response": result.message,

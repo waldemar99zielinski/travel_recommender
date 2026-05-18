@@ -41,10 +41,12 @@ logger: Any = LoggerManager.get_logger(__name__)
 
 def _outcome_router(state: RecommendationV3GraphState) -> str:
     outcome = state.routing_outcome
+    logger.verbose("_outcome_router: routing outcome=%s", outcome)
     if outcome == QuerySynthesisRoutingOutcome.RUN_NEW_RECOMMENDATION:
         return QuerySynthesisRoutingOutcome.RUN_NEW_RECOMMENDATION.value
     if outcome == QuerySynthesisRoutingOutcome.OUTSIDE_OF_RECOMMENDER_SCOPE:
         return QuerySynthesisRoutingOutcome.OUTSIDE_OF_RECOMMENDER_SCOPE.value
+    logger.verbose("_outcome_router: defaulting to not_enough_information_provided")
     return QuerySynthesisRoutingOutcome.NOT_ENOUGH_INFORMATION_PROVIDED.value
 
 
