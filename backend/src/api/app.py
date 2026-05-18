@@ -13,6 +13,8 @@ from api.core.handlers import register_exception_handlers
 from api.lifecycle import create_lifespan
 from api.routers import health
 from api.routers import recommendations
+from api.routers import recommendations_v2
+from api.routers import recommendations_v3
 from api.routers import sessions
 
 
@@ -22,6 +24,8 @@ def create_app(
     embedding_model: EmbeddingHealthDependencyProtocol,
     storage: StorageHealthDependencyProtocol,
     recommendation_service: RecommendationServiceProtocol,
+    recommendation_v2_service: RecommendationServiceProtocol | None = None,
+    recommendation_v3_service: RecommendationServiceProtocol | None = None,
     session_service: SessionServiceProtocol,
 ) -> FastAPI:
     app = FastAPI(lifespan=create_lifespan())
@@ -35,11 +39,15 @@ def create_app(
     app.state.embedding_model = embedding_model
     app.state.storage = storage
     app.state.recommendation_service = recommendation_service
+    app.state.recommendation_v2_service = recommendation_v2_service or recommendation_service
+    app.state.recommendation_v3_service = recommendation_v3_service or recommendation_service
     app.state.session_service = session_service
     app.state.is_ready = False
 
     app.include_router(health.router)
     app.include_router(recommendations.router)
+    app.include_router(recommendations_v2.router)
+    app.include_router(recommendations_v3.router)
     app.include_router(sessions.router)
 
     register_exception_handlers(app)

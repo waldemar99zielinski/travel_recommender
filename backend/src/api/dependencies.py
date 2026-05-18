@@ -24,6 +24,20 @@ def get_recommendation_service(request: Request) -> RecommendationServiceProtoco
     return service
 
 
+def get_recommendation_v2_service(request: Request) -> RecommendationServiceProtocol:
+    service = getattr(request.app.state, "recommendation_v2_service", None)
+    if service is None:
+        raise DependencyNotConfiguredError(dependency_name="recommendation_v2_service")
+    return service
+
+
+def get_recommendation_v3_service(request: Request) -> RecommendationServiceProtocol:
+    service = getattr(request.app.state, "recommendation_v3_service", None)
+    if service is None:
+        raise DependencyNotConfiguredError(dependency_name="recommendation_v3_service")
+    return service
+
+
 def get_session_service(request: Request) -> SessionServiceProtocol:
     service = getattr(request.app.state, "session_service", None)
     if service is None:

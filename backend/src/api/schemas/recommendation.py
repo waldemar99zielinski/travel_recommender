@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 from pydantic import Field
 
+from api.schemas.chat_message import ChatMessageDto
+
 if TYPE_CHECKING:
     from storage.stores.search_models import ScoredTravelDestination
 
@@ -35,5 +37,5 @@ class RecommendationItemDto(BaseModel):
 
 
 class RecommendationResponseDto(BaseModel):
-    message: str = Field(...)
-    recommendations: list[RecommendationItemDto] = Field(...)
+    messages: list[ChatMessageDto] = Field(default_factory=list)
+    recommendations: list[RecommendationItemDto] = Field(default_factory=list)

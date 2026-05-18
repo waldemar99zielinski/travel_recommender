@@ -6,25 +6,27 @@ from api.schemas.chat_message import create_text_chat_message
 from api.schemas.recommendation import RecommendationItemDto
 from api.schemas.recommendation import RecommendationRequestDto
 from api.schemas.recommendation import RecommendationResponseDto
-from recommender.graphs.recommendation.models import RecommendationGraphState
+from recommender.graphs.recommendation_v3.models import RecommendationV3GraphState
 from recommender.models.session.session import Session
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
 
-class RecommendationService:
+class RecommendationV3Service:
+    """Service wrapper for the recommendation_v3 graph."""
+
     def __init__(
         self,
         *,
         recommendation_graph: Any,
     ) -> None:
         self._recommendation_graph = recommendation_graph
-        logger.info("Real recommendation service initialized")
+        logger.info("Recommendation v3 service initialized")
 
     def chat(self, request: RecommendationRequestDto) -> RecommendationResponseDto:
         logger.info(
-            "Graph chat called: user_id=%s, session_id=%s",
+            "Recommendation v3 graph chat called: user_id=%s, session_id=%s",
             request.user_id,
             request.session_id,
         )
@@ -37,7 +39,7 @@ class RecommendationService:
             },
         )
 
-        graph_state = RecommendationGraphState.model_validate(graph_result)
+        graph_state = RecommendationV3GraphState.model_validate(graph_result)
         recommendations = [
             RecommendationItemDto.from_recommendation(item)
             for item in (graph_state.recommendation or [])
@@ -51,9 +53,8 @@ class RecommendationService:
             recommendations=recommendations,
         )
         logger.info(
-            "Graph chat completed: user_id=%s, session_id=%s, status=%s",
+            "Recommendation v3 graph chat completed: user_id=%s, session_id=%s",
             request.user_id,
             request.session_id,
-            graph_state.status.value,
         )
         return response
