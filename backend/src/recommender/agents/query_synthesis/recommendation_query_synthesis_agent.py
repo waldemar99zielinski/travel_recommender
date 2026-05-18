@@ -13,6 +13,9 @@ from recommender.agents.query_synthesis.recommendation_query_synthesis_prompt im
 )
 from recommender.models.llm.llm import create_llm_chat_model
 from recommender.models.llm.llm_config import LLMConfig
+from utils.logger import LoggerManager
+
+logger = LoggerManager.get_logger(__name__)
 
 
 class RecommendationQuerySynthesisInput(BaseModel):
@@ -58,6 +61,22 @@ class RecommendationQuerySynthesisAgentBuilder(BaseAgentBuilder):
 class RecommendationQuerySynthesisAgent(BaseAgent):
     """Agent that synthesizes cumulative recommendation query from chat turns."""
 
+    @staticmethod
+    def _fallback_synthesized_query(inputs: RecommendationQuerySynthesisInput) -> str:
+        previous_synthesized_query = (inputs.previous_synthesized_query or "").strip()
+        current_user_request = inputs.current_user_request.strip()
+
+        if previous_synthesized_query and current_user_request:
+            return f"{previous_synthesized_query} {current_user_request}"
+        if current_user_request:
+            return current_user_request
+        if previous_synthesized_query:
+            return previous_synthesized_query
+
+        raise ValueError(
+            "RecommendationQuerySynthesisAgent cannot build a synthesized query from empty inputs"
+        )
+
     def invoke(
         self,
         inputs: RecommendationQuerySynthesisInput,
@@ -70,7 +89,10 @@ class RecommendationQuerySynthesisAgent(BaseAgent):
 
         synthesized_query = result.synthesized_query.strip()
         if not synthesized_query:
-            raise ValueError("RecommendationQuerySynthesisAgent returned an empty synthesized_query")
+            synthesized_query = self._fallback_synthesized_query(inputs)
+            logger.warning(
+                "RecommendationQuerySynthesisAgent returned an empty synthesized_query; using fallback query"
+            )
         return RecommendationQuerySynthesisResult(synthesized_query=synthesized_query)
 
     @classmethod

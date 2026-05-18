@@ -23,6 +23,8 @@ recommendation_query_synthesis_prompt_template = ChatPromptTemplate.from_message
             - Do not include explanations.
             - Keep wording compact and retrieval-friendly.
             - Keep the style and phrasing consistent with previous queries and user inputs.
+            - Never return an empty synthesized query. If the best synthesis is unclear, reuse the
+              current_user_request verbatim or merge it with previous_synthesized_query.
             """,
         ),
         (
