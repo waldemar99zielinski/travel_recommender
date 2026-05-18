@@ -106,6 +106,31 @@ class TestTravelDestinationStoreE2E(unittest.TestCase):
         self.assertEqual(semantic_ids, vector_ids)
         self.assertEqual(semantic_ids[0], "CITY_CULT")
 
+    def test_exact_text_search_matches_region_name(self) -> None:
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.exact_text_search("Culture Capital", limit=3)
+
+        self.assertGreaterEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "CITY_CULT")
+
+    def test_exact_text_search_matches_description_terms(self) -> None:
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.exact_text_search("exclusive sea views", limit=3)
+
+        self.assertGreaterEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "LUX_BEACH")
+
+    def test_semantic_search_can_filter_destination_ids(self) -> None:
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.semantic_search(
+                "museum culture architecture",
+                limit=3,
+                destination_ids=["CITY_CULT"],
+            )
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "CITY_CULT")
+
     def test_semantic_search_rejects_blank_query(self) -> None:
         with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
             with self.assertRaises(ValueError):

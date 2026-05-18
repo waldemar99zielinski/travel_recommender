@@ -66,6 +66,7 @@ class TravelDestinationStore:
         self,
         query: str,
         limit: int | None = None,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]:
         """Run nearest-neighbor semantic search over embedding vectors."""
         query_embedding = self._embed_query(query)
@@ -74,7 +75,11 @@ class TravelDestinationStore:
                 session,
                 embedding_dimension=self.embedding_dimension,
             )
-            return repository.semantic_search(query_embedding=query_embedding, limit=limit)
+            return repository.semantic_search(
+                query_embedding=query_embedding,
+                limit=limit,
+                destination_ids=destination_ids,
+            )
 
     def hybrid_search(
         self,
@@ -84,6 +89,7 @@ class TravelDestinationStore:
         limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]:
         """Run blended semantic + logistics search."""
         query_embedding = self._embed_query(query)
@@ -98,7 +104,25 @@ class TravelDestinationStore:
                 limit=limit,
                 semantic_weight=semantic_weight,
                 logistics_weight=logistics_weight,
+                destination_ids=destination_ids,
             )
+
+    def exact_text_search(
+        self,
+        query: str,
+        limit: int | None = None,
+    ) -> list[ScoredTravelDestination]:
+        """Run exact and full-text search over region and description fields."""
+        normalized_query = query.strip()
+        if not normalized_query:
+            raise ValueError("query must not be empty")
+
+        with self.unit_of_work.read() as session:
+            repository = TravelDestinationRepository(
+                session,
+                embedding_dimension=self.embedding_dimension,
+            )
+            return repository.exact_text_search(normalized_query, limit=limit)
 
     def vector_search(
         self,

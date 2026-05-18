@@ -9,6 +9,7 @@ from recommender.agents.response_generation.recommendation_v3_response_generatio
     RecommendationV3ResponseGenerationInput,
 )
 from recommender.graphs.recommendation_v3.models import RecommendationV3GraphState
+from recommender.graphs.recommendation_v3.errors import RecommendationV3MissingQueryError
 from recommender.graphs.recommendation_v3.models import QuerySynthesisRoutingOutcome
 
 DEFAULT_TOP_K = 3
@@ -21,6 +22,9 @@ def create_response_generation_node(
     """Create node that generates the final conversational response using the LLM agent."""
 
     def response_generation_node(state: RecommendationV3GraphState) -> dict[str, object]:
+        if not state.synthesized_query and state.routing_outcome == QuerySynthesisRoutingOutcome.RUN_NEW_RECOMMENDATION:
+            raise RecommendationV3MissingQueryError()
+
         scored_recommendations = state.recommendation or []
         top_k_destinations = [r.destination for r in scored_recommendations[:top_k]]
 

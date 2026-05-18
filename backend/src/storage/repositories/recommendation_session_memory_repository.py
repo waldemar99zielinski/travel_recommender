@@ -9,6 +9,7 @@ from sqlmodel import col
 from sqlmodel import delete
 from sqlmodel import select
 
+from storage.identifiers import normalize_identifier_to_uuid
 from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
 
 
@@ -73,7 +74,4 @@ class RecommendationSessionMemoryRepository:
 
 
 def _coerce_uuid(value: UUID | str, *, field_name: str) -> UUID:
-    try:
-        return value if isinstance(value, UUID) else UUID(value)
-    except ValueError as error:
-        raise ValueError(f"{field_name} must be a valid UUID") from error
+    return normalize_identifier_to_uuid(value, field_name=field_name)

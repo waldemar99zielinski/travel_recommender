@@ -3,9 +3,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
+from sqlalchemy import and_
 from sqlalchemy import case
 from sqlalchemy import literal
 from sqlalchemy import Float
+from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import func
 from sqlmodel import Session
@@ -92,10 +94,15 @@ class TravelDestinationRepository:
         self,
         query_embedding: Sequence[float],
         limit: int | None = None,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]:
         """Return nearest travel destinations with semantic-only ranking."""
         self._validate_embedding_dimension(query_embedding)
         self._validate_limit(limit)
+
+        normalized_destination_ids = self._normalize_destination_ids(destination_ids)
+        if destination_ids is not None and not normalized_destination_ids:
+            return []
 
         distance_expression = col(TravelDestinationRecord.embedding).op("<->")(list(query_embedding)).cast(Float)
         semantic_score_expression = literal(1.0) / (literal(1.0) + distance_expression)
@@ -104,8 +111,9 @@ class TravelDestinationRepository:
             select(TravelDestinationRecord)
             .add_columns(distance_expression.label("embedding_distance"))
             .add_columns(semantic_score_expression.label("semantic_score"))
-            .order_by(distance_expression)
         )
+        statement = self._apply_destination_id_filter(statement, normalized_destination_ids)
+        statement = statement.order_by(distance_expression)
         if limit is not None:
             statement = statement.limit(limit)
 
@@ -129,12 +137,17 @@ class TravelDestinationRepository:
         limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]:
         """Return destinations ranked by semantic and logistics blending."""
         self._validate_embedding_dimension(query_embedding)
         self._validate_limit(limit)
         self._validate_weight(semantic_weight, "semantic_weight")
         self._validate_weight(logistics_weight, "logistics_weight")
+
+        normalized_destination_ids = self._normalize_destination_ids(destination_ids)
+        if destination_ids is not None and not normalized_destination_ids:
+            return []
 
         distance_expression = col(TravelDestinationRecord.embedding).op("<->")(list(query_embedding)).cast(Float)
         semantic_score_expression = literal(1.0) / (literal(1.0) + distance_expression)
@@ -151,8 +164,9 @@ class TravelDestinationRepository:
             .add_columns(semantic_score_expression.label("semantic_score"))
             .add_columns(logistics_score_expression.label("logistics_score"))
             .add_columns(ranking_score_expression.label("ranking_score"))
-            .order_by(ranking_score_expression.desc(), distance_expression)
         )
+        statement = self._apply_destination_id_filter(statement, normalized_destination_ids)
+        statement = statement.order_by(ranking_score_expression.desc(), distance_expression)
         if limit is not None:
             statement = statement.limit(limit)
 
@@ -166,6 +180,83 @@ class TravelDestinationRepository:
                 ranking_score=float(row[4]),
             )
             for row in rows
+        ]
+
+    def exact_text_search(
+        self,
+        query: str,
+        limit: int | None = None,
+    ) -> list[ScoredTravelDestination]:
+        """Return destinations ranked by exact field and full-text matches."""
+        normalized_query = self._normalize_search_term(query)
+        if not normalized_query:
+            raise ValueError("query must not be empty")
+
+        self._validate_limit(limit)
+
+        region_expression = self._normalize_text_expression(col(TravelDestinationRecord.region))
+        parent_region_expression = self._normalize_text_expression(col(TravelDestinationRecord.parent_region))
+        description_expression = self._normalize_text_expression(col(TravelDestinationRecord.description))
+        query_literal = literal(normalized_query)
+        contains_pattern = f"%{normalized_query}%"
+        search_document = self._build_search_document_expression()
+        ts_query = func.websearch_to_tsquery("simple", normalized_query)
+        fts_rank_expression = func.ts_rank_cd(search_document, ts_query).cast(Float)
+
+        exact_region_score = case(
+            (region_expression == query_literal, literal(1.0)),
+            else_=literal(0.0),
+        )
+        exact_parent_region_score = case(
+            (parent_region_expression == query_literal, literal(0.95)),
+            else_=literal(0.0),
+        )
+        partial_region_score = case(
+            (region_expression.like(contains_pattern), literal(0.9)),
+            else_=literal(0.0),
+        )
+        partial_parent_region_score = case(
+            (parent_region_expression.like(contains_pattern), literal(0.85)),
+            else_=literal(0.0),
+        )
+        description_phrase_score = case(
+            (description_expression.like(contains_pattern), literal(0.8)),
+            else_=literal(0.0),
+        )
+        text_match_score_expression = func.greatest(
+            exact_region_score,
+            exact_parent_region_score,
+            partial_region_score,
+            partial_parent_region_score,
+            description_phrase_score,
+            func.least(literal(0.75), fts_rank_expression),
+        ).cast(Float)
+
+        statement = (
+            select(TravelDestinationRecord)
+            .add_columns(text_match_score_expression.label("text_match_score"))
+            .where(
+                or_(
+                    text_match_score_expression > literal(0.0),
+                    search_document.op("@@")(ts_query),
+                )
+            )
+            .order_by(text_match_score_expression.desc(), col(TravelDestinationRecord.popularity).desc())
+        )
+        if limit is not None:
+            statement = statement.limit(limit)
+
+        rows = self.session.execute(statement).all()
+        return [
+            ScoredTravelDestination(
+                destination=row[0],
+                embedding_distance=0.0,
+                semantic_score=float(row[1]),
+                logistics_score=1.0,
+                ranking_score=float(row[1]),
+            )
+            for row in rows
+            if float(row[1]) > 0.0
         ]
 
     def _build_logistics_score_expression(self, constraints: TravelSearchConstraints) -> Any:
@@ -230,3 +321,38 @@ class TravelDestinationRepository:
     def _validate_weight(self, weight: float, field_name: str) -> None:
         if weight < 0.0:
             raise ValueError(f"{field_name} must be greater than or equal to zero")
+
+    def _apply_destination_id_filter(self, statement: Any, destination_ids: Sequence[str] | None) -> Any:
+        if not destination_ids:
+            return statement
+        return statement.where(col(TravelDestinationRecord.id).in_(list(destination_ids)))
+
+    def _normalize_destination_ids(self, destination_ids: Sequence[str] | None) -> list[str]:
+        if destination_ids is None:
+            return []
+
+        normalized_destination_ids: list[str] = []
+        for destination_id in destination_ids:
+            normalized_destination_id = destination_id.strip()
+            if normalized_destination_id and normalized_destination_id not in normalized_destination_ids:
+                normalized_destination_ids.append(normalized_destination_id)
+        return normalized_destination_ids
+
+    def _build_search_document_expression(self) -> Any:
+        return func.to_tsvector(
+            "simple",
+            func.concat_ws(
+                " ",
+                col(TravelDestinationRecord.region),
+                col(TravelDestinationRecord.parent_region),
+                col(TravelDestinationRecord.description),
+            ),
+        )
+
+    def _normalize_text_expression(self, expression: Any) -> Any:
+        return func.trim(func.regexp_replace(func.lower(expression), r"[^a-z0-9]+", " ", "g"))
+
+    def _normalize_search_term(self, value: str) -> str:
+        normalized = " ".join(value.lower().strip().split())
+        normalized = "".join(character if character.isalnum() or character.isspace() else " " for character in normalized)
+        return " ".join(normalized.split())

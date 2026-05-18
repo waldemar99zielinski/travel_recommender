@@ -80,20 +80,6 @@ recommendation_v3_response_generation_prompt_template = ChatPromptTemplate.from_
 
             ===
 
-            OUTCOME: not_enough_information_provided
-
-            The user did not provide enough information to run a meaningful recommendation, or they asked a general travel question.
-
-            Rules:
-            - Use the reason and synthesized_query to understand what information is missing.
-            - If the user asked a general travel question (e.g., "What's the best time to visit Japan?"), answer concisely based on the synthesized_query.
-            - If more preferences are needed, ask for specific missing details (budget, preferred activities, time of year) in a conversational way.
-            - Reference the user's input and synthesized query to make it feel like a continuous chat.
-            - Keep it 2-4 sentences.
-            - Do not fabricate destination-specific facts that are not grounded in the provided context.
-
-            ===
-
             General rules for all outcomes:
             - Stay in character as a helpful travel assistant.
             - Maintain natural conversation flow - this is a chat, not a report.

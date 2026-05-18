@@ -26,6 +26,7 @@ class TravelDestinationStoreProtocol(Protocol):
         self,
         query: str,
         limit: int | None = None,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
     def vector_search(
@@ -42,6 +43,13 @@ class TravelDestinationStoreProtocol(Protocol):
         limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
+        destination_ids: Sequence[str] | None = None,
+    ) -> list[ScoredTravelDestination]: ...
+
+    def exact_text_search(
+        self,
+        query: str,
+        limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
 

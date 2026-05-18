@@ -72,6 +72,12 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
                 user_request="Suggest a beach vacation",
                 system_response="Try Island Escape",
                 query="beach holiday",
+                recommendations=[
+                    {
+                        "code": "destination-1",
+                        "score": 0.91,
+                    },
+                ],
                 interest_preference={"beach": 1.0},
                 logistical_preference={"max_cost_per_week": 900},
             )
@@ -82,6 +88,12 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
                 user_request="I like hiking",
                 system_response="Consider Alpine Peaks",
                 query="mountain hiking",
+                recommendations=[
+                    {
+                        "code": "destination-2",
+                        "score": 0.88,
+                    },
+                ],
                 interest_preference={"hiking": 1.0},
                 logistical_preference={"months": ["jul", "aug"]},
             )
@@ -90,6 +102,7 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
 
             loaded_messages = storage.recommendation_sessions.load_session(user_id, session_id)
             self.assertEqual([row.chat_history_number for row in loaded_messages], [1, 2])
+            self.assertEqual(loaded_messages[0].recommendations[0]["code"], "destination-2")
 
             updated_message = RecommendationSessionMemoryRecord(
                 user_id=user_id,
@@ -98,6 +111,12 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
                 user_request="Suggest a beach vacation",
                 system_response="Try Luxury Coast",
                 query="luxury beach holiday",
+                recommendations=[
+                    {
+                        "code": "destination-3",
+                        "score": 0.95,
+                    },
+                ],
                 interest_preference={"beach": 1.0, "luxury": 1.0},
                 logistical_preference={"max_cost_per_week": 1500},
             )
@@ -105,6 +124,7 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
 
             reloaded_messages = storage.recommendation_sessions.load_session(user_id, session_id)
             self.assertEqual(reloaded_messages[1].system_response, "Try Luxury Coast")
+            self.assertEqual(reloaded_messages[1].recommendations[0]["code"], "destination-3")
 
             other_session_message = RecommendationSessionMemoryRecord(
                 user_id=user_id,
@@ -113,6 +133,7 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
                 user_request="City break",
                 system_response="Try Culture Capital",
                 query="city museum",
+                recommendations=[],
             )
             storage.recommendation_sessions.upsert_many([other_session_message])
 

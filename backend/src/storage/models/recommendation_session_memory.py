@@ -41,7 +41,15 @@ class RecommendationSessionMemoryRecord(SQLModel, table=True):
 
     user_request: str = Field(default="")
     system_response: str = Field(default="")
+    system_messages: list[dict[str, Any]] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+    )
     query: str = Field(default="")
+    recommendations: list[dict[str, Any]] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+    )
     interest_preference: dict[str, Any] = Field(
         default_factory=dict,
         sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
