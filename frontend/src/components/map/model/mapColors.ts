@@ -54,14 +54,10 @@ function interpolateHexColor(startColor: string, endColor: string, amount: numbe
 
 export function formatRecommendationScore(score: number): string {
     if (!Number.isFinite(score)) {
-        return "0.00";
+        return "0.000";
     }
 
-    if (score >= 0 && score <= 1) {
-        return score.toFixed(2);
-    }
-
-    return (score / 100).toFixed(2);
+    return (score * 100).toFixed(3);
 }
 
 export function normalizedScoreToColor(score: number): string {

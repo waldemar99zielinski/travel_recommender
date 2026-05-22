@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import {
     Accordion,
     AccordionDetails,
@@ -17,22 +15,16 @@ import { useRecommendationFeatureContext } from "@/features/recommendation/useRe
 
 type RecommendationResultsMessageProps = {
     recommendations: RecommendationItemDto[];
-    limit: number;
 };
 
 export function RecommendationResultsMessage({
     recommendations,
-    limit,
 }: RecommendationResultsMessageProps) {
     const { t } = useTranslation();
     const { selectedRegionId, setSelectedRegionId, setFocusedRegionId } =
         useRecommendationFeatureContext();
-    const visibleRecommendations = useMemo(
-        () => recommendations.slice(0, Math.max(0, limit)),
-        [limit, recommendations],
-    );
 
-    if (visibleRecommendations.length === 0) {
+    if (recommendations.length === 0) {
         return null;
     }
 
@@ -40,10 +32,10 @@ export function RecommendationResultsMessage({
         <Stack spacing={1} sx={{ minWidth: 0 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 {t("chat.recommendations.title", {
-                    count: visibleRecommendations.length,
+                    count: recommendations.length,
                 })}
             </Typography>
-            {visibleRecommendations.map((recommendation, index) => {
+            {recommendations.map((recommendation, index) => {
                 const isExpanded = selectedRegionId === recommendation.id;
 
                 return (

@@ -18,7 +18,6 @@ import { useSessionContext } from "@/shared/context";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "RecommendationFeatureContext" });
-const CHAT_RECOMMENDATION_RESULT_LIMIT = 10;
 
 function createChatMessageId(turnNumber: number, role: "user" | "assistant"): string {
     return `chat-${turnNumber}-${role}`;
@@ -93,7 +92,6 @@ function createRecommendationResultsMessage(
         role: "assistant",
         content: createElement(RecommendationResultsMessage, {
             recommendations,
-            limit: CHAT_RECOMMENDATION_RESULT_LIMIT,
         }),
     };
 }
