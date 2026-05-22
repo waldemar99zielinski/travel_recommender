@@ -4,17 +4,23 @@ import {
     validateRecommendationRequestDto,
     validateRecommendationResponseDto,
 } from "@/models/recommendation.models";
-import { recommendationApiUrlBuilder } from "@/shared/api/urls.api";
+import { apiConfig } from "@/shared/api/config.api";
+import { createRecommendationApiUrlBuilder } from "@/shared/api/urls.api";
+import type { RecommendationApiVersion } from "@/shared/configuration";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "RecommendationApi" });
 
 export async function fetchRecommendations(
     payload: RecommendationRequestDto,
+    recommendationApiVersion: RecommendationApiVersion,
 ): Promise<RecommendationResponseDto> {
     const requestPayload = validateRecommendationRequestDto(payload);
     const startedAt = Date.now();
-    const url = recommendationApiUrlBuilder.fetchRecommendations();
+    const url = createRecommendationApiUrlBuilder(
+        apiConfig.baseUrl,
+        recommendationApiVersion,
+    ).fetchRecommendations();
 
     logger.trace("Sending recommendation request", {
         url,

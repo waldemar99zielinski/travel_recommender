@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
     Box,
@@ -17,6 +17,10 @@ import { MapLegend } from "@/components/map/components/MapLegend";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
 import { TravelMapLoader } from "@/components/loader/TravelMapLoader";
 import type { ChatMessage } from "@/components/chat/Chat.interfaces";
+import { appConfiguration } from "@/shared/configuration";
+import { createLogger } from "@/shared/lib";
+
+const testPageLogger = createLogger({ scope: "TestPage" });
 
 interface QuickReplyChipsProps {
     onSelect: (value: string) => void;
@@ -67,6 +71,17 @@ export function TestPage() {
         },
     ]);
 
+    useEffect(() => {
+        testPageLogger.debug("Opened test page", {
+            environment: appConfiguration.environment,
+            loggerLevel: testPageLogger.getLevel(),
+        });
+
+        return () => {
+            testPageLogger.trace("Leaving test page");
+        };
+    }, []);
+
     const dynamicMessages: ChatMessage[] = [
         ...chatMessages,
         {
@@ -75,7 +90,12 @@ export function TestPage() {
             content: (
                 <Stack spacing={1}>
                     <Typography variant="body2">{t("test.quickPicks")}</Typography>
-                    <QuickReplyChips onSelect={setMessage} />
+                    <QuickReplyChips
+                        onSelect={(value) => {
+                            setMessage(value);
+                            testPageLogger.debug("Quick reply selected", { value });
+                        }}
+                    />
                 </Stack>
             ),
         },
@@ -84,8 +104,13 @@ export function TestPage() {
     const handleSubmit = () => {
         const trimmedMessage = message.trim();
         if (trimmedMessage.length === 0) {
+            testPageLogger.debug("Ignored empty message submit");
             return;
         }
+
+        testPageLogger.trace("Submitting demo message", {
+            length: trimmedMessage.length,
+        });
 
         setChatMessages((previous) => [
             ...previous,
@@ -101,6 +126,7 @@ export function TestPage() {
             },
         ]);
         setMessage("");
+        testPageLogger.debug("Demo message submitted");
     };
 
     return (
@@ -148,9 +174,13 @@ export function TestPage() {
                             <Stack direction="row" alignItems="center" spacing={1}>
                                 <Switch
                                     checked={showLoader}
-                                    onChange={(event) =>
-                                        setShowLoader(event.target.checked)
-                                    }
+                                    onChange={(event) => {
+                                        const nextValue = event.target.checked;
+                                        setShowLoader(nextValue);
+                                        testPageLogger.debug("Loader preview toggled", {
+                                            visible: nextValue,
+                                        });
+                                    }}
                                 />
                                 <Typography variant="body2" color="text.secondary">
                                     {t("test.showLoaderPreview")}

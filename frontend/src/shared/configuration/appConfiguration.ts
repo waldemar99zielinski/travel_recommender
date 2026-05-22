@@ -1,8 +1,10 @@
 export type AppEnvironment = "dev" | "production";
+export type RecommendationApiVersion = "v1" | "v2" | "v3";
 
 export interface AppConfiguration {
     environment: AppEnvironment;
     version: string;
+    recommendationApiVersion: RecommendationApiVersion;
 }
 
 function resolveEnvironment(): AppEnvironment {
@@ -22,4 +24,5 @@ function resolveEnvironment(): AppEnvironment {
 export const appConfiguration: AppConfiguration = {
     environment: resolveEnvironment(),
     version: __APP_VERSION__,
+    recommendationApiVersion: "v3",
 };

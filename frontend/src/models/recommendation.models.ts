@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import {
-    type SessionRefDto,
+    type ChatMessageDto,
+    chatMessageDtoSchema,
+} from "@/models/chat-message.models";
+import {
+    type SessionDto,
     sessionRefDtoSchema,
 } from "@/models/session.models";
 
@@ -12,15 +16,12 @@ export interface RecommendationItemDto {
     description: string;
 }
 
-export interface RecommendationMessageOutputDto {
-    message: string;
-}
-
-export interface RecommendationResponseDto extends RecommendationMessageOutputDto {
+export interface RecommendationResponseDto {
+    messages: ChatMessageDto[];
     recommendations: RecommendationItemDto[];
 }
 
-export interface RecommendationRequestDto extends SessionRefDto {
+export interface RecommendationRequestDto extends SessionDto {
     message: string;
 }
 
@@ -31,14 +32,10 @@ export const recommendationItemDtoSchema = z.object({
     description: z.string(),
 }) satisfies z.ZodType<RecommendationItemDto>;
 
-export const recommendationMessageOutputDtoSchema = z.object({
-    message: z.string(),
-}) satisfies z.ZodType<RecommendationMessageOutputDto>;
-
-export const recommendationResponseDtoSchema =
-    recommendationMessageOutputDtoSchema.extend({
-        recommendations: z.array(recommendationItemDtoSchema),
-    }) satisfies z.ZodType<RecommendationResponseDto>;
+export const recommendationResponseDtoSchema = z.object({
+    messages: z.array(chatMessageDtoSchema),
+    recommendations: z.array(recommendationItemDtoSchema),
+}) satisfies z.ZodType<RecommendationResponseDto>;
 
 export const recommendationRequestDtoSchema = sessionRefDtoSchema.extend({
     message: z.string().trim().min(1),

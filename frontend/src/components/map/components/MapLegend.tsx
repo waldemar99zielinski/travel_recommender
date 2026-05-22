@@ -1,7 +1,10 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-import { SCORE_LEGEND, scoreToColor } from "@/components/map/model/mapColors";
+import {
+    normalizedScoreToColor,
+    SCORE_LEGEND,
+} from "@/components/map/model/mapColors";
 
 export function MapLegend() {
     const { t } = useTranslation();
@@ -33,7 +36,9 @@ export function MapLegend() {
                                 height: 14,
                                 borderRadius: 0.5,
                                 border: "1px solid rgba(0,0,0,0.12)",
-                                bgcolor: scoreToColor(entry.score),
+                                bgcolor: normalizedScoreToColor(
+                                    entry.normalizedScore,
+                                ),
                             }}
                         />
                         <Typography variant="caption">

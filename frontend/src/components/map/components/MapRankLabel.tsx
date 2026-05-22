@@ -1,16 +1,17 @@
 import { Typography } from "@mui/material";
 
 import type { MapRankLabelProps } from "@/components/map/Map.interfaces";
+import { formatRecommendationScore } from "@/components/map/model/mapColors";
 
 function buildLabel({ rank, score, mode }: MapRankLabelProps): string {
-    const roundedScore = Math.round(score);
+    const formattedScore = formatRecommendationScore(score);
 
     if (mode === "score") {
-        return `${roundedScore}`;
+        return formattedScore;
     }
 
     if (mode === "rank-score") {
-        return `#${rank} ${roundedScore}`;
+        return `#${rank} ${formattedScore}`;
     }
 
     return `${rank}`;

@@ -61,7 +61,7 @@ export async function createSession(
 
 export async function getSession(
     session: SessionDto,
-): Promise<SessionStateResponseDto> {
+): Promise<SessionStateResponseDto | null> {
     const validSession = validateSessionRefDto(session);
     const startedAt = Date.now();
     const url = sessionApiUrlBuilder.getSession(
@@ -75,6 +75,16 @@ export async function getSession(
     });
 
     const response = await fetch(url);
+
+    if (response.status === 404) {
+        logger.debug("Session not found", {
+            status: response.status,
+            session: validSession,
+            durationMs: Date.now() - startedAt,
+        });
+
+        return null;
+    }
 
     if (!response.ok) {
         logger.error("Get session request failed", {

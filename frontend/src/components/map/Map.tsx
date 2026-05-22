@@ -11,6 +11,7 @@ export function Map({
     recommendations,
     selectedRegionId,
     onSelectRegion,
+    focusedRegionId,
     rankingConfig,
 }: MapProps) {
     const resolvedRankingConfig = {
@@ -38,6 +39,7 @@ export function Map({
                 enrichedRegions={enrichedRegions}
                 selectedRegionId={selectedRegionId}
                 onSelectRegion={onSelectRegion}
+                focusedRegionId={focusedRegionId}
                 rankingConfig={resolvedRankingConfig}
             />
         </Box>

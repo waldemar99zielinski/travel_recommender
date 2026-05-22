@@ -1,16 +1,23 @@
 import "leaflet/dist/leaflet.css";
 
+import { useEffect } from "react";
+
 import { GlobalStyles } from "@mui/material";
+import L from "leaflet";
 import {
     GeoJSON,
     MapContainer,
     Popup,
     Tooltip,
+    useMap,
     useMapEvents,
 } from "react-leaflet";
 
 import type { MapCanvasProps } from "@/components/map/Map.interfaces";
-import { scoreToColor } from "@/components/map/model/mapColors";
+import {
+    createRelativeScoreColorScale,
+    normalizedScoreToColor,
+} from "@/components/map/model/mapColors";
 import {
     MAP_BOUNDS,
     MAP_CENTER,
@@ -19,11 +26,12 @@ import {
 import { MapLegend } from "@/components/map/components/MapLegend";
 import { MapPopupCard } from "@/components/map/components/MapPopupCard";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
-import type { EnrichedRegionFeatureProperties } from "@/models/destination.models";
+import type { EnrichedRegionFeatureProperties } from "@/models/region.model";
 
 function getFillColor(
     properties: EnrichedRegionFeatureProperties,
     rankingConfig: MapCanvasProps["rankingConfig"],
+    colorScale: (score: number) => string,
 ): string {
     if (properties.recommendation == null) {
         return MAP_COLORS.noRecommendationFill;
@@ -34,10 +42,10 @@ function getFillColor(
         properties.rank != null &&
         properties.rank <= rankingConfig.topN
     ) {
-        return scoreToColor(100);
+        return normalizedScoreToColor(1);
     }
 
-    return scoreToColor(properties.recommendation.score);
+    return colorScale(properties.recommendation.score);
 }
 
 type MapBackgroundResetSelectionProps = {
@@ -70,12 +78,57 @@ function MapBackgroundResetSelection({
     return null;
 }
 
+type MapFocusHandlerProps = {
+    focusedRegionId: string | null;
+    enrichedRegions: MapCanvasProps["enrichedRegions"];
+};
+
+function MapFocusHandler({
+    focusedRegionId,
+    enrichedRegions,
+}: MapFocusHandlerProps) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (focusedRegionId == null) {
+            return;
+        }
+
+        const feature = enrichedRegions.features.find(
+            (f) => f.properties.u_name === focusedRegionId,
+        );
+
+        if (feature == null) {
+            return;
+        }
+
+        const leafletGeoJson = L.geoJSON(feature);
+        const bounds = leafletGeoJson.getBounds();
+
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, {
+                padding: [40, 40],
+                maxZoom: 5,
+            });
+        }
+    }, [enrichedRegions.features, focusedRegionId, map]);
+
+    return null;
+}
+
 export function MapCanvas({
     enrichedRegions,
     selectedRegionId,
     onSelectRegion,
+    focusedRegionId,
     rankingConfig,
 }: MapCanvasProps) {
+    const colorScale = createRelativeScoreColorScale(
+        enrichedRegions.features
+            .map((feature) => feature.properties.recommendation?.score)
+            .filter((score): score is number => score != null),
+    );
+
     return (
         <>
             <GlobalStyles
@@ -104,6 +157,10 @@ export function MapCanvas({
                 style={{ height: "100%" }}
             >
                 <MapBackgroundResetSelection onSelectRegion={onSelectRegion} />
+                <MapFocusHandler
+                    focusedRegionId={focusedRegionId}
+                    enrichedRegions={enrichedRegions}
+                />
                 {enrichedRegions.features.map((feature) => {
                     const regionId = feature.properties.u_name;
                     const isSelected = selectedRegionId === regionId;
@@ -117,6 +174,7 @@ export function MapCanvas({
                                 fillColor: getFillColor(
                                     feature.properties,
                                     rankingConfig,
+                                    colorScale,
                                 ),
                                 color: isSelected
                                     ? MAP_COLORS.selectedBorder

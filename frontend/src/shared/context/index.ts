@@ -1,5 +1,10 @@
 export { AppContextProvider } from "@/shared/context/AppContextProvider";
 export {
+    AppConfigContextProvider,
+    useAppConfigContext,
+    type AppConfigContextValue,
+} from "@/shared/context/app-config";
+export {
     HealthContextProvider,
     useHealthContext,
     type HealthContextValue,
@@ -10,10 +15,3 @@ export {
     useSessionContext,
     type SessionContextValue,
 } from "@/shared/context/session";
-export {
-    RecommendationContextProvider,
-    useRecommendationContext,
-    type RecommendationContextValue,
-    type RecommendationRequest,
-    type RecommendationResponseDto,
-} from "@/shared/context/recommendation";

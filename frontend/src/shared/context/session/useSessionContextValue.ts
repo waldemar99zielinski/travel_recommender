@@ -77,6 +77,19 @@ export function useSessionContextValue(): SessionContextValue {
             }
 
             const response = await getSessionRequest(targetSession);
+            if (response == null) {
+                logger.debug("Session state not found", {
+                    session: targetSession,
+                });
+
+                if (isSameSession(session, targetSession)) {
+                    sessionStorage.clear();
+                    setSession(null);
+                }
+
+                return null;
+            }
+
             if (!isSameSession(session, response.session)) {
                 setSession(response.session);
             }

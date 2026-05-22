@@ -1,5 +1,5 @@
 import { appConfiguration } from "@/shared/configuration";
-import { browserStorage } from "@/shared/storage";
+import { browserStorage, STORAGE_KEYS } from "@/shared/storage";
 
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "silent";
 
@@ -46,7 +46,7 @@ const DEFAULT_LOG_COLORS: Readonly<LoggerColors> = {
     error: "#c0392b",
 };
 
-const LOG_LEVEL_STORAGE_KEY = "hybrid:logger:base-level";
+const LOG_LEVEL_STORAGE_KEY = STORAGE_KEYS.loggerBaseLevel;
 const DEFAULT_BASE_LOG_LEVEL: LogLevel =
     appConfiguration.environment === "dev" ? "trace" : "info";
 

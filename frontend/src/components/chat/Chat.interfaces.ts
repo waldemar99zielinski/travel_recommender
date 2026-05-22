@@ -16,6 +16,7 @@ export interface ChatProps {
     onSubmit: () => void;
     isLoading: boolean;
     errorMessage: string | null;
+    headerAction?: ReactNode;
 }
 
 export interface ChatPromptCardProps {
@@ -27,6 +28,7 @@ export interface ChatPromptCardProps {
 
 export interface ChatConversationProps {
     messages: ChatMessage[];
+    isLoading: boolean;
 }
 
 export interface ChatMessageCardProps {

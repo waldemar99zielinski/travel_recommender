@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
+import { AppConfigContextProvider } from "@/shared/context/app-config/AppConfigContextProvider";
 import { HealthContextProvider } from "@/shared/context/health/HealthContextProvider";
-import { RecommendationContextProvider } from "@/shared/context/recommendation/RecommendationContextProvider";
 import { SessionContextProvider } from "@/shared/context/session/SessionContextProvider";
 
 type AppContextProviderProps = {
@@ -10,12 +10,10 @@ type AppContextProviderProps = {
 
 export function AppContextProvider({ children }: AppContextProviderProps) {
     return (
-        <HealthContextProvider>
-            <SessionContextProvider>
-                <RecommendationContextProvider>
-                    {children}
-                </RecommendationContextProvider>
-            </SessionContextProvider>
-        </HealthContextProvider>
+        <AppConfigContextProvider>
+            <HealthContextProvider>
+                <SessionContextProvider>{children}</SessionContextProvider>
+            </HealthContextProvider>
+        </AppConfigContextProvider>
     );
 }

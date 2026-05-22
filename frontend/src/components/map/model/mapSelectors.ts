@@ -2,8 +2,12 @@ import type {
     EnrichedRegionFeatureCollection,
     EnrichedRegionFeatureProperties,
     RegionFeatureCollection,
-} from "@/models/destination.models";
+} from "@/models/region.model";
 import type { RecommendationItemDto } from "@/models/recommendation.models";
+
+function normalizeRegionId(regionId: string): string {
+    return regionId.trim().replace(/[\s-]+/g, "_").toUpperCase();
+}
 
 export function enrichRegions(
     regions: RegionFeatureCollection,
@@ -19,7 +23,7 @@ export function enrichRegions(
 
     const rankedById = new Map(
         recommendationsByScore.map((recommendation, index) => [
-            recommendation.id,
+            normalizeRegionId(recommendation.id),
             { recommendation, rank: index + 1 },
         ]),
     );
@@ -27,7 +31,7 @@ export function enrichRegions(
     return {
         ...regions,
         features: regions.features.map((feature) => {
-            const ranked = rankedById.get(feature.properties.u_name);
+            const ranked = rankedById.get(normalizeRegionId(feature.properties.u_name));
             const properties: EnrichedRegionFeatureProperties = {
                 ...feature.properties,
                 recommendation: ranked?.recommendation,

@@ -3,6 +3,9 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
 import { translationEn } from "@/app/providers/i18n/resources/en";
+import { createLogger } from "@/shared/lib";
+
+const logger = createLogger({ scope: "i18n" });
 
 void i18n
     .use(LanguageDetector)
@@ -26,6 +29,14 @@ void i18n
             order: ["querystring", "localStorage", "navigator"],
             caches: ["localStorage"],
         },
+    })
+    .then(() => {
+        logger.debug("i18n initialized", {
+            language: i18n.language,
+        });
+    })
+    .catch((error) => {
+        logger.error("i18n initialization failed", error);
     });
 
 export { i18n };

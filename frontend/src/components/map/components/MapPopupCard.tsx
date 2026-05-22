@@ -1,14 +1,12 @@
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 import type { MapPopupCardProps } from "@/components/map/Map.interfaces";
+import { formatRecommendationScore } from "@/components/map/model/mapColors";
 
 export function MapPopupCard({ properties }: MapPopupCardProps) {
     const { t } = useTranslation();
-    const regionTitle =
-        properties.display_name ?? properties.name ?? properties.u_name;
-    const regionDescription =
-        properties.name ?? properties.display_name ?? properties.u_name;
+    const regionTitle = properties.display_name;
 
     return (
         <Box sx={{ minWidth: 200, p: 0.5 }}>
@@ -16,28 +14,15 @@ export function MapPopupCard({ properties }: MapPopupCardProps) {
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {regionTitle}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                    {t("map.popup.regionId", { id: properties.u_name })}
-                </Typography>
-                <Divider sx={{ my: 0.5 }} />
                 {properties.recommendation ? (
-                    <>
-                        <Typography variant="body2">
-                            {t("map.popup.score", {
-                                score: String(
-                                    Math.round(properties.recommendation.score),
-                                ),
-                            })}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            {properties.recommendation.description}
-                        </Typography>
-                    </>
-                ) : (
-                    <Typography variant="body2" color="text.secondary">
-                        {regionDescription}
+                    <Typography variant="body2">
+                        {t("map.popup.score", {
+                            score: formatRecommendationScore(
+                                properties.recommendation.score,
+                            ),
+                        })}
                     </Typography>
-                )}
+                ) : null}
             </Stack>
         </Box>
     );

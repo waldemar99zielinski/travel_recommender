@@ -11,6 +11,7 @@ export function Chat({
     onSubmit,
     isLoading,
     errorMessage,
+    headerAction,
 }: ChatProps) {
     return (
         <Stack
@@ -30,8 +31,22 @@ export function Chat({
                     overflow: "hidden",
                 }}
             >
+                {headerAction != null && (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            px: 1.5,
+                            py: 1,
+                            borderBottom: "1px solid",
+                            borderColor: "divider",
+                        }}
+                    >
+                        {headerAction}
+                    </Box>
+                )}
                 <Box sx={{ flex: 1, overflow: "auto", px: 1.5, py: 1.5 }}>
-                    <ChatConversation messages={messages} />
+                    <ChatConversation messages={messages} isLoading={isLoading} />
                 </Box>
                 {errorMessage != null && (
                     <Box sx={{ px: 1.5, pb: 1 }}>

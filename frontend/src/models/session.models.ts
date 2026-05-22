@@ -1,8 +1,26 @@
 import { z } from "zod";
 
+import {
+    type ChatMessageDto,
+    chatMessageDtoSchema,
+} from "@/models/chat-message.models";
+
 export interface SessionDto {
     user_id: string;
     session_id: string;
+}
+
+export interface SessionHistoryTurnDto {
+    chat_history_number: number;
+    user_request: string;
+    system_messages: ChatMessageDto[];
+}
+
+export interface SessionRecommendationItemDto {
+    id: string;
+    title: string;
+    score: number;
+    description: string;
 }
 
 export interface SessionCreateRequestDto {
@@ -15,6 +33,8 @@ export interface SessionCreateResponseDto {
 
 export interface SessionStateResponseDto {
     session: SessionDto;
+    history: SessionHistoryTurnDto[];
+    last_recommendation_result: SessionRecommendationItemDto[];
 }
 
 export interface SessionDeleteResponseDto {
@@ -34,8 +54,23 @@ export const sessionCreateResponseDtoSchema = z.object({
     session: sessionRefDtoSchema,
 }) satisfies z.ZodType<SessionCreateResponseDto>;
 
+export const sessionHistoryTurnDtoSchema = z.object({
+    chat_history_number: z.number().int().nonnegative(),
+    user_request: z.string(),
+    system_messages: z.array(chatMessageDtoSchema),
+}) satisfies z.ZodType<SessionHistoryTurnDto>;
+
+export const sessionRecommendationItemDtoSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    score: z.number().finite(),
+    description: z.string(),
+}) satisfies z.ZodType<SessionRecommendationItemDto>;
+
 export const sessionStateResponseDtoSchema = z.object({
     session: sessionRefDtoSchema,
+    history: z.array(sessionHistoryTurnDtoSchema),
+    last_recommendation_result: z.array(sessionRecommendationItemDtoSchema),
 }) satisfies z.ZodType<SessionStateResponseDto>;
 
 export const sessionDeleteResponseDtoSchema = z.object({

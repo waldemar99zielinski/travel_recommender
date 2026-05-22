@@ -21,6 +21,11 @@ import {
     setBaseLogLevel,
     type LogLevel,
 } from "@/shared/lib";
+import {
+    appConfiguration,
+    type RecommendationApiVersion,
+} from "@/shared/configuration";
+import { useAppConfigContext } from "@/shared/context";
 
 const debugLogger = createLogger({ scope: "DebugToolsModal" });
 const LOG_LEVEL_OPTIONS: LogLevel[] = [
@@ -31,6 +36,7 @@ const LOG_LEVEL_OPTIONS: LogLevel[] = [
     "error",
     "silent",
 ];
+const RECOMMENDATION_API_VERSION_OPTIONS: RecommendationApiVersion[] = ["v1", "v2", "v3"];
 
 function isDebugShortcut(event: KeyboardEvent): boolean {
     return (
@@ -43,10 +49,17 @@ function isDebugShortcut(event: KeyboardEvent): boolean {
 }
 
 export function DebugToolsModal() {
+    const {
+        config,
+        resetRecommendationApiVersion,
+        setRecommendationApiVersion,
+    } = useAppConfigContext();
     const [open, setOpen] = useState(false);
     const [selectedLogLevel, setSelectedLogLevel] = useState<LogLevel>(() =>
         getBaseLogLevel(),
     );
+    const [selectedRecommendationApiVersion, setSelectedRecommendationApiVersion] =
+        useState<RecommendationApiVersion>(config.recommendationApiVersion);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -72,7 +85,8 @@ export function DebugToolsModal() {
         }
 
         setSelectedLogLevel(getBaseLogLevel());
-    }, [open]);
+        setSelectedRecommendationApiVersion(config.recommendationApiVersion);
+    }, [config.recommendationApiVersion, open]);
 
     return (
         <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs">
@@ -100,14 +114,40 @@ export function DebugToolsModal() {
                             ))}
                         </Select>
                     </FormControl>
+
+                    <FormControl fullWidth>
+                        <InputLabel id="debug-recommendation-api-version-label">
+                            Recommendation API version
+                        </InputLabel>
+                        <Select
+                            labelId="debug-recommendation-api-version-label"
+                            label="Recommendation API version"
+                            value={selectedRecommendationApiVersion}
+                            onChange={(event) =>
+                                setSelectedRecommendationApiVersion(
+                                    event.target.value as RecommendationApiVersion,
+                                )
+                            }
+                        >
+                            {RECOMMENDATION_API_VERSION_OPTIONS.map((version) => (
+                                <MenuItem key={version} value={version}>
+                                    {version}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button
                     onClick={() => {
                         clearStoredBaseLogLevel();
+                        resetRecommendationApiVersion();
                         const baseLevel = getBaseLogLevel();
                         setSelectedLogLevel(baseLevel);
+                        setSelectedRecommendationApiVersion(
+                            appConfiguration.recommendationApiVersion,
+                        );
                         debugLogger.info("Reset base log level", { baseLevel });
                     }}
                 >
@@ -118,8 +158,12 @@ export function DebugToolsModal() {
                     variant="contained"
                     onClick={() => {
                         setBaseLogLevel(selectedLogLevel);
+                        setRecommendationApiVersion(selectedRecommendationApiVersion);
                         debugLogger.info("Updated base log level", {
                             level: selectedLogLevel,
+                        });
+                        debugLogger.info("Updated recommendation API version", {
+                            version: selectedRecommendationApiVersion,
                         });
                         setOpen(false);
                     }}

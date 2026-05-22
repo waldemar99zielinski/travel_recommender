@@ -24,7 +24,6 @@ export function SessionContextProvider({ children }: SessionContextProviderProps
                     userId: activeSession.user_id,
                     sessionId: activeSession.session_id,
                 });
-
             } catch (error) {
                 logger.error("Failed to initialize session", error);
             }

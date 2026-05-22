@@ -16,7 +16,7 @@ export async function fetchHealth(): Promise<HealthResponseDto> {
     });
 
     const response = await fetch(url);
-    if (response.status !== 200 && response.status !== 503) {
+    if (response.status !== 200) {
         logger.error("Health check request failed", {
             status: response.status,
             statusText: response.statusText,

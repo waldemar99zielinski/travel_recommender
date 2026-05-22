@@ -2,7 +2,7 @@ import type {
     EnrichedRegionFeatureCollection,
     EnrichedRegionFeatureProperties,
     RegionFeatureCollection,
-} from "@/models/destination.models";
+} from "@/models/region.model";
 import type { RecommendationItemDto } from "@/models/recommendation.models";
 
 export type MapRankingLabelMode = "rank" | "score" | "rank-score";
@@ -18,6 +18,7 @@ export interface MapProps {
     recommendations: RecommendationItemDto[];
     selectedRegionId: string | null;
     onSelectRegion: (regionId: string | null) => void;
+    focusedRegionId: string | null;
     rankingConfig?: MapRegionRankingConfig;
 }
 
@@ -25,6 +26,7 @@ export interface MapCanvasProps {
     enrichedRegions: EnrichedRegionFeatureCollection;
     selectedRegionId: string | null;
     onSelectRegion: (regionId: string | null) => void;
+    focusedRegionId: string | null;
     rankingConfig: Required<MapRegionRankingConfig>;
 }
 

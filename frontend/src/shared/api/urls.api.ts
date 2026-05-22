@@ -1,4 +1,7 @@
-import { apiConfig } from "@/shared/api/config.api";
+import {
+    apiConfig,
+} from "@/shared/api/config.api";
+import type { RecommendationApiVersion } from "@/shared/configuration";
 
 export interface HealthApiUrlBuilder {
     fetchHealth(): string;
@@ -22,9 +25,11 @@ export function createHealthApiUrlBuilder(baseUrl: string): HealthApiUrlBuilder 
 
 export function createRecommendationApiUrlBuilder(
     baseUrl: string,
+    recommendationApiVersion: RecommendationApiVersion,
 ): RecommendationApiUrlBuilder {
     return {
-        fetchRecommendations: () => `${baseUrl}/api/v1/recommendations/chat`,
+        fetchRecommendations: () =>
+            `${baseUrl}/api/${recommendationApiVersion}/recommendations/chat`,
     };
 }
 
@@ -40,6 +45,3 @@ export function createSessionApiUrlBuilder(baseUrl: string): SessionApiUrlBuilde
 
 export const sessionApiUrlBuilder = createSessionApiUrlBuilder(apiConfig.baseUrl);
 export const healthApiUrlBuilder = createHealthApiUrlBuilder(apiConfig.baseUrl);
-export const recommendationApiUrlBuilder = createRecommendationApiUrlBuilder(
-    apiConfig.baseUrl,
-);
