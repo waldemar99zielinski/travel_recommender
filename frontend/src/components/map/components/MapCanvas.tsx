@@ -1,16 +1,13 @@
 import "leaflet/dist/leaflet.css";
 
-import { useEffect } from "react";
-
-import { GlobalStyles } from "@mui/material";
-import L from "leaflet";
+import {
+    GlobalStyles,
+} from "@mui/material";
 import {
     GeoJSON,
     MapContainer,
     Popup,
     Tooltip,
-    useMap,
-    useMapEvents,
 } from "react-leaflet";
 
 import type { MapCanvasProps } from "@/components/map/Map.interfaces";
@@ -25,8 +22,13 @@ import {
 } from "@/components/map/map.config";
 import { MapLegend } from "@/components/map/components/MapLegend";
 import { MapPopupCard } from "@/components/map/components/MapPopupCard";
+
+import { DraftSelectionMenu } from "@/components/map/components/DraftSelectionMenu";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
 import type { EnrichedRegionFeatureProperties } from "@/models/region.model";
+import { MapInteractionLock } from "@/components/map/components/MapInteractionLock";
+import { MapSelectionBox } from "@/components/map/components/MapSelectionBox";
+import { MapFocusHandler } from "@/components/map/components/MapFocusHandler";
 
 function getFillColor(
     properties: EnrichedRegionFeatureProperties,
@@ -48,80 +50,12 @@ function getFillColor(
     return colorScale(properties.recommendation.score);
 }
 
-type MapBackgroundResetSelectionProps = {
-    onSelectRegion: (regionId: string | null) => void;
-};
-
-function MapBackgroundResetSelection({
-    onSelectRegion,
-}: MapBackgroundResetSelectionProps) {
-    useMapEvents({
-        click: (event) => {
-            const targetElement = event.originalEvent
-                .target as HTMLElement | null;
-            if (targetElement == null) {
-                return;
-            }
-
-            const isCountryPath =
-                targetElement.closest(".leaflet-interactive") != null;
-            const isPopupOrTooltip =
-                targetElement.closest(".leaflet-popup") != null ||
-                targetElement.closest(".leaflet-tooltip") != null;
-
-            if (!isCountryPath && !isPopupOrTooltip) {
-                onSelectRegion(null);
-            }
-        },
-    });
-
-    return null;
-}
-
-type MapFocusHandlerProps = {
-    focusedRegionId: string | null;
-    enrichedRegions: MapCanvasProps["enrichedRegions"];
-};
-
-function MapFocusHandler({
-    focusedRegionId,
-    enrichedRegions,
-}: MapFocusHandlerProps) {
-    const map = useMap();
-
-    useEffect(() => {
-        if (focusedRegionId == null) {
-            return;
-        }
-
-        const feature = enrichedRegions.features.find(
-            (f) => f.properties.u_name === focusedRegionId,
-        );
-
-        if (feature == null) {
-            return;
-        }
-
-        const leafletGeoJson = L.geoJSON(feature);
-        const bounds = leafletGeoJson.getBounds();
-
-        if (bounds.isValid()) {
-            map.fitBounds(bounds, {
-                padding: [40, 40],
-                maxZoom: 5,
-            });
-        }
-    }, [enrichedRegions.features, focusedRegionId, map]);
-
-    return null;
-}
-
 export function MapCanvas({
     enrichedRegions,
-    selectedRegionId,
     onSelectRegion,
     focusedRegionId,
     rankingConfig,
+    selectionForRecommendationProps,
 }: MapCanvasProps) {
     const colorScale = createRelativeScoreColorScale(
         enrichedRegions.features
@@ -146,6 +80,10 @@ export function MapCanvas({
                         border: "none",
                         boxShadow: "none",
                     },
+                    ".leaflet-top.leaflet-left": {
+                        top: 52,
+                    },
+
                 }}
             />
             <MapContainer
@@ -156,44 +94,90 @@ export function MapCanvas({
                 doubleClickZoom={false}
                 style={{ height: "100%" }}
             >
-                <MapBackgroundResetSelection onSelectRegion={onSelectRegion} />
                 <MapFocusHandler
                     focusedRegionId={focusedRegionId}
                     enrichedRegions={enrichedRegions}
                 />
+                <MapInteractionLock 
+                    draggingDisabled={
+                        selectionForRecommendationProps.selectionMode === "selecting-for-recommendation"
+                    }
+                />
+                {selectionForRecommendationProps.selectionMode === "selecting-for-recommendation" && (
+                    <MapSelectionBox
+                        enrichedRegions={enrichedRegions}
+                        onSelectionComplete={(selectedRegionIds: string[]) => {
+                            selectionForRecommendationProps.addRegionsToDraftSelection(selectedRegionIds);
+                        }}
+                    />
+                )}
                 {enrichedRegions.features.map((feature) => {
                     const regionId = feature.properties.u_name;
-                    const isSelected = selectedRegionId === regionId;
+                    const regionStatus = selectionForRecommendationProps.regionSelectedForRecommendationStatus.get(regionId);
+
+                    if (!regionStatus) {
+                       throw new Error(`MapCanvas region status not found for regionId: ${regionId}`);
+                    }
+
+                    let fillColor: string;
+                    let borderColor: string;
+                    let borderWeight: number;
+                    let fillOpacity: number;
+
+                    if (regionStatus === "draft") {
+                        fillColor = MAP_COLORS.draftFill;
+                        borderColor = "#37474f";
+                        borderWeight = 2;
+                        fillOpacity = 0.8;
+                    } else if (regionStatus === "excluded") {
+                        fillColor = MAP_COLORS.excludedFill;
+                        borderColor = "#d32f2f";
+                        borderWeight = 2;
+                        fillOpacity = 0.9;
+                    } else if (regionStatus === "included") {
+                        fillColor = MAP_COLORS.includedFill;
+                        borderColor = "#4caf50";
+                        borderWeight = 2;
+                        fillOpacity = 0.9;
+                    } else {
+                        fillColor = getFillColor(
+                            feature.properties,
+                            rankingConfig,
+                            colorScale,
+                        );
+                        borderColor = MAP_COLORS.defaultBorder;
+                        borderWeight = 1;
+                        fillOpacity = 1;
+                    }
 
                     return (
                         <GeoJSON
                             key={regionId}
                             data={feature}
                             style={{
-                                fillOpacity: isSelected ? 0.9 : 1,
-                                fillColor: getFillColor(
-                                    feature.properties,
-                                    rankingConfig,
-                                    colorScale,
-                                ),
-                                color: isSelected
-                                    ? MAP_COLORS.selectedBorder
-                                    : MAP_COLORS.defaultBorder,
-                                weight: isSelected ? 3 : 1,
+                                fillOpacity,
+                                fillColor,
+                                color: borderColor,
+                                weight: borderWeight,
                             }}
                             eventHandlers={{
-                                dblclick: (event) => {
-                                    event.target.bringToFront?.();
-                                    onSelectRegion(regionId);
-                                },
-                                click: (event) => {
-                                    event.target.bringToFront?.();
-                                    onSelectRegion(regionId);
+                                click: (leafletEvent) => {
+                                    if (selectionForRecommendationProps.selectionMode === "selecting-for-recommendation") {
+                                        if (selectionForRecommendationProps.regionSelectedForRecommendationStatus.get(regionId) === "draft") {
+                                            selectionForRecommendationProps.setRegionSelectedForRecommendationStatus([regionId], "unset");
+                                        } else {
+                                            selectionForRecommendationProps.setRegionSelectedForRecommendationStatus([regionId], "draft");
+                                        }
+                                    } else {
+                                        leafletEvent.target.bringToFront?.();
+                                        onSelectRegion(regionId);
+                                    }
                                 },
                             }}
                         >
                             {feature.properties.rank != null &&
-                                feature.properties.rank <= rankingConfig.topN &&
+                                feature.properties.rank <=
+                                    rankingConfig.topN &&
                                 feature.properties.recommendation != null && (
                                     <Tooltip
                                         permanent
@@ -210,14 +194,29 @@ export function MapCanvas({
                                         />
                                     </Tooltip>
                                 )}
-                            <Popup>
-                                <MapPopupCard properties={feature.properties} />
-                            </Popup>
+                            {(selectionForRecommendationProps.selectionMode === "browse") && <Popup>
+                                <MapPopupCard
+                                    properties={feature.properties}
+                                />
+                            </Popup>}
                         </GeoJSON>
                     );
                 })}
             </MapContainer>
             <MapLegend />
+            {selectionForRecommendationProps.selectionMode === "selecting-for-recommendation" && 
+                <DraftSelectionMenu
+                    regionSelectedForRecommendationStatus={
+                        selectionForRecommendationProps.regionSelectedForRecommendationStatus
+                    }
+                    onInclude={selectionForRecommendationProps.moveDraftSelectionToIncluded}
+                    onExclude={selectionForRecommendationProps.moveDraftSelectionToExcluded}
+                    onClear={selectionForRecommendationProps.clearDraftSelectedRegionIds}
+                    onExitSelectionMode={() => {
+                        selectionForRecommendationProps.clearDraftSelectedRegionIds();
+                        selectionForRecommendationProps.setSelectionMode("browse");
+                    }}
+            />}
         </>
     );
 }
