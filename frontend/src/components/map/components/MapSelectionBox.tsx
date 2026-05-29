@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import booleanIntersects from "@turf/boolean-intersects";
 import { polygon } from "@turf/helpers";
@@ -12,42 +12,66 @@ interface MapSelectionBoxProps {
     onSelectionComplete: (selectedRegionIds: string[]) => void;
 }
 
+const DRAG_THRESHOLD_PX = 5;
+
 export function MapSelectionBox({
     enrichedRegions,
     onSelectionComplete,
 }: MapSelectionBoxProps) {
+    const dragStartLatLngRef = useRef<L.LatLng | null>(null);
+    const dragStartContainerPointRef = useRef<L.Point | null>(null);
     const [startPoint, setStartPoint] = useState<L.LatLng | null>(null);
     const [currentPoint, setCurrentPoint] = useState<L.LatLng | null>(null);
 
     useMapEvents({
         mousedown: (e) => {
-            // Skip if the click originated on a GeoJSON polygon — those are
-            // handled by the individual region click handler. Checking for
-            // leaflet-interactive catches all interactive vector layers.
+            dragStartLatLngRef.current = e.latlng;
+            dragStartContainerPointRef.current = e.containerPoint;
+            setStartPoint(null);
+            setCurrentPoint(null);
+        },
+        mousemove: (e) => {
+            const dragStartLatLng = dragStartLatLngRef.current;
+            const dragStartContainerPoint = dragStartContainerPointRef.current;
+
+            if (dragStartLatLng == null || dragStartContainerPoint == null) {
+                return;
+            }
+
             if (
-                e.originalEvent?.target != null &&
-                (e.originalEvent.target as HTMLElement).classList?.contains("leaflet-interactive")
+                dragStartContainerPoint.distanceTo(e.containerPoint) <
+                DRAG_THRESHOLD_PX
             ) {
                 return;
             }
-            setStartPoint(e.latlng);
-            setCurrentPoint(e.latlng);
-        },
-        mousemove: (e) => {
-            if (startPoint == null) return;
+
+            if (startPoint == null) {
+                setStartPoint(dragStartLatLng);
+            }
+
             setCurrentPoint(e.latlng);
         },
         mouseup: (e) => {
-            if (startPoint == null) return;
+            const dragStartLatLng = dragStartLatLngRef.current;
+            const dragStartContainerPoint = dragStartContainerPointRef.current;
 
-            const distance = startPoint.distanceTo(e.latlng);
-            if (distance < 10) {
+            dragStartLatLngRef.current = null;
+            dragStartContainerPointRef.current = null;
+
+            if (dragStartLatLng == null || dragStartContainerPoint == null) {
+                return;
+            }
+
+            if (
+                dragStartContainerPoint.distanceTo(e.containerPoint) <
+                DRAG_THRESHOLD_PX
+            ) {
                 setStartPoint(null);
                 setCurrentPoint(null);
                 return;
             }
 
-            const bounds = L.latLngBounds(startPoint, e.latlng);
+            const bounds = L.latLngBounds(dragStartLatLng, e.latlng);
             if (!bounds.isValid()) {
                 setStartPoint(null);
                 setCurrentPoint(null);
