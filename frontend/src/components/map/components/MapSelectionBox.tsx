@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import booleanIntersects from "@turf/boolean-intersects";
+import { polygon } from "@turf/helpers";
 import L from "leaflet";
 import { Rectangle, useMapEvents } from "react-leaflet";
 
@@ -52,13 +54,17 @@ export function MapSelectionBox({
                 return;
             }
 
-            const intersectingIds: string[] = [];
-            enrichedRegions.features.forEach((feature) => {
-                const featureBounds = L.geoJSON(feature).getBounds();
-                if (bounds.intersects(featureBounds)) {
-                    intersectingIds.push(feature.properties.u_name);
-                }
-            });
+            const selectionPolygon = polygon([[
+                [bounds.getWest(), bounds.getSouth()],
+                [bounds.getEast(), bounds.getSouth()],
+                [bounds.getEast(), bounds.getNorth()],
+                [bounds.getWest(), bounds.getNorth()],
+                [bounds.getWest(), bounds.getSouth()],
+            ]]);
+
+            const intersectingIds = enrichedRegions.features
+                .filter((feature) => booleanIntersects(selectionPolygon, feature))
+                .map((feature) => feature.properties.u_name);
 
             setStartPoint(null);
             setCurrentPoint(null);
