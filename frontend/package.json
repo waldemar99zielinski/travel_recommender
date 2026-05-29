@@ -12,7 +12,10 @@
     "dependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
-        "@mui/material": "^7.3.9",
+        "@mui/icons-material": "^9.0.1",
+        "@mui/material": "^9.0.1",
+        "@turf/boolean-intersects": "^7.3.5",
+        "@turf/helpers": "^7.3.5",
         "i18next": "^26.0.2",
         "i18next-browser-languagedetector": "^8.2.1",
         "leaflet": "^1.9.4",
