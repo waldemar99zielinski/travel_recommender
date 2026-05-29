@@ -9,7 +9,7 @@ type LoaderShellProps = {
 
 export function LoaderShell({ label, children }: LoaderShellProps) {
     return (
-        <Stack alignItems="center" spacing={1.25}>
+        <Stack sx={{ alignItems: "center" }} spacing={1.25}>
             <Box
                 sx={{
                     position: "relative",
