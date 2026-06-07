@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from langchain_core.language_models import BaseChatModel
-from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -12,10 +9,6 @@ from recommender.graphs.recommendation_v2.agents.query_synthesis.query_synthesis
 )
 from recommender.graphs.recommendation_v2.models import serialize_chat_history
 from storage.models.chat_record import ChatRecord
-from utils.logger import LoggerManager
-
-logger = LoggerManager.get_logger(__name__)
-
 class RecommendationV2SynthesizedUserRequestInput(BaseModel):
     """Input payload for recommendation_v2 synthesized user request generation."""
 
@@ -38,7 +31,7 @@ class RecommendationV2SynthesizedUserRequestResult(BaseModel):
 
     synthesized_query: str = Field(
         ...,
-        description="Updated synthesized user request for the current turn",
+        description="General context of interest synthesized for the current turn",
     )
 
 
@@ -69,6 +62,4 @@ class RecommendationV2SynthesizedUserRequestAgent:
         prompt_value = self._prompt_template.format_prompt(**prompt_inputs)
         prompt_messages = prompt_value.to_messages()
         result = self._structured_output_llm.invoke(prompt_messages)
-        output = RecommendationV2SynthesizedUserRequestResult.model_validate(result)
-
-        return output
+        return RecommendationV2SynthesizedUserRequestResult.model_validate(result)

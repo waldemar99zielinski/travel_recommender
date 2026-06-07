@@ -59,8 +59,6 @@ def create_need_more_information_response_generation_node(
                 system_response=response_result.response,
                 recommendations=state.final_recommendations or state.recommendations,
                 chat_history_number=len(state.history or []),
-                included_regions_ids=state.included_regions_ids,
-                excluded_regions_ids=state.excluded_regions_ids,
             ),
         )
 

@@ -21,6 +21,16 @@ def _serialize_recommendations(
     return [recommendation.serialize() for recommendation in recommendations]
 
 
+def _serialize_travel_destination_filter(state: RecommendationV2GraphState) -> dict[str, object]:
+    if state.travel_destination_filter is not None:
+        return state.travel_destination_filter.serialize()
+
+    if state.previously_extracted_travel_destination_filter is not None:
+        return state.previously_extracted_travel_destination_filter.serialize()
+
+    return {}
+
+
 def create_session_memory_save_node(
     chat_store: ChatStore,
 ) -> Callable[[RecommendationV2GraphState], dict[str, object]]:
@@ -45,18 +55,7 @@ def create_session_memory_save_node(
             user_request=state.user_request,
             system_response=state.system_response,
             synthesized_query=state.synthesized_user_request or state.previous_synthesized_user_request,
-            filter=(
-                state.travel_destination_filter.serialize_storage_filter()
-                if state.travel_destination_filter is not None
-                else {}
-            ),
-            travel_destination_filter=(
-                state.travel_destination_filter.serialize()
-                if state.travel_destination_filter is not None
-                else {}
-            ),
-            included_regions_ids=state.included_regions_ids,
-            excluded_regions_ids=state.excluded_regions_ids,
+            travel_destination_filter=_serialize_travel_destination_filter(state),
             recommendations=_serialize_recommendations(
                 state.final_recommendations,
             ),

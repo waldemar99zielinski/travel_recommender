@@ -47,15 +47,15 @@ prompt = ChatPromptTemplate.from_messages(
 
             Example 1
             current_user_request: Same vibe, but cheaper and near the beach
-            synthesized_user_request: warm affordable beach trip in Europe
-            travel_destination_filter: parent_region Europe, max_cost_per_week 700, season summer
+            synthesized_user_request: warm affordable beach trip in Southern Europe
+            travel_destination_filter: {{"regions": [{{"field_name": "parent_region", "region_name": "Southern Europe", "type": "include"}}], "seasonality": {{"season": "summer"}}, "budget": {{"max_cost_per_week": 700}}}}
             recommendations: present
-            response: I generated some destination recommendations for you based on a warm, affordable beach trip in Europe. I also kept your Europe, summer, and budget preferences in the search. Click the results for more details.
+            response: I generated some destination recommendations for you based on a warm, affordable beach trip in Southern Europe. I also kept your Southern Europe, summer, and budget preferences in the search. Click the results for more details.
 
             Example 2
             current_user_request: I want a quiet hiking trip in October
             synthesized_user_request: quiet hiking trip in October
-            travel_destination_filter: months oct
+            travel_destination_filter: {{"seasonality": {{"months": ["oct"]}}}}
             recommendations: present
             response: I generated recommendations for a quiet hiking trip in October. I used your October timing as part of the search. Click the results for more details.
 

@@ -13,27 +13,27 @@ prompt = ChatPromptTemplate.from_messages(
             - chat_history: prior user and assistant turns for additional context
 
             Goal:
-            - Produce one concise synthesized query that captures the user's up-to-date travel intent.
+            - Produce one concise synthesized query that captures the user's up-to-date general travel context of interest.
             - Treat current_user_request as an update to previous_synthesized_query.
             - Use chat_history to resolve references such as "same", "as before", "something closer", "not that", or omitted constraints.
-            - Preserve the most important high-signal constraints and keywords unless the current_user_request clearly changes, removes, or contradicts them.
+            - Preserve the most important high-signal constraints and context unless the current_user_request clearly changes, removes, or contradicts them.
+            - The synthesized query should describe interests, themes, vibe, destination type, activities, attractions, foods, or concrete place-specific context.
+            - Do not include filter-style constraints like budget, season, months, temperature, weather, or logistics in the synthesized query.
+            - Those filter-style constraints are handled separately by other nodes, so omit them even if they appear in the user request.
 
             What counts as high-signal information:
             - destination type or trip style: beach, ski, city break, hiking, nightlife, romantic, family-friendly
             - location constraints: Europe, Mediterranean, near Poland, short flight, island, coastal
-            - budget constraints: cheap, affordable, luxury, under a specific amount
-            - climate or season constraints: warm, sunny, tropical, winter sun, summer
-            - logistics constraints: direct flight, no visa, short travel time, weekend trip
             - preference constraints: quiet, not crowded, safe, walkable, good food, nightlife
 
             Update rules:
-            - Keep earlier high-signal keywords when the new message refines them or adds detail.
-            - Remove earlier keywords when the new message rejects them, replaces them, or clearly shifts intent.
+            - Keep earlier high-signal context when the new message refines it or adds detail.
+            - Remove earlier context when the new message rejects it, replaces it, or clearly shifts intent.
             - If the current_user_request says the opposite of an earlier constraint, the newer constraint wins.
             - If the user narrows the search, keep both the older compatible constraints and the new narrower ones.
             - If the user broadens the search, keep only the constraints that still clearly apply.
             - If a prior detail is weak, implicit, or incidental and the new request moves in another direction, drop it.
-            - Do not keep stale keywords just because they appeared earlier in the conversation.
+            - Do not keep stale details just because they appeared earlier in the conversation.
             - Prefer the latest explicit user intent over inferred older intent.
 
             Conflict resolution:
@@ -42,27 +42,31 @@ prompt = ChatPromptTemplate.from_messages(
             - When in doubt, keep only constraints that are both important and still compatible with the latest request.
 
             Examples:
-            - previous_synthesized_query: "cheap warm beach destination in southern Europe"
+            - previous_synthesized_query: "beach destination in southern Europe"
               current_user_request: "same vibe but quieter and with better food"
-              synthesized_query: "cheap warm quiet beach destination in southern Europe with good food"
+              synthesized_query: "quiet beach destination in southern Europe with good food"
 
-            - previous_synthesized_query: "cheap warm beach destination in southern Europe"
-              current_user_request: "not a beach, I want a city break instead"
-              synthesized_query: "cheap warm city break in southern Europe"
+            - previous_synthesized_query: "beach destination in southern Europe"
+              current_user_request: "not a beach, I want Rome instead, especially for carbonara and the Colosseum"
+              synthesized_query: "city break in Rome focused on carbonara and the Colosseum"
 
-            - previous_synthesized_query: "luxury island honeymoon with nightlife"
-              current_user_request: "same honeymoon idea but not luxury and less nightlife"
-              synthesized_query: "affordable island honeymoon with calmer nightlife"
+            - previous_synthesized_query: "island honeymoon with nightlife"
+              current_user_request: "same honeymoon idea but in Japan, with sushi and Mount Fuji"
+              synthesized_query: "island-style honeymoon in Japan focused on sushi and Mount Fuji"
 
-            - previous_synthesized_query: "quiet hiking trip in the Alps"
-              current_user_request: "actually make it near the sea and more about food"
-              synthesized_query: "quiet seaside trip with good food"
+            - previous_synthesized_query: "seaside trip"
+              current_user_request: "somewhere I can see sharks"
+              synthesized_query: "seaside trip where the user can see sharks"
+
+            - previous_synthesized_query: "mountain trip"
+              current_user_request: "I want Switzerland for fondue and the Matterhorn"
+              synthesized_query: "mountain trip in Switzerland focused on fondue and the Matterhorn"
 
             Output rules:
             - Return the synthesized query in the `synthesized_query` field.
-            - Do not include explanations.
             - Keep the result compact and retrieval-friendly.
-            - Keep the most important surviving keywords explicit in the final query.
+            - The `synthesized_query` should describe the general context of interest, not just a bag of keywords.
+            - The `synthesized_query` must exclude budget, season, month, weather, and logistics constraints.
             - Never return an empty synthesized query.
             - If the synthesis is uncertain, prefer preserving the latest clear user intent.
             """,

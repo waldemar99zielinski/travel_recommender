@@ -27,10 +27,10 @@ prompt = ChatPromptTemplate.from_messages(
 
             Important semantics for explicit values:
             - `explicit` is for concrete money amounts the user gave.
-            - Example: "I want to spend 200 euro per day" -> `explicit = { value: 200, operator: around, duration: day }`
-            - Example: "I want to spend at most 150 euro per day" -> `explicit = { value: 150, operator: max, duration: day }`
-            - Example: "I want to spend at least 300 per week" -> `explicit = { value: 300, operator: min, duration: week }`
-            - Example: "I want to spend 700 for the trip" -> resolve that to `explicit = { value: 700, operator: around, duration: week }`
+            - Example: "I want to spend 200 euro per day" -> `explicit = {{"value": 200, "operator": "around", "duration": "day"}}`
+            - Example: "I want to spend at most 150 euro per day" -> `explicit = {{"value": 150, "operator": "max", "duration": "day"}}`
+            - Example: "I want to spend at least 300 per week" -> `explicit = {{"value": 300, "operator": "min", "duration": "week"}}`
+            - Example: "I want to spend 700 for the trip" -> resolve that to `explicit = {{"value": 700, "operator": "around", "duration": "week"}}`
             - Assume an unspecified full trip lasts one week.
             - Do not convert explicit money amounts into low, medium, or high.
 
@@ -63,10 +63,10 @@ prompt = ChatPromptTemplate.from_messages(
             Examples:
             - "cheap trip" -> cost_term.inferred_level = low
             - "luxury escape" -> cost_term.inferred_level = high
-            - "I want to spend 200 euro per day" -> cost_term.explicit = {{ value: 200, operator: around, duration: day }}
-            - "I want to spend at most 150 euro per day" -> cost_term.explicit = {{ value: 150, operator: max, duration: day }}
-            - "I want to spend at least 300 per week" -> cost_term.explicit = {{ value: 300, operator: min, duration: week }}
-            - "I want to spend 700 for the trip" -> cost_term.explicit = {{ value: 700, operator: around, duration: week }}
+            - "I want to spend 200 euro per day" -> cost_term.explicit = {{"value": 200, "operator": "around", "duration": "day"}}
+            - "I want to spend at most 150 euro per day" -> cost_term.explicit = {{"value": 150, "operator": "max", "duration": "day"}}
+            - "I want to spend at least 300 per week" -> cost_term.explicit = {{"value": 300, "operator": "min", "duration": "week"}}
+            - "I want to spend 700 for the trip" -> cost_term.explicit = {{"value": 700, "operator": "around", "duration": "week"}}
             """,
         ),
         (

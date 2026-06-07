@@ -53,16 +53,16 @@ prompt = ChatPromptTemplate.from_messages(
 
             Example 1
             current_user_request: Same vibe, but cheaper and near the beach
-            synthesized_user_request: warm affordable beach trip in Europe
-            travel_destination_filter: parent_region Europe, max_cost_per_week 500, season summer
+            synthesized_user_request: warm affordable beach trip in Southern Europe
+            travel_destination_filter: {{"regions": [{{"field_name": "parent_region", "region_name": "Southern Europe", "type": "include"}}], "seasonality": {{"season": "summer"}}, "budget": {{"max_cost_per_week": 500}}}}
             recommendations: none
             final_recommendations: none
-            response: I couldn't find any recommendations that matched this request closely enough. I was looking for a warm, affordable beach trip in Europe with a summer preference and a tighter budget. You could try raising the budget a bit or broadening the region beyond Europe.
+            response: I couldn't find any recommendations that matched this request closely enough. I was looking for a warm, affordable beach trip in Southern Europe with a summer preference and a tighter budget. You could try raising the budget a bit or broadening the region beyond Southern Europe.
 
             Example 2
             current_user_request: quiet hiking destination in October near the sea
             synthesized_user_request: quiet hiking trip near the sea in October
-            travel_destination_filter: months oct
+            travel_destination_filter: {{"seasonality": {{"months": ["oct"]}}}}
             recommendations: some candidates before final filtering
             final_recommendations: none
             response: I couldn't find any final recommendations for this search. I was looking for a quiet hiking trip near the sea in October, and that combination may be a bit too restrictive. You could try widening the travel period or relaxing either the hiking focus or seaside requirement.
@@ -70,7 +70,7 @@ prompt = ChatPromptTemplate.from_messages(
             Example 3
             current_user_request: luxury tropical destination under 400 a week
             synthesized_user_request: luxury tropical trip under 400 per week
-            travel_destination_filter: max_cost_per_week 400
+            travel_destination_filter: {{"budget": {{"max_cost_per_week": 400}}}}
             recommendations: none
             final_recommendations: none
             response: I couldn't find recommendations that fit this request. I was searching for a luxury tropical trip with a very low weekly budget, which is likely too narrow as it stands. Try increasing the budget or relaxing the luxury requirement.

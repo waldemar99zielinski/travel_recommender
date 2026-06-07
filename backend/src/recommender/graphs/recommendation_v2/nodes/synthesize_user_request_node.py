@@ -55,7 +55,7 @@ def create_synthesize_user_request_node(
         )
 
         logger.verbose(
-            "Synthesized recommendation_v2 user request for user_id=%s, session_id=%s: %s",
+            "Synthesized recommendation_v2 user request for user_id=%s, session_id=%s: query=%s",
             state.session.user_id,
             state.session.session_id,
             synthesized_user_request.synthesized_query,
