@@ -24,13 +24,14 @@ prompt = ChatPromptTemplate.from_messages(
             - Do not include budget, season, month, weather, or logistics terms.
             - If no sufficiently specific concrete terms are present, return an empty array.
             - Do not include explanations.
+            - Keep the keywords as concise as possible up to one word.
 
             Examples:
             - synthesized_query: "city break in Rome focused on carbonara and the Colosseum"
               keywords: ["Rome", "carbonara", "Colosseum"]
 
             - synthesized_query: "island-style honeymoon in Japan focused on sushi and Mount Fuji"
-              keywords: ["Japan", "sushi", "Mount Fuji"]
+              keywords: ["Japan", "sushi", "Fuji"]
 
             - synthesized_query: "seaside trip where the user can see whale sharks"
               keywords: ["whale shark"]

@@ -33,6 +33,10 @@ class RecommendationV2SynthesizedUserRequestResult(BaseModel):
         ...,
         description="General context of interest synthesized for the current turn",
     )
+    keywords: list[str] = Field(
+        default_factory=list,
+        description="Concrete direct-search keywords extracted from the synthesized query",
+    )
 
 
 class RecommendationV2SynthesizedUserRequestAgent:
@@ -44,6 +48,9 @@ class RecommendationV2SynthesizedUserRequestAgent:
         llm: BaseChatModel,
     ) -> None:
         self._llm = llm
+        self._llm.bind(
+            temperature=0.1,
+        )
         self._prompt_template = prompt
         self._structured_output_llm = self._llm.with_structured_output(
             RecommendationV2SynthesizedUserRequestResult,

@@ -54,7 +54,7 @@ prompt = ChatPromptTemplate.from_messages(
             Example 1
             current_user_request: Same vibe, but cheaper and near the beach
             synthesized_user_request: warm affordable beach trip in Southern Europe
-            travel_destination_filter: {{"regions": [{{"field_name": "parent_region", "region_name": "Southern Europe", "type": "include"}}], "seasonality": {{"season": "summer"}}, "budget": {{"max_cost_per_week": 500}}}}
+            travel_destination_filter: {{"parent_region_filters": [{{"field_name": "parent_region", "region_name": "Southern Europe", "type": "include"}}], "seasonality": {{"season": "summer"}}, "budget": {{"max_cost_per_week": 500}}}}
             recommendations: none
             final_recommendations: none
             response: I couldn't find any recommendations that matched this request closely enough. I was looking for a warm, affordable beach trip in Southern Europe with a summer preference and a tighter budget. You could try raising the budget a bit or broadening the region beyond Southern Europe.

@@ -6,11 +6,17 @@ from recommender.graphs.recommendation_v2.agents.filter_extraction.budget.agent 
 from recommender.graphs.recommendation_v2.agents.filter_extraction.budget.models import (
     RecommendationV2BudgetFilterExtractionInput,
 )
-from recommender.graphs.recommendation_v2.agents.filter_extraction.regions.agent import (
-    RecommendationV2RegionsFilterExtractionAgent,
+from recommender.graphs.recommendation_v2.agents.filter_extraction.direct_region.agent import (
+    RecommendationV2DirectRegionFilterExtractionAgent,
 )
-from recommender.graphs.recommendation_v2.agents.filter_extraction.regions.models import (
-    RecommendationV2RegionsFilterExtractionInput,
+from recommender.graphs.recommendation_v2.agents.filter_extraction.direct_region.models import (
+    RecommendationV2DirectRegionFilterExtractionInput,
+)
+from recommender.graphs.recommendation_v2.agents.filter_extraction.parent_region.agent import (
+    RecommendationV2ParentRegionFilterExtractionAgent,
+)
+from recommender.graphs.recommendation_v2.agents.filter_extraction.parent_region.models import (
+    RecommendationV2ParentRegionFilterExtractionInput,
 )
 from recommender.graphs.recommendation_v2.agents.filter_extraction.season.agent import (
     RecommendationV2SeasonFilterExtractionAgent,
@@ -22,8 +28,10 @@ from recommender.graphs.recommendation_v2.agents.filter_extraction.season.models
 __all__ = [
     "RecommendationV2BudgetFilterExtractionAgent",
     "RecommendationV2BudgetFilterExtractionInput",
-    "RecommendationV2RegionsFilterExtractionAgent",
-    "RecommendationV2RegionsFilterExtractionInput",
+    "RecommendationV2DirectRegionFilterExtractionAgent",
+    "RecommendationV2DirectRegionFilterExtractionInput",
+    "RecommendationV2ParentRegionFilterExtractionAgent",
+    "RecommendationV2ParentRegionFilterExtractionInput",
     "RecommendationV2SeasonFilterExtractionAgent",
     "RecommendationV2SeasonFilterExtractionInput",
 ]
