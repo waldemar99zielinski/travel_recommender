@@ -15,6 +15,9 @@ from recommender.graphs.recommendation_v2.filter_models import (
     RecommendationV2RegionFilter,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
+from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
+    merge_parent_region_filters,
+)
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -42,7 +45,7 @@ def create_extract_parent_region_filter_node(
             )
         )
 
-        valid_filters: list[RecommendationV2RegionFilter] = []
+        extracted_filters: list[RecommendationV2RegionFilter] = []
         if result.parent_regions:
             for entry in result.parent_regions:
                 if entry.name not in _ALLOWED_PARENT_REGION_SET:
@@ -52,7 +55,7 @@ def create_extract_parent_region_filter_node(
                     )
                     continue
                 try:
-                    valid_filters.append(
+                    extracted_filters.append(
                         RecommendationV2RegionFilter(
                             field_name="parent_region",
                             region_name=entry.name,
@@ -64,6 +67,13 @@ def create_extract_parent_region_filter_node(
                         "Skipping invalid parent_region filter from LLM output: %s",
                         entry.model_dump(),
                     )
+
+        existing_filters = []
+        if state.previously_extracted_travel_destination_filter is not None:
+            existing_filters = (
+                state.previously_extracted_travel_destination_filter.parent_region_filters
+            )
+        valid_filters = merge_parent_region_filters(existing_filters, extracted_filters)
 
         logger.verbose(
             "Extracted recommendation_v2 parent-region filters for user_id=%s, session_id=%s: %s",

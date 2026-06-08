@@ -58,9 +58,7 @@ def compose_travel_destination_filter(
     )
 
     return RecommendationV2TravelDestinationFilter(
-        parent_region_filters=(
-            extracted_parent_region_filters or fallback_filter.parent_region_filters
-        ),
+        parent_region_filters=extracted_parent_region_filters,
         direct_region_filters=(
             extracted_direct_region_filters or fallback_filter.direct_region_filters
         ),
@@ -71,3 +69,31 @@ def compose_travel_destination_filter(
             extracted_budget_filter if has_budget else fallback_filter.budget
         ),
     )
+
+
+def merge_parent_region_filters(
+    existing_parent_region_filters: list[RecommendationV2RegionFilter],
+    updated_parent_region_filters: list[RecommendationV2RegionFilter],
+) -> list[RecommendationV2RegionFilter]:
+    merged_filters_by_region_name = {
+        region_filter.region_name: region_filter
+        for region_filter in existing_parent_region_filters
+    }
+
+    for updated_filter in updated_parent_region_filters:
+        existing_filter = merged_filters_by_region_name.get(updated_filter.region_name)
+        if existing_filter is None:
+            merged_filters_by_region_name[updated_filter.region_name] = updated_filter
+            continue
+
+        if updated_filter.type == "include":
+            merged_filters_by_region_name[updated_filter.region_name] = updated_filter
+            continue
+
+        if existing_filter.type == "include":
+            del merged_filters_by_region_name[updated_filter.region_name]
+            continue
+
+        merged_filters_by_region_name[updated_filter.region_name] = updated_filter
+
+    return list(merged_filters_by_region_name.values())
