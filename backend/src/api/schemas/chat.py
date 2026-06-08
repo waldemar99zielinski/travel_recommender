@@ -28,6 +28,7 @@ class ChatRecordDto(BaseModel):
     system_response: str = Field(default="")
     recommendations: list[dict[str, Any]] = Field(default_factory=list)
     travel_destinations_evaluations: list[dict[str, Any]] = Field(default_factory=list)
+    travel_destination_filter: dict[str, Any] = Field(default_factory=dict)
     included_regions_ids: list[str] = Field(default_factory=list)
     excluded_regions_ids: list[str] = Field(default_factory=list)
 
@@ -43,4 +44,5 @@ class ChatRecordDto(BaseModel):
             travel_destinations_evaluations=record.travel_destinations_evaluations,
             included_regions_ids=record.included_regions_ids,
             excluded_regions_ids=record.excluded_regions_ids,
+            travel_destination_filter=record.travel_destination_filter,
         )
