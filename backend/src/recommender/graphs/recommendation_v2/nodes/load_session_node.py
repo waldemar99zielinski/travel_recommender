@@ -8,7 +8,7 @@ from recommender.graphs.recommendation_v2.filter_models import (
     RecommendationV2TravelDestinationFilter,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
-from recommender.graphs.recommendation_v2.stream_events import emit_stream_event
+from recommender.graphs.recommendation_v2.stream_events import emit_stream_event, EventType
 from storage.models.chat_record import ChatRecord
 from storage.stores.chat_store import ChatStore
 from utils.logger import LoggerManager
@@ -48,7 +48,7 @@ def create_session_memory_load_node(
     def session_memory_load_node(
         state: RecommendationV2GraphState,
     ) -> dict[str, object]:
-        emit_stream_event("init", {})
+        emit_stream_event(EventType.INITIALIZING, {})
 
         logger.verbose(
             "Loading recommendation_v2 session memory for user_id=%s, session_id=%s",

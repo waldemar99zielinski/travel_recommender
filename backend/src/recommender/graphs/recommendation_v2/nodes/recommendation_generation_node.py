@@ -8,6 +8,7 @@ from recommender.graphs.recommendation_v2.filter_models import (
 from recommender.graphs.recommendation_v2.models import RecommendationV2
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
 from storage.stores.travel_destination_store import TravelDestinationStore
+from recommender.graphs.recommendation_v2.stream_events import StreamEventRecommendation, emit_stream_event, EventType
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -26,29 +27,23 @@ def create_recommendation_generation_node(
                 "Synthesized user request must be generated before generating recommendation_v2 candidates"
             )
 
-        base_filter = state.previously_extracted_travel_destination_filter
-        if base_filter is None:
-            base_filter = RecommendationV2TravelDestinationFilter()
-
-        travel_destination_filter = base_filter.model_copy(
-            update={
-                "regions": state.extracted_region_filters,
-                "seasonality": state.extracted_seasonality_filter or base_filter.seasonality,
-                "budget": state.extracted_budget_filter or base_filter.budget,
-            },
-        )
-
         query = state.synthesized_user_request
+        keywords = state.synthesized_user_request_keywords
 
         logger.verbose(
-            "Generating recommendation_v2 candidates for user_id=%s, session_id=%s with query=%s and travel_destination_filter=%s",
+            "Generating recommendation_v2 candidates for user_id=%s, session_id=%s with query=%s and keywords=%s",
             state.session.user_id,
             state.session.session_id,
             query,
-            travel_destination_filter.serialize(),
+            keywords,
         )
+        
+        emit_stream_event(EventType.RECOMMENDATION_GENERATION, {})
 
-        scored_destinations = travel_destination_store.semantic_search(query)
+        scored_destinations = travel_destination_store.keyword_boosted_search(
+            query,
+            keywords=keywords,
+        )
         recommendations = [
             RecommendationV2(
                 region_id=scored_destination.destination.id,
@@ -56,6 +51,8 @@ def create_recommendation_generation_node(
             )
             for scored_destination in scored_destinations
         ]
+
+        emit_stream_event(EventType.RECOMMENDATION, StreamEventRecommendation(recommendations).serialize())
 
         logger.verbose(
             "Generated %s recommendation_v2 candidates for user_id=%s, session_id=%s",
@@ -65,7 +62,6 @@ def create_recommendation_generation_node(
         )
 
         return {
-            "travel_destination_filter": travel_destination_filter,
             "recommendations": recommendations,
             "final_recommendations": list(recommendations),
         }

@@ -10,7 +10,8 @@ from recommender.graphs.recommendation_v2.agents.response_generation.out_of_scop
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
 from recommender.graphs.recommendation_v2.stream_events import (
-    build_recommendation_event_payload,
+    EventType,
+    StreamEventResponseMessage,
 )
 from recommender.graphs.recommendation_v2.stream_events import emit_stream_event
 from utils.logger import LoggerManager
@@ -37,6 +38,8 @@ def create_out_of_scope_response_generation_node(
             state.session.session_id,
         )
 
+        emit_stream_event(EventType.RESPONSE_GENERATION, {})    
+
         response_result = response_generation_agent.invoke(
             RecommendationV2OutOfScopeResponseGenerationInput(
                 current_user_request=state.user_request,
@@ -52,15 +55,9 @@ def create_out_of_scope_response_generation_node(
         )
 
         emit_stream_event(
-            "recommendation",
-            build_recommendation_event_payload(
-                session=state.session,
-                user_request=state.user_request,
-                system_response=response_result.response,
-                recommendations=state.final_recommendations or state.recommendations,
-                chat_history_number=len(state.history or []),
-            ),
+            EventType.RESPONSE, StreamEventResponseMessage(response_result.response).serialize()
         )
+
 
         return {
             "system_response": response_result.response,

@@ -15,7 +15,12 @@ from recommender.graphs.recommendation_v2.agents.response_generation.recommendat
     RecommendationV2RecommendationGeneratedResponseGenerationInput,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
+from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
+    compose_travel_destination_filter,
+)
 from recommender.graphs.recommendation_v2.stream_events import (
+    EventType,
+    StreamEventResponseMessage,
     build_recommendation_event_payload,
 )
 from recommender.graphs.recommendation_v2.stream_events import emit_stream_event
@@ -45,12 +50,22 @@ def create_recommendation_response_generation_node(
             len(state.final_recommendations) if state.final_recommendations is not None else None,
         )
 
+        emit_stream_event(EventType.RESPONSE_GENERATION, {})
+
+        travel_destination_filter = compose_travel_destination_filter(
+            extracted_parent_region_filters=state.extracted_parent_region_filters,
+            extracted_direct_region_filters=state.extracted_direct_region_filters,
+            extracted_seasonality_filter=state.extracted_seasonality_filter,
+            extracted_budget_filter=state.extracted_budget_filter,
+            fallback=state.previously_extracted_travel_destination_filter,
+        )
+
         if state.final_recommendations and len(state.final_recommendations) > 0:
             response_result = recommendation_generated_agent.invoke(
                 RecommendationV2RecommendationGeneratedResponseGenerationInput(
                     current_user_request=state.user_request,
                     synthesized_user_request=state.synthesized_user_request,
-                    travel_destination_filter=state.travel_destination_filter,
+                    travel_destination_filter=travel_destination_filter,
                     recommendations=state.final_recommendations,
                     chat_history=state.history,
                 )
@@ -60,7 +75,7 @@ def create_recommendation_response_generation_node(
                 RecommendationV2NoResultsForRecommendationResponseGenerationInput(
                     current_user_request=state.user_request,
                     synthesized_user_request=state.synthesized_user_request,
-                    travel_destination_filter=state.travel_destination_filter,
+                    travel_destination_filter=travel_destination_filter,
                     recommendations=state.recommendations,
                     final_recommendations=state.final_recommendations,
                     chat_history=state.history,
@@ -75,14 +90,7 @@ def create_recommendation_response_generation_node(
         )
 
         emit_stream_event(
-            "recommendation",
-            build_recommendation_event_payload(
-                session=state.session,
-                user_request=state.user_request,
-                system_response=response_result.response,
-                recommendations=state.final_recommendations or state.recommendations,
-                chat_history_number=len(state.history or []),
-            ),
+            EventType.RESPONSE, StreamEventResponseMessage(response_result.response).serialize()
         )
 
         return {

@@ -9,6 +9,7 @@ from recommender.graphs.recommendation_v2.agents.request_routing.request_routing
     RecommendationV2RequestRoutingInput,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
+from recommender.graphs.recommendation_v2.stream_events import emit_stream_event, EventType
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -33,12 +34,17 @@ def create_request_routing_node(
             state.session.session_id,
         )
 
+        emit_stream_event(EventType.VALIDATING_REQUEST, {})
+
         routing_result = request_routing_agent.invoke(
             RecommendationV2RequestRoutingInput(
                 current_user_request=state.user_request,
                 chat_history=state.history,
             )
         )
+
+        if routing_result.decision == "new_recommendation_run":
+            emit_stream_event(EventType.GATHERING_REQUIREMENTS, {})
 
         logger.verbose(
             "Routed recommendation_v2 request for user_id=%s, session_id=%s to %s",

@@ -10,6 +10,8 @@ from recommender.graphs.recommendation_v2.agents.response_generation.need_more_i
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
 from recommender.graphs.recommendation_v2.stream_events import (
+    EventType,
+    StreamEventResponseMessage,
     build_recommendation_event_payload,
 )
 from recommender.graphs.recommendation_v2.stream_events import emit_stream_event
@@ -37,6 +39,8 @@ def create_need_more_information_response_generation_node(
             state.session.session_id,
         )
 
+        emit_stream_event(EventType.RESPONSE_GENERATION, {})
+
         response_result = response_generation_agent.invoke(
             RecommendationV2NeedMoreInformationResponseGenerationInput(
                 current_user_request=state.user_request,
@@ -52,14 +56,7 @@ def create_need_more_information_response_generation_node(
         )
 
         emit_stream_event(
-            "recommendation",
-            build_recommendation_event_payload(
-                session=state.session,
-                user_request=state.user_request,
-                system_response=response_result.response,
-                recommendations=state.final_recommendations or state.recommendations,
-                chat_history_number=len(state.history or []),
-            ),
+            EventType.RESPONSE, StreamEventResponseMessage(response_result.response).serialize()
         )
 
         return {

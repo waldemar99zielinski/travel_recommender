@@ -13,7 +13,7 @@ from recommender.graphs.recommendation_v2.filter_models import (
     RecommendationV2TravelDestinationFilter,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
-from recommender.graphs.recommendation_v2.nodes.travel_destination_filter_node_utils import (
+from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
     latest_travel_destination_filter_from_history,
 )
 from utils.logger import LoggerManager
