@@ -13,7 +13,7 @@ export function ChatPromptCard({
     const canSubmit = message.trim().length > 0 && !isLoading;
 
     return (
-        <Stack direction="row" spacing={1} alignItems="flex-end">
+        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-end" }}>
             <TextField
                 fullWidth
                 minRows={1}
@@ -26,14 +26,16 @@ export function ChatPromptCard({
                     if (event.key === "Enter" && !event.shiftKey && !isLoading) {
                         event.preventDefault();
                         if (canSubmit) {
-                            onSubmit();
+                            void onSubmit();
                         }
                     }
                 }}
             />
             <IconButton
                 color="primary"
-                onClick={onSubmit}
+                onClick={() => {
+                    void onSubmit();
+                }}
                 disabled={!canSubmit}
                 aria-label={isLoading ? t("chat.loading") : t("chat.send")}
                 sx={{

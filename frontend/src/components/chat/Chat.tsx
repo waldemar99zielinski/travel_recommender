@@ -1,18 +1,27 @@
-import { Alert, Box, Card, Stack } from "@mui/material";
+import { Card, Stack } from "@mui/material";
 
 import type { ChatProps } from "@/components/chat/Chat.interfaces";
 import { ChatConversation } from "@/components/chat/components/ChatConversation";
+import { ChatConversationPanel } from "@/components/chat/components/ChatConversationPanel";
+import { ChatErrorAlert } from "@/components/chat/components/ChatErrorAlert";
+import { ChatHeaderActionBar } from "@/components/chat/components/ChatHeaderActionBar";
 import { ChatPromptCard } from "@/components/chat/components/ChatPromptCard";
+import { ChatPromptFooter } from "@/components/chat/components/ChatPromptFooter";
 
-export function Chat({
-    messages,
-    message,
-    onMessageChange,
-    onSubmit,
-    isLoading,
-    errorMessage,
-    headerAction,
-}: ChatProps) {
+
+export function Chat(props: ChatProps) {
+    const {
+        chatRecords,
+        onGoingChatTurn,
+        message,
+        onMessageChange,
+        onSubmit,
+        isLoading,
+        errorMessage,
+        loadingDetail,
+        headerAction,
+    } = props;
+
     return (
         <Stack
             sx={{
@@ -31,42 +40,24 @@ export function Chat({
                     overflow: "hidden",
                 }}
             >
-                {headerAction != null && (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            px: 1.5,
-                            py: 1,
-                            borderBottom: "1px solid",
-                            borderColor: "divider",
-                        }}
-                    >
-                        {headerAction}
-                    </Box>
-                )}
-                <Box sx={{ flex: 1, overflow: "auto", px: 1.5, py: 1.5 }}>
-                    <ChatConversation messages={messages} isLoading={isLoading} />
-                </Box>
-                {errorMessage != null && (
-                    <Box sx={{ px: 1.5, pb: 1 }}>
-                        <Alert severity="error">{errorMessage}</Alert>
-                    </Box>
-                )}
-                <Box
-                    sx={{
-                        borderTop: "1px solid",
-                        borderColor: "divider",
-                        p: 1.5,
-                    }}
-                >
+                <ChatHeaderActionBar headerAction={headerAction} />
+                <ChatConversationPanel>
+                    <ChatConversation
+                        chatRecords={chatRecords}
+                        onGoingChatTurn={onGoingChatTurn}
+                        isLoading={isLoading}
+                        loadingDetail={loadingDetail}
+                    />
+                </ChatConversationPanel>
+                <ChatErrorAlert errorMessage={errorMessage} />
+                <ChatPromptFooter>
                     <ChatPromptCard
                         message={message}
                         onMessageChange={onMessageChange}
                         onSubmit={onSubmit}
                         isLoading={isLoading}
                     />
-                </Box>
+                </ChatPromptFooter>
             </Card>
         </Stack>
     );

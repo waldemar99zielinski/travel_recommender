@@ -1,16 +1,29 @@
+import type { ReactNode } from "react";
+
 import { Box, Card, CardContent, Stack } from "@mui/material";
 
 import type { ChatMessageCardProps } from "@/components/chat/Chat.interfaces";
+import { ChatAssistantContent } from "@/components/chat/components/ChatAssistantContent";
 
-export function ChatMessageCard({ message }: ChatMessageCardProps) {
-    const isUser = message.role === "user";
-    const isClickable = message.onClick != null;
+function renderBubble(
+    content: ReactNode,
+    {
+        align,
+        isUser,
+        onClick,
+    }: {
+        align: "flex-start" | "flex-end";
+        isUser: boolean;
+        onClick?: () => void;
+    },
+) {
+    const isClickable = onClick != null;
 
     return (
-        <Stack alignItems={isUser ? "flex-end" : "flex-start"}>
+        <Stack sx={{ alignItems: align }}>
             <Card
                 variant="outlined"
-                onClick={message.onClick}
+                onClick={onClick}
                 sx={{
                     maxWidth: "85%",
                     bgcolor: isUser ? "primary.main" : "background.paper",
@@ -25,9 +38,7 @@ export function ChatMessageCard({ message }: ChatMessageCardProps) {
                         : undefined,
                 }}
             >
-                <CardContent
-                    sx={{ py: 1.25, px: 1.5, "&:last-child": { pb: 1.25 } }}
-                >
+                <CardContent sx={{ py: 1.25, px: 1.5, "&:last-child": { pb: 1.25 } }}>
                     <Box
                         sx={{
                             fontSize: 14,
@@ -35,10 +46,50 @@ export function ChatMessageCard({ message }: ChatMessageCardProps) {
                             whiteSpace: "pre-wrap",
                         }}
                     >
-                        {message.content}
+                        {content}
                     </Box>
                 </CardContent>
             </Card>
+        </Stack>
+    );
+}
+
+export function ChatMessageCard({
+    turn,
+    isStreaming = false,
+    loadingDetail = null,
+}: ChatMessageCardProps) {
+    const userRequest = turn.user_request?.trim();
+    const systemResponse = turn.system_response?.trim();
+    const showAssistantCard = isStreaming || Boolean(systemResponse);
+
+    return (
+        <Stack spacing={1}>
+            {userRequest &&
+                renderBubble(userRequest, {
+                    align: "flex-end",
+                    isUser: true,
+                })}
+            {showAssistantCard && (
+                <Stack sx={{ alignItems: "flex-start" }}>
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            maxWidth: "85%",
+                            bgcolor: "background.paper",
+                            opacity: isStreaming ? 0.96 : 1,
+                        }}
+                    >
+                        <CardContent sx={{ py: 1.25, px: 1.5, "&:last-child": { pb: 1.25 } }}>
+                            <ChatAssistantContent
+                                turn={turn}
+                                isStreaming={isStreaming}
+                                loadingDetail={loadingDetail}
+                            />
+                        </CardContent>
+                    </Card>
+                </Stack>
+            )}
         </Stack>
     );
 }
