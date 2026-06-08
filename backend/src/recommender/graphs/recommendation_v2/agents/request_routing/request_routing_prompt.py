@@ -37,11 +37,13 @@ prompt = ChatPromptTemplate.from_messages(
             - the user adds, removes, or changes recommendation constraints,
             - the user asks for alternatives or a different direction,
             - the user rejects a prior direction and wants replacements,
+            - the user provides a possible region, area description, climate direction, trip style, or other broad travel signal that can anchor recommendations,
             - the message is short on its own but becomes actionable once chat_history is considered.
 
             Actionable means there is enough signal to run recommendations now.
             Do not require a perfect specification.
-            If the user gives at least one meaningful preference, constraint, or clearly resolvable follow-up, prefer `new_recommendation_run`.
+            If the user gives at least one meaningful preference, constraint, broad regional hint, or clearly resolvable follow-up, prefer `new_recommendation_run`.
+            If the user describes a possible region in loose terms, such as north, south, Mediterranean, tropical, mountain area, or similar broad geography, prefer `new_recommendation_run` instead of asking for more detail.
 
             Choose `need_more_information_from_user` only when the request is still not actionable after using chat_history.
             Examples of not actionable:
@@ -66,6 +68,14 @@ prompt = ChatPromptTemplate.from_messages(
 
             - chat_history: none
               current_user_request: "I want a quiet hiking trip in October"
+              decision: new_recommendation_run
+
+            - chat_history: none
+              current_user_request: "somewhere in southern Europe with good beaches"
+              decision: new_recommendation_run
+
+            - chat_history: none
+              current_user_request: "I want to go cave exploring and diving"
               decision: new_recommendation_run
 
             - chat_history: none
