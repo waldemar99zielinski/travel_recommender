@@ -5,6 +5,7 @@ from fastapi import Depends
 
 from api.contracts.session_service import SessionServiceProtocol
 from api.dependencies import get_session_service
+from api.schemas.session import ChatRecordDto, SessionGetRequestDto
 from api.schemas.session import SessionCreateRequestDto
 from api.schemas.session import SessionCreateResponseDto
 from api.schemas.session import SessionDeleteResponseDto
@@ -32,7 +33,7 @@ def get_session(
     service: SessionServiceProtocol = Depends(get_session_service),
 ) -> SessionStateResponseDto:
     logger.info("Get session request: user_id=%s, session_id=%s", user_id, session_id)
-    return service.get_session(SessionRefDto(user_id=user_id, session_id=session_id))
+    return service.get_session(SessionGetRequestDto(user_id=user_id, session_id=session_id))
 
 
 @router.delete("/{user_id}/{session_id}", response_model=SessionDeleteResponseDto)
@@ -42,4 +43,4 @@ def delete_session(
     service: SessionServiceProtocol = Depends(get_session_service),
 ) -> SessionDeleteResponseDto:
     logger.info("Delete session request: user_id=%s, session_id=%s", user_id, session_id)
-    return service.delete_session(SessionRefDto(user_id=user_id, session_id=session_id))
+    return service.delete_session(SessionGetRequestDto(user_id=user_id, session_id=session_id))

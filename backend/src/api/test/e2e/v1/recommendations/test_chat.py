@@ -23,8 +23,7 @@ class TestRecommendationsChatE2E(unittest.TestCase):
 
     def test_chat_endpoint_returns_recommendations(self) -> None:
         payload = {
-            "user_id": "user-123",
-            "session_id": "session-abc",
+            "session": {"user_id": "user-123", "session_id": "session-abc"},
             "message": "I want a peaceful city break",
         }
 
@@ -44,8 +43,7 @@ class TestRecommendationsChatE2E(unittest.TestCase):
 
     def test_chat_endpoint_rejects_invalid_payload(self) -> None:
         payload = {
-            "user_id": "",
-            "session_id": "session-abc",
+            "session": {"user_id": "", "session_id": "session-abc"},
             "message": "",
         }
 

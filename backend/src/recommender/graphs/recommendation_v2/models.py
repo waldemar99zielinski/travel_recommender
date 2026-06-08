@@ -66,26 +66,18 @@ class RecommendationV2GraphState(BaseModel):
         None,
         description="Synthetically generated user request from the previous turn, used to detect changes in user intent",
     )
-    included_regions_ids_from_request: list[str] = Field(
-        default_factory=list,
-        description="Region IDs explicitly preferred by the user",
-    )
-    excluded_regions_ids_from_request: list[str] = Field(
-        default_factory=list,
-        description="Region IDs explicitly excluded by the user",
-    )
     #TODO load this in the session load
     previously_extracted_travel_destination_filter: RecommendationV2TravelDestinationFilter | None = Field(
         None,
         description="Travel destination filter extracted from the previous turn, used to detect changes in user intent",
     )
-    travel_destination_filter: RecommendationV2TravelDestinationFilter | None = Field(
-        None,
-        description="Structured catalog filters extracted from the conversation state",
-    )
-    extracted_region_filters: list[RecommendationV2RegionFilter] = Field(
+    extracted_parent_region_filters: list[RecommendationV2RegionFilter] = Field(
         default_factory=list,
-        description="Region filters extracted for the current turn",
+        description="Parent-region filters extracted from the current turn with include/exclude intent",
+    )
+    extracted_direct_region_filters: list[RecommendationV2RegionFilter] = Field(
+        default_factory=list,
+        description="Direct region filters extracted from the current turn with include/exclude intent",
     )
     extracted_seasonality_filter: RecommendationV2SeasonalityFilter | None = Field(
         None,
@@ -94,6 +86,10 @@ class RecommendationV2GraphState(BaseModel):
     extracted_budget_filter: RecommendationV2BudgetFilter | None = Field(
         None,
         description="Budget filter extracted for the current turn",
+    )
+    gathered_travel_destination_filter: RecommendationV2TravelDestinationFilter | None = Field(
+        None,
+        description="Composed travel destination filter assembled by gather_requirements_node, used downstream for response generation and persistence",
     )
     system_response: str | None = Field(
         None,

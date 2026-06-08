@@ -7,11 +7,14 @@ from recommender.graphs.recommendation_v2.filter_models import RecommendationV2B
 from recommender.graphs.recommendation_v2.filter_models import RecommendationV2RegionFilter
 from recommender.graphs.recommendation_v2.filter_models import RecommendationV2SeasonalityFilter
 from recommender.graphs.recommendation_v2.filter_models import RecommendationV2TravelDestinationFilter
+from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
+    compose_travel_destination_filter,
+)
 
 
-class TestRecommendationV2TravelDestinationFilter(unittest.TestCase):
-    def test_serializes_into_category_object(self) -> None:
-        travel_destination_filter = RecommendationV2TravelDestinationFilter(
+class TestComposeTravelDestinationFilter(unittest.TestCase):
+    def test_uses_fallback_per_missing_category(self) -> None:
+        fallback = RecommendationV2TravelDestinationFilter(
             parent_region_filters=[
                 RecommendationV2RegionFilter(
                     field_name="parent_region",
@@ -19,17 +22,36 @@ class TestRecommendationV2TravelDestinationFilter(unittest.TestCase):
                     type="include",
                 )
             ],
-            seasonality=RecommendationV2SeasonalityFilter(
-                season="summer",
-                months=["jun", "jul"],
-            ),
+            direct_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="region",
+                    region_name="Spain",
+                    type="exclude",
+                )
+            ],
+            seasonality=RecommendationV2SeasonalityFilter(months=["jun"]),
             budget=RecommendationV2BudgetFilter(
                 cost_term=CostTerm.model_validate({"inferred_level": "medium"}),
             ),
         )
 
+        composed = compose_travel_destination_filter(
+            extracted_parent_region_filters=[],
+            extracted_direct_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="region",
+                    region_name="Greece",
+                    type="include",
+                )
+            ],
+            extracted_seasonality_filter=None,
+            extracted_budget_filter=RecommendationV2BudgetFilter(),
+            fallback=fallback,
+        )
+
+        self.assertIsNot(composed, fallback)
         self.assertEqual(
-            travel_destination_filter.serialize(),
+            composed.serialize(),
             {
                 "parent_region_filters": [
                     {
@@ -38,9 +60,15 @@ class TestRecommendationV2TravelDestinationFilter(unittest.TestCase):
                         "type": "include",
                     }
                 ],
+                "direct_region_filters": [
+                    {
+                        "field_name": "region",
+                        "region_name": "Greece",
+                        "type": "include",
+                    }
+                ],
                 "seasonality": {
-                    "season": "summer",
-                    "months": ["jun", "jul"],
+                    "months": ["jun"],
                 },
                 "budget": {
                     "cost_term": {
@@ -49,8 +77,6 @@ class TestRecommendationV2TravelDestinationFilter(unittest.TestCase):
                 },
             },
         )
-
-
 
 
 if __name__ == "__main__":

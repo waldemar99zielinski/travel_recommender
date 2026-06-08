@@ -6,14 +6,14 @@ from langgraph.graph import StateGraph
 from recommender.graphs.recommendation_v2.agents.filter_extraction.budget.agent import (
     RecommendationV2BudgetFilterExtractionAgent,
 )
-from recommender.graphs.recommendation_v2.agents.filter_extraction.regions.agent import (
-    RecommendationV2RegionsFilterExtractionAgent,
+from recommender.graphs.recommendation_v2.agents.filter_extraction.direct_region.agent import (
+    RecommendationV2DirectRegionFilterExtractionAgent,
+)
+from recommender.graphs.recommendation_v2.agents.filter_extraction.parent_region.agent import (
+    RecommendationV2ParentRegionFilterExtractionAgent,
 )
 from recommender.graphs.recommendation_v2.agents.filter_extraction.season.agent import (
     RecommendationV2SeasonFilterExtractionAgent,
-)
-from recommender.graphs.recommendation_v2.agents.query_keyword_extraction.agent import (
-    RecommendationV2QueryKeywordExtractionAgent,
 )
 from recommender.graphs.recommendation_v2.agents.query_synthesis.query_synthesis_agent import (
     RecommendationV2SynthesizedUserRequestAgent,
@@ -37,14 +37,17 @@ from recommender.graphs.recommendation_v2.models import RecommendationV2GraphSta
 from recommender.graphs.recommendation_v2.nodes.extract_budget_filter_node import (
     create_extract_budget_filter_node,
 )
-from recommender.graphs.recommendation_v2.nodes.extract_query_keyword_node import (
-    create_extract_query_keyword_node,
+from recommender.graphs.recommendation_v2.nodes.extract_direct_region_filter_node import (
+    create_extract_direct_region_filter_node,
 )
-from recommender.graphs.recommendation_v2.nodes.extract_regions_filter_node import (
-    create_extract_regions_filter_node,
+from recommender.graphs.recommendation_v2.nodes.extract_parent_region_filter_node import (
+    create_extract_parent_region_filter_node,
 )
 from recommender.graphs.recommendation_v2.nodes.extract_season_filter_node import (
     create_extract_season_filter_node,
+)
+from recommender.graphs.recommendation_v2.nodes.gather_requirements_node import (
+    create_gather_requirements_node,
 )
 from recommender.graphs.recommendation_v2.nodes.load_session_node import (
     create_session_memory_load_node,
@@ -97,11 +100,11 @@ def build_recommendation_v2_graph(
     synthesize_user_request_node = create_synthesize_user_request_node(
         RecommendationV2SynthesizedUserRequestAgent(llm=llm),
     )
-    extract_query_keyword_node = create_extract_query_keyword_node(
-        RecommendationV2QueryKeywordExtractionAgent(llm=llm),
+    extract_parent_region_filter_node = create_extract_parent_region_filter_node(
+        RecommendationV2ParentRegionFilterExtractionAgent(llm=llm),
     )
-    extract_regions_filter_node = create_extract_regions_filter_node(
-        RecommendationV2RegionsFilterExtractionAgent(llm=llm),
+    extract_direct_region_filter_node = create_extract_direct_region_filter_node(
+        RecommendationV2DirectRegionFilterExtractionAgent(llm=llm),
     )
     extract_season_filter_node = create_extract_season_filter_node(
         RecommendationV2SeasonFilterExtractionAgent(llm=llm),
@@ -109,6 +112,7 @@ def build_recommendation_v2_graph(
     extract_budget_filter_node = create_extract_budget_filter_node(
         RecommendationV2BudgetFilterExtractionAgent(llm=llm),
     )
+    gather_requirements_node = create_gather_requirements_node()
     recommendation_generation_node = create_recommendation_generation_node(
         travel_destination_store,
     )
@@ -129,10 +133,11 @@ def build_recommendation_v2_graph(
     graph_builder.add_node(session_load_node.__name__, session_load_node)
     graph_builder.add_node(request_routing_node.__name__, request_routing_node)
     graph_builder.add_node(synthesize_user_request_node.__name__, synthesize_user_request_node)
-    graph_builder.add_node(extract_query_keyword_node.__name__, extract_query_keyword_node)
-    graph_builder.add_node(extract_regions_filter_node.__name__, extract_regions_filter_node)
+    graph_builder.add_node(extract_parent_region_filter_node.__name__, extract_parent_region_filter_node)
+    graph_builder.add_node(extract_direct_region_filter_node.__name__, extract_direct_region_filter_node)
     graph_builder.add_node(extract_season_filter_node.__name__, extract_season_filter_node)
     graph_builder.add_node(extract_budget_filter_node.__name__, extract_budget_filter_node)
+    graph_builder.add_node(gather_requirements_node.__name__, gather_requirements_node)
     graph_builder.add_node(recommendation_generation_node.__name__, recommendation_generation_node)
     graph_builder.add_node(
         recommendation_response_generation_node.__name__,
@@ -162,7 +167,8 @@ def build_recommendation_v2_graph(
         if state.request_routing_decision == "new_recommendation_run":
             return [
                 synthesize_user_request_node.__name__,
-                extract_regions_filter_node.__name__,
+                extract_parent_region_filter_node.__name__,
+                extract_direct_region_filter_node.__name__,
                 extract_season_filter_node.__name__,
                 extract_budget_filter_node.__name__,
             ]
@@ -170,7 +176,7 @@ def build_recommendation_v2_graph(
         if state.request_routing_decision == "need_more_information_from_user":
             return need_more_information_response_generation_node.__name__
 
-        if state.request_routing_decision == "out_of_scope_request":
+        if state.request_routing_decision == "out_of_system_scope":
             return out_of_scope_response_generation_node.__name__
 
         raise RuntimeError(
@@ -191,24 +197,31 @@ def build_recommendation_v2_graph(
         session_save_node.__name__,
     )
 
+    # parallel execution fan out
     graph_builder.add_edge(
         synthesize_user_request_node.__name__,
-        extract_query_keyword_node.__name__,
+        gather_requirements_node.__name__,
     )
     graph_builder.add_edge(
-        extract_query_keyword_node.__name__,
-        recommendation_generation_node.__name__,
+        extract_parent_region_filter_node.__name__,
+        gather_requirements_node.__name__,
     )
     graph_builder.add_edge(
-        extract_regions_filter_node.__name__,
-        recommendation_generation_node.__name__,
+        extract_direct_region_filter_node.__name__,
+        gather_requirements_node.__name__,
     )
     graph_builder.add_edge(
         extract_season_filter_node.__name__,
-        recommendation_generation_node.__name__,
+        gather_requirements_node.__name__,
     )
     graph_builder.add_edge(
         extract_budget_filter_node.__name__,
+        gather_requirements_node.__name__,
+    )
+
+    # requirement fan in node
+    graph_builder.add_edge(
+        gather_requirements_node.__name__,
         recommendation_generation_node.__name__,
     )
     graph_builder.add_edge(

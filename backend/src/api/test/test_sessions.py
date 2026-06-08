@@ -7,10 +7,11 @@ from api.core.configuration import ApiConfiguration
 from api.core.configuration import ApiEnvironment
 from api.core.configuration import ApiLogLevel
 from api.core.exceptions import SessionNotFoundError
-from api.schemas.chat_message import create_text_chat_message
+from api.schemas.chat import create_text_chat_message
 from api.schemas.recommendation import RecommendationRequestDto
 from api.schemas.recommendation import RecommendationResponseDto
 from api.schemas.session import SessionCreateRequestDto
+from api.schemas.session import SessionGetRequestDto
 from api.schemas.session import SessionCreateResponseDto
 from api.schemas.session import SessionDeleteResponseDto
 from api.schemas.session import SessionRefDto
@@ -34,14 +35,18 @@ class FakeSessionService:
         self._sessions.add((session.user_id, session.session_id))
         return SessionCreateResponseDto(session=session)
 
-    def get_session(self, session: SessionRefDto) -> SessionStateResponseDto:
+    def get_session(self, session: SessionGetRequestDto) -> SessionStateResponseDto:
         if (session.user_id, session.session_id) not in self._sessions:
             raise SessionNotFoundError(user_id=session.user_id, session_id=session.session_id)
-        return SessionStateResponseDto(session=session)
+        return SessionStateResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
-    def delete_session(self, session: SessionRefDto) -> SessionDeleteResponseDto:
+    def delete_session(self, session: SessionGetRequestDto) -> SessionDeleteResponseDto:
         self._sessions.discard((session.user_id, session.session_id))
-        return SessionDeleteResponseDto(session=session)
+        return SessionDeleteResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
 
 class FakeEmbeddingModel:
@@ -102,11 +107,12 @@ class TestSessionEndpoints(unittest.TestCase):
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(delete_response.status_code, 200)
         get_body = get_response.json()
-        self.assertEqual(get_body["history"], [])
-        self.assertEqual(get_body["last_recommendation_result"], [])
+        self.assertEqual(get_body["chat_history"], [])
+        self.assertEqual(get_body["session"]["version"], "v1")
         delete_body = delete_response.json()
         self.assertEqual(delete_body["session"]["user_id"], "user-1")
         self.assertEqual(delete_body["session"]["session_id"], "session-1")
+        self.assertEqual(delete_body["session"]["version"], "v1")
 
 
 if __name__ == "__main__":

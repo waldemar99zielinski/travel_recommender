@@ -6,21 +6,21 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from api.dependencies import get_recommendation_v2_service
+from api.dependencies import get_recommendation_v0_service
 from api.schemas.recommendation import RecommendationRequestDto
 from utils.logger import LoggerManager
 
-router = APIRouter(prefix="/api/v2/recommendations")
+router = APIRouter(prefix="/api/v0/recommendations")
 logger = LoggerManager.get_logger(__name__)
 
 
 @router.post("/chat")
 async def chat_stream(
     payload: RecommendationRequestDto,
-    service: Any = Depends(get_recommendation_v2_service),
+    service: Any = Depends(get_recommendation_v0_service),
 ):
     logger.info(
-        "Recommendation v2 chat streaming request: user_id=%s, session_id=%s",
+        "Recommendation v0 chat streaming request: user_id=%s, session_id=%s",
         payload.session.user_id,
         payload.session.session_id,
     )

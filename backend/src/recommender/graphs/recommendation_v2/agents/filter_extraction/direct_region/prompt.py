@@ -15,29 +15,23 @@ prompt = ChatPromptTemplate.from_messages(
             f"""
             You extract specific direct-region filters for the current recommendation_v2 chat turn.
 
+            CRITICAL RULE — READ CAREFULLY:
+            Only return regions when the user EXPLICITLY names a country, island, city, or named destination area.
+            If the user talks about anything else (vibe, activities, budget, season, food, etc.) without naming a specific place, you MUST return null.
+
             Inputs:
             - current_user_request: the raw user request for this turn
-
-            Goal:
-            - Return direct region filters based only on the current_user_request.
-            - Map every extracted filter to an allowed direct region value with include or exclude intent.
-            - Extract regions only when the user explicitly mentions a specific country, island,
-              or named destination area from the allowed list.
-            - If the user does not explicitly mention a specific region, return null for `regions`.
-            - If you are able to figure out how its mapped to a certain region based on your knowledge do it, otherwise leave empty.
 
             Allowed direct region values:
             {allowed_direct_region_values}
 
             Rules:
             - Use only the current_user_request.
-            - Do not infer a region from vibe, climate, food, language, landmarks, activities, or other indirect hints.
-            - Map natural user phrasing to the closest allowed value when the intent is clear.
-            - Generalise country names to the allowed sub-regions that belong to that country. For example:
-              "Brazil" → one of: Brazil Central West, Brazil North, Brazil Northeast, Brazil South, Brazil Southeast.
-              "USA" or "United States" or "America" → one of: USA Alaska, USA California, USA Florida, USA Great Plains, USA Hawaii, USA Mid-Atlantic, USA Midwest, USA New England, USA Pacific Northwest, USA Rocky Mountains, USA South, USA Southwest, USA Texas.
-              Use your knowledge to map the user's mention to the most appropriate sub-region based on context (e.g., "beaches in Brazil" → Brazil Northeast or Brazil Southeast; "skiing in the US" → USA Rocky Mountains).
-            - If the request does not explicitly include or exclude one of the allowed values, return null.
+            - NEVER infer a region from vibe, climate, food, language, landmarks, activities, or other indirect hints.
+            - NEVER fill regions just because the user mentioned travel or destinations in general.
+            - ONLY fill when a concrete geographic name is explicitly mentioned (country, island, city, or named destination area).
+            - If a country is mentioned without a specific sub-region context, use your knowledge to pick the most appropriate sub-region from the allowed list. For example: "Brazil" with beach context → Brazil Northeast; "USA" without specifics → USA California (most commonly visited); "Brazil" without specifics → Brazil Southeast (most populated).
+            - If in doubt, return null.
             - Do not invent regions.
             - Do not return values outside the allowed list.
             - Do not return season, month, budget, price, or activity filters.
@@ -47,22 +41,44 @@ prompt = ChatPromptTemplate.from_messages(
             - Use type="exclude" when the user rules that region out.
 
             Examples:
-            - current_user_request: "I want Japan, especially for sushi"
-              regions: [{{{{"name": "Japan", "type": "include"}}}}]
-            - current_user_request: "Somewhere like Italy and Malta"
-              regions: [{{{{"name": "Italy and Malta", "type": "include"}}}}]
-            - current_user_request: "Anywhere in Southern Europe except Italy and Malta"
-              regions: [{{{{"name": "Italy and Malta", "type": "exclude"}}}}]
-            - current_user_request: "beach destination in Brazil"
-              regions: [{{{{"name": "Brazil Northeast", "type": "include"}}}}]
-            - current_user_request: "A road trip across the USA"
-              regions: [{{{{"name": "USA California", "type": "include"}}}}, {{{{ "name": "USA Midwest", "type": "include"}}}}, {{{{ "name": "USA Texas", "type": "include"}}}}]
-            - current_user_request: "National parks in the United States"
-              regions: [{{{{"name": "USA Rocky Mountains", "type": "include"}}}}]
-            - current_user_request: "beach destination in the Caribbean"
-              regions: null
-            - current_user_request: "I want beaches, good food, and a quiet vibe"
-              regions: null
+
+            current_user_request: "I want Japan, especially for sushi"
+            regions: [{{{{"name": "Japan", "type": "include"}}}}]
+
+            current_user_request: "Somewhere like Italy and Malta"
+            regions: [{{{{"name": "Italy and Malta", "type": "include"}}}}]
+
+            current_user_request: "Anywhere in Southern Europe except Italy and Malta"
+            regions: [{{{{"name": "Italy and Malta", "type": "exclude"}}}}]
+
+            current_user_request: "beach destination in Brazil"
+            regions: [{{{{"name": "Brazil Northeast", "type": "include"}}}}]
+
+            current_user_request: "A road trip across the USA"
+            regions: [{{{{"name": "USA California", "type": "include"}}}}, {{{{ "name": "USA Midwest", "type": "include"}}}}, {{{{ "name": "USA Texas", "type": "include"}}}}]
+
+            current_user_request: "National parks in the United States"
+            regions: [{{{{"name": "USA Rocky Mountains", "type": "include"}}}}]
+
+            --- These must return null (no specific place explicitly named) ---
+
+            current_user_request: "beach destination in the Caribbean"
+            regions: null
+
+            current_user_request: "I want beaches, good food, and a quiet vibe"
+            regions: null
+
+            current_user_request: "Same vibe, but cheaper and near the beach"
+            regions: null
+
+            current_user_request: "Show me something romantic and warm"
+            regions: null
+
+            current_user_request: "I want a quiet hiking trip in October"
+            regions: null
+
+            current_user_request: "luxury tropical destination under 400 a week"
+            regions: null
             """,
         ),
         (

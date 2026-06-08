@@ -15,9 +15,6 @@ from recommender.graphs.recommendation_v2.agents.response_generation.recommendat
     RecommendationV2RecommendationGeneratedResponseGenerationInput,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
-from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
-    compose_travel_destination_filter,
-)
 from recommender.graphs.recommendation_v2.stream_events import (
     EventType,
     StreamEventResponseMessage,
@@ -52,13 +49,7 @@ def create_recommendation_response_generation_node(
 
         emit_stream_event(EventType.RESPONSE_GENERATION, {})
 
-        travel_destination_filter = compose_travel_destination_filter(
-            extracted_parent_region_filters=state.extracted_parent_region_filters,
-            extracted_direct_region_filters=state.extracted_direct_region_filters,
-            extracted_seasonality_filter=state.extracted_seasonality_filter,
-            extracted_budget_filter=state.extracted_budget_filter,
-            fallback=state.previously_extracted_travel_destination_filter,
-        )
+        travel_destination_filter = state.gathered_travel_destination_filter
 
         if state.final_recommendations and len(state.final_recommendations) > 0:
             response_result = recommendation_generated_agent.invoke(

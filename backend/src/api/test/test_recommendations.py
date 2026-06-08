@@ -1,4 +1,8 @@
+from __future__ import annotations
+
+import json
 import unittest
+from collections.abc import AsyncGenerator
 
 from fastapi.testclient import TestClient
 
@@ -6,31 +10,38 @@ from api.app import create_app
 from api.core.configuration import ApiConfiguration
 from api.core.configuration import ApiEnvironment
 from api.core.configuration import ApiLogLevel
-from api.schemas.chat_message import create_text_chat_message
-from api.schemas.recommendation import RecommendationItemDto
 from api.schemas.recommendation import RecommendationRequestDto
-from api.schemas.recommendation import RecommendationResponseDto
 from api.schemas.session import SessionCreateRequestDto
+from api.schemas.session import SessionGetRequestDto
 from api.schemas.session import SessionCreateResponseDto
 from api.schemas.session import SessionDeleteResponseDto
 from api.schemas.session import SessionRefDto
 from api.schemas.session import SessionStateResponseDto
+from api.utils.sse import MESSAGE_DELIMITER, format_sse
 from storage.health import StorageHealthReport
 
 
 class FakeRecommendationService:
-    def chat(self, request: RecommendationRequestDto) -> RecommendationResponseDto:
-        return RecommendationResponseDto(
-            messages=[create_text_chat_message(f"Recommendations for: {request.message}")],
-            recommendations=[
-                RecommendationItemDto(
-                    id="destination-1",
-                    title="Zurich",
-                    score=0.91,
-                    description="A quiet city with lake views and nearby mountains.",
-                ),
-            ],
+    async def chat_stream(
+        self,
+        request: RecommendationRequestDto,
+    ) -> AsyncGenerator[str, None]:
+        yield format_sse("init", {})
+        yield format_sse(
+            "recommendation",
+            {
+                "user_id": request.session.user_id,
+                "session_id": request.session.session_id,
+                "chat_history_number": 0,
+                "user_request": request.message,
+                "system_response": f"Recommendations for: {request.message}",
+                "recommendations": [{"region_id": "ch-zurich", "explanation": "Good match for the requested trip."}],
+                "travel_destinations_evaluations": [],
+                "included_regions_ids": [],
+                "excluded_regions_ids": [],
+            },
         )
+        yield format_sse("completed", {})
 
 
 class FakeSessionService:
@@ -38,11 +49,15 @@ class FakeSessionService:
         _ = request
         return SessionCreateResponseDto(session=SessionRefDto(user_id="u", session_id="s"))
 
-    def get_session(self, session: SessionRefDto) -> SessionStateResponseDto:
-        return SessionStateResponseDto(session=session)
+    def get_session(self, session: SessionGetRequestDto) -> SessionStateResponseDto:
+        return SessionStateResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
-    def delete_session(self, session: SessionRefDto) -> SessionDeleteResponseDto:
-        return SessionDeleteResponseDto(session=session)
+    def delete_session(self, session: SessionGetRequestDto) -> SessionDeleteResponseDto:
+        return SessionDeleteResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
 
 class FakeEmbeddingModel:
@@ -74,21 +89,58 @@ def create_test_client() -> TestClient:
         host="127.0.0.1",
         port=8000,
     )
+    fake = FakeRecommendationService()
     app = create_app(
         configuration=configuration,
         embedding_model=FakeEmbeddingModel(),
         storage=FakeStorage(),
-        recommendation_service=FakeRecommendationService(),
+        recommendation_v0_service=fake,
+        recommendation_v1_service=fake,
         session_service=FakeSessionService(),
     )
     return TestClient(app)
 
 
+def _parse_sse_events(text: str) -> list[dict]:
+    events = []
+    for block in text.strip().split(MESSAGE_DELIMITER):
+        if not block.strip():
+            continue
+        lines = block.strip().split("\n")
+        event = ""
+        data = ""
+        for line in lines:
+            if line.startswith("event: "):
+                event = line[7:]
+            elif line.startswith("data: "):
+                data = line[6:]
+        if event or data:
+            events.append({"event": event, "data": json.loads(data) if data else {}})
+    return events
+
+
 class TestRecommendationEndpoints(unittest.TestCase):
-    def test_chat_endpoint_returns_placeholder_response(self) -> None:
+    def test_chat_v0_endpoint_returns_sse_stream(self) -> None:
         payload = {
-            "user_id": "user-1",
-            "session_id": "session-1",
+            "session": {"user_id": "user-1", "session_id": "session-1"},
+            "message": "Recommend a calm trip",
+        }
+
+        with create_test_client() as client:
+            response = client.post("/api/v0/recommendations/chat", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["content-type"], "text/event-stream; charset=utf-8")
+
+        events = _parse_sse_events(response.text)
+        self.assertGreaterEqual(len(events), 2)
+        self.assertEqual(events[0]["event"], "init")
+        recommendation_event = next(e for e in events if e["event"] == "recommendation")
+        self.assertEqual(recommendation_event["data"]["user_request"], "Recommend a calm trip")
+
+    def test_chat_endpoint_returns_sse_stream(self) -> None:
+        payload = {
+            "session": {"user_id": "user-1", "session_id": "session-1"},
             "message": "Recommend a calm trip",
         }
 
@@ -96,19 +148,30 @@ class TestRecommendationEndpoints(unittest.TestCase):
             response = client.post("/api/v1/recommendations/chat", json=payload)
 
         self.assertEqual(response.status_code, 200)
-        body = response.json()
-        self.assertEqual(len(body["messages"]), 1)
-        self.assertEqual(body["messages"][0]["type"], "text")
+        self.assertEqual(response.headers["content-type"], "text/event-stream; charset=utf-8")
+
+        events = _parse_sse_events(response.text)
+        self.assertGreaterEqual(len(events), 2)
+
+        self.assertEqual(events[0]["event"], "init")
+        self.assertEqual(events[0]["data"], {})
+
+        recommendation_event = next(e for e in events if e["event"] == "recommendation")
+        self.assertIn("system_response", recommendation_event["data"])
+        self.assertIn("recommendations", recommendation_event["data"])
+        self.assertEqual(recommendation_event["data"]["user_request"], "Recommend a calm trip")
         self.assertEqual(
-            body["messages"][0]["context"]["text"],
+            recommendation_event["data"]["system_response"],
             "Recommendations for: Recommend a calm trip",
         )
-        self.assertEqual(len(body["recommendations"]), 1)
+        self.assertEqual(len(recommendation_event["data"]["recommendations"]), 1)
+
+        completed_event = next(e for e in events if e["event"] == "completed")
+        self.assertEqual(completed_event["data"], {})
 
     def test_chat_endpoint_validates_payload(self) -> None:
         payload = {
-            "user_id": "",
-            "session_id": "session-1",
+            "session": {"user_id": "", "session_id": "session-1"},
             "message": "",
         }
 
@@ -118,27 +181,6 @@ class TestRecommendationEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         body = response.json()
         self.assertEqual(body["code"], "validation_error")
-
-    def test_chat_v2_endpoint_returns_placeholder_response(self) -> None:
-        payload = {
-            "user_id": "user-1",
-            "session_id": "session-1",
-            "message": "Recommend a calm trip",
-        }
-
-        with create_test_client() as client:
-            response = client.post("/api/v2/recommendations/chat", json=payload)
-
-        self.assertEqual(response.status_code, 200)
-        body = response.json()
-        self.assertEqual(len(body["messages"]), 1)
-        self.assertEqual(body["messages"][0]["type"], "text")
-        self.assertEqual(
-            body["messages"][0]["context"]["text"],
-            "Recommendations for: Recommend a calm trip",
-        )
-        self.assertEqual(len(body["recommendations"]), 1)
-
 
 if __name__ == "__main__":
     unittest.main()

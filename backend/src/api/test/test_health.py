@@ -7,10 +7,11 @@ from api.app import create_app
 from api.core.configuration import ApiConfiguration
 from api.core.configuration import ApiEnvironment
 from api.core.configuration import ApiLogLevel
-from api.schemas.chat_message import create_text_chat_message
+from api.schemas.chat import create_text_chat_message
 from api.schemas.recommendation import RecommendationRequestDto
 from api.schemas.recommendation import RecommendationResponseDto
 from api.schemas.session import SessionCreateRequestDto
+from api.schemas.session import SessionGetRequestDto
 from api.schemas.session import SessionCreateResponseDto
 from api.schemas.session import SessionDeleteResponseDto
 from api.schemas.session import SessionRefDto
@@ -29,11 +30,15 @@ class FakeSessionService:
         _ = request
         return SessionCreateResponseDto(session=SessionRefDto(user_id="u", session_id="s"))
 
-    def get_session(self, session: SessionRefDto) -> SessionStateResponseDto:
-        return SessionStateResponseDto(session=session)
+    def get_session(self, session: SessionGetRequestDto) -> SessionStateResponseDto:
+        return SessionStateResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
-    def delete_session(self, session: SessionRefDto) -> SessionDeleteResponseDto:
-        return SessionDeleteResponseDto(session=session)
+    def delete_session(self, session: SessionGetRequestDto) -> SessionDeleteResponseDto:
+        return SessionDeleteResponseDto(
+            session=SessionRefDto(user_id=session.user_id, session_id=session.session_id),
+        )
 
 
 class FakeEmbeddingModel:

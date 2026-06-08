@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import Request
 
 from api.contracts.health_dependencies import EmbeddingHealthDependencyProtocol
@@ -20,21 +22,32 @@ def get_api_configuration(request: Request) -> ApiConfiguration:
 def get_recommendation_service(request: Request) -> RecommendationServiceProtocol:
     service = getattr(request.app.state, "recommendation_service", None)
     if service is None:
+        service = getattr(request.app.state, "recommendation_v0_service", None)
+    if service is None:
         raise DependencyNotConfiguredError(dependency_name="recommendation_service")
     return service
 
 
-def get_recommendation_v2_service(request: Request) -> RecommendationServiceProtocol:
-    service = getattr(request.app.state, "recommendation_v2_service", None)
+def get_recommendation_v0_service(request: Request) -> Any:
+    service = getattr(request.app.state, "recommendation_v0_service", None)
     if service is None:
-        raise DependencyNotConfiguredError(dependency_name="recommendation_v2_service")
+        service = getattr(request.app.state, "recommendation_service", None)
+    if service is None:
+        raise DependencyNotConfiguredError(dependency_name="recommendation_v0_service")
     return service
 
 
-def get_recommendation_v3_service(request: Request) -> RecommendationServiceProtocol:
-    service = getattr(request.app.state, "recommendation_v3_service", None)
+def get_recommendation_v1_service(request: Request) -> Any:
+    service = getattr(request.app.state, "recommendation_v1_service", None)
     if service is None:
-        raise DependencyNotConfiguredError(dependency_name="recommendation_v3_service")
+        raise DependencyNotConfiguredError(dependency_name="recommendation_v1_service")
+    return service
+
+
+def get_recommendation_v2_service(request: Request) -> Any:
+    service = getattr(request.app.state, "recommendation_v2_service", None)
+    if service is None:
+        raise DependencyNotConfiguredError(dependency_name="recommendation_v2_service")
     return service
 
 

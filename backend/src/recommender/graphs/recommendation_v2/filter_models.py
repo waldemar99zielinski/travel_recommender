@@ -32,35 +32,12 @@ CostTermDuration = Literal["day", "week", "month"]
 
 ALLOWED_RECOMMENDATION_V2_PARENT_REGION_NAMES: tuple[str, ...] = (
     "Africa",
-    "Argentina",
+    "Antarctica",
+    "Asia",
     "Australia",
-    "Brazil",
-    "British Islands",
-    "Canada",
-    "Caribbean",
-    "Central Asia",
-    "Central Europe",
-    "China",
-    "East Africa",
-    "East Asia",
-    "Eastern Europe",
-    "India",
-    "Indonesia",
-    "Maghreb",
-    "Mexico",
-    "Middle America",
-    "Near and Middle East",
+    "Europe",
     "North America",
-    "North Europe",
-    "Oceania",
-    "Pacific",
-    "Russland and Caucasus",
     "South America",
-    "South Asia",
-    "Southeast Asia",
-    "Southern Africa",
-    "Southern Europe",
-    "USA",
 )
 
 ALLOWED_RECOMMENDATION_V2_REGION_NAMES: tuple[str, ...] = (
@@ -403,9 +380,13 @@ class RecommendationV2BudgetFilter(BaseModel):
 class RecommendationV2TravelDestinationFilter(BaseModel):
     """Structured travel-destination filters grouped by filter category."""
 
-    regions: list[RecommendationV2RegionFilter] = Field(
+    parent_region_filters: list[RecommendationV2RegionFilter] = Field(
         default_factory=list,
-        description="Requested parent-region or direct-region filters with explicit include or exclude intent",
+        description="Parent-region filters with explicit include or exclude intent",
+    )
+    direct_region_filters: list[RecommendationV2RegionFilter] = Field(
+        default_factory=list,
+        description="Direct region filters with explicit include or exclude intent",
     )
     seasonality: RecommendationV2SeasonalityFilter = Field(
         default_factory=RecommendationV2SeasonalityFilter,
@@ -419,54 +400,7 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def normalize_legacy_payload(cls, value: Any) -> Any:
-        if not isinstance(value, dict):
-            return value
-
-        normalized = dict(value)
-
-        seasonality: dict[str, object] = {}
-        existing_seasonality = normalized.pop("seasonality", None)
-        if isinstance(existing_seasonality, RecommendationV2SeasonalityFilter):
-            seasonality.update(existing_seasonality.serialize())
-        elif isinstance(existing_seasonality, dict):
-            seasonality.update(existing_seasonality)
-        if "season" in normalized:
-            seasonality["season"] = normalized.pop("season")
-        if "months" in normalized:
-            seasonality["months"] = normalized.pop("months")
-
-        budget: dict[str, object] = {}
-        existing_budget = normalized.pop("budget", None)
-        if isinstance(existing_budget, RecommendationV2BudgetFilter):
-            budget.update(existing_budget.serialize())
-        elif isinstance(existing_budget, dict):
-            budget.update(existing_budget)
-        if "min_cost_per_week" in normalized:
-            budget["min_cost_per_week"] = normalized.pop("min_cost_per_week")
-        if "cost_term" in normalized:
-            budget["cost_term"] = normalized.pop("cost_term")
-        if "max_cost_per_week" in normalized:
-            budget["max_cost_per_week"] = normalized.pop("max_cost_per_week")
-        if "cost" in normalized and "max_cost_per_week" not in budget:
-            budget["max_cost_per_week"] = normalized.pop("cost")
-
-        if "regions" not in normalized and "parent_region" in normalized:
-            parent_region = normalized.pop("parent_region")
-            if parent_region:
-                normalized["regions"] = [
-                    {
-                        "field_name": "parent_region",
-                        "region_name": parent_region,
-                        "type": "include",
-                    }
-                ]
-
-        if seasonality:
-            normalized["seasonality"] = seasonality
-        if budget:
-            normalized["budget"] = budget
-
-        return normalized
+        return value
 
     @property
     def season(self) -> SeasonCode | None:
@@ -503,7 +437,8 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
 
         return any(
             (
-                bool(self.regions),
+                bool(self.parent_region_filters),
+                bool(self.direct_region_filters),
                 self.seasonality.has_any_constraints(),
                 self.budget.has_any_constraints(),
             )
@@ -513,8 +448,14 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
         """Serialize the canonical persisted filter object."""
 
         serialized: dict[str, object] = {}
-        if self.regions:
-            serialized["regions"] = [region.model_dump() for region in self.regions]
+        if self.parent_region_filters:
+            serialized["parent_region_filters"] = [
+                region.model_dump() for region in self.parent_region_filters
+            ]
+        if self.direct_region_filters:
+            serialized["direct_region_filters"] = [
+                region.model_dump() for region in self.direct_region_filters
+            ]
 
         seasonality = self.seasonality.serialize()
         if seasonality:

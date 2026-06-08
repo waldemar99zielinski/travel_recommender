@@ -44,7 +44,7 @@ def create_request_routing_node(
         )
 
         if routing_result.decision == "new_recommendation_run":
-            emit_stream_event(EventType.GATHERING_REQUIREMENTS, {})
+            emit_stream_event(EventType.GATHERING_FILTER, {})
 
         logger.verbose(
             "Routed recommendation_v2 request for user_id=%s, session_id=%s to %s",

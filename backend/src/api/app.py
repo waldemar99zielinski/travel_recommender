@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,10 +13,11 @@ from api.core.configuration import ApiConfiguration
 from api.core.cors import build_cors_middleware_options
 from api.core.handlers import register_exception_handlers
 from api.lifecycle import create_lifespan
+from api.routers import destinations
 from api.routers import health
 from api.routers import recommendations
+from api.routers import recommendations_v0
 from api.routers import recommendations_v2
-from api.routers import recommendations_v3
 from api.routers import sessions
 
 
@@ -23,9 +26,10 @@ def create_app(
     configuration: ApiConfiguration,
     embedding_model: EmbeddingHealthDependencyProtocol,
     storage: StorageHealthDependencyProtocol,
-    recommendation_service: RecommendationServiceProtocol,
-    recommendation_v2_service: RecommendationServiceProtocol | None = None,
-    recommendation_v3_service: RecommendationServiceProtocol | None = None,
+    recommendation_service: RecommendationServiceProtocol | None = None,
+    recommendation_v0_service: Any | None = None,
+    recommendation_v1_service: Any | None = None,
+    recommendation_v2_service: Any | None = None,
     session_service: SessionServiceProtocol,
 ) -> FastAPI:
     app = FastAPI(lifespan=create_lifespan())
@@ -38,16 +42,19 @@ def create_app(
     app.state.api_configuration = configuration
     app.state.embedding_model = embedding_model
     app.state.storage = storage
-    app.state.recommendation_service = recommendation_service
-    app.state.recommendation_v2_service = recommendation_v2_service or recommendation_service
-    app.state.recommendation_v3_service = recommendation_v3_service or recommendation_service
+    app.state.recommendation_service = recommendation_service or recommendation_v0_service
+    app.state.recommendation_v0_service = recommendation_v0_service or recommendation_service
+    app.state.recommendation_v1_service = recommendation_v1_service
+    app.state.recommendation_v2_service = recommendation_v2_service
     app.state.session_service = session_service
     app.state.is_ready = False
 
+    app.include_router(destinations.router)
     app.include_router(health.router)
+    app.include_router(recommendations_v0.router)
     app.include_router(recommendations.router)
     app.include_router(recommendations_v2.router)
-    app.include_router(recommendations_v3.router)
+
     app.include_router(sessions.router)
 
     register_exception_handlers(app)

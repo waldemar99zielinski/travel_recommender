@@ -4,12 +4,13 @@ from typing import Callable
 
 from recommender.graphs.recommendation_v2.models import RecommendationV2
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
-from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
-    compose_travel_destination_filter,
-)
 from storage.models.chat_record import ChatRecord
 from storage.stores.chat_store import ChatStore
-from recommender.graphs.recommendation_v2.stream_events import StreamEventChatRecord, emit_stream_event, EventType
+from recommender.graphs.recommendation_v2.stream_events import (
+    StreamEventChatRecord,
+    emit_stream_event,
+    EventType,
+)
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
@@ -25,14 +26,11 @@ def _serialize_recommendations(
 
 
 def _serialize_travel_destination_filter(state: RecommendationV2GraphState) -> dict[str, object]:
-    travel_destination_filter = compose_travel_destination_filter(
-        extracted_parent_region_filters=state.extracted_parent_region_filters,
-        extracted_direct_region_filters=state.extracted_direct_region_filters,
-        extracted_seasonality_filter=state.extracted_seasonality_filter,
-        extracted_budget_filter=state.extracted_budget_filter,
-        fallback=state.previously_extracted_travel_destination_filter,
-    )
-    return travel_destination_filter.serialize()
+    if state.gathered_travel_destination_filter is not None:
+        return state.gathered_travel_destination_filter.serialize()
+    if state.previously_extracted_travel_destination_filter is not None:
+        return state.previously_extracted_travel_destination_filter.serialize()
+    return {}
 
 
 def create_session_memory_save_node(
