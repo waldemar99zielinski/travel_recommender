@@ -15,6 +15,14 @@ class TravelSearchConstraints:
 
 
 @dataclass(frozen=True, slots=True)
+class TravelCostStatistics:
+    """Percentile statistics for destination weekly cost."""
+
+    percentile_50: float | None
+    percentile_75: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class ScoredTravelDestination:
     """Search result with semantic and logistics scoring details."""
 

@@ -16,7 +16,7 @@ from storage.models.vector_type import create_vector_column
 class TravelDestinationRecord(SQLModel, table=True):
     """Unified PostgreSQL record for metadata and vector embedding search."""
 
-    __tablename__ = "travel_destinations"  # type: ignore[assignment]
+    __tablename__ = "travel_destinations"
 
     id: str = Field(primary_key=True)
     parent_region: str

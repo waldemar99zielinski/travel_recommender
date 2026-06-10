@@ -10,7 +10,7 @@ sys.path.append(str(Path(__file__).resolve().parents[4]))
 from storage.configuration import MigrationConfiguration
 from storage.configuration import StorageConfiguration
 from storage.configuration import StorageEngineConfiguration
-from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.models.chat_record import ChatRecord
 from storage.storage import Storage
 from storage.test.utils import FakeTextEmbeddingModel
 from storage.test.utils import build_db_url_with_schema_search_path
@@ -59,88 +59,110 @@ class TestStorageCoreStoresE2E(unittest.TestCase):
             storage.storage_metadata.delete("custom_key")
             self.assertIsNone(storage.storage_metadata.get_value("custom_key"))
 
-    def test_recommendation_session_store_upsert_load_and_delete(self) -> None:
+    def test_chat_store_upsert_load_and_delete(self) -> None:
         user_id = UUID("11111111-1111-1111-1111-111111111111")
         session_id = UUID("22222222-2222-2222-2222-222222222222")
         other_session_id = UUID("33333333-3333-3333-3333-333333333333")
 
         with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
-            first_message = RecommendationSessionMemoryRecord(
+            first_message = ChatRecord(
                 user_id=user_id,
                 session_id=session_id,
                 chat_history_number=2,
                 user_request="Suggest a beach vacation",
                 system_response="Try Island Escape",
-                query="beach holiday",
+                synthesized_query="beach holiday",
+                travel_destination_filter={
+                    "regions": [
+                        {
+                            "field_name": "parent_region",
+                            "region_name": "Caribbean",
+                            "type": "include",
+                        }
+                    ],
+                    "budget": {
+                        "max_cost_per_week": 700,
+                    },
+                    "seasonality": {
+                        "season": "winter",
+                        "months": ["dec", "jan", "feb"],
+                    },
+                },
                 recommendations=[
                     {
                         "code": "destination-1",
                         "score": 0.91,
                     },
                 ],
-                interest_preference={"beach": 1.0},
-                logistical_preference={"max_cost_per_week": 900},
             )
-            second_message = RecommendationSessionMemoryRecord(
+            second_message = ChatRecord(
                 user_id=user_id,
                 session_id=session_id,
                 chat_history_number=1,
                 user_request="I like hiking",
                 system_response="Consider Alpine Peaks",
-                query="mountain hiking",
+                synthesized_query="mountain hiking",
                 recommendations=[
                     {
                         "code": "destination-2",
                         "score": 0.88,
                     },
                 ],
-                interest_preference={"hiking": 1.0},
-                logistical_preference={"months": ["jul", "aug"]},
             )
 
-            storage.recommendation_sessions.upsert_many([first_message, second_message])
+            storage.chat.upsert_many([first_message, second_message])
 
-            loaded_messages = storage.recommendation_sessions.load_session(user_id, session_id)
+            loaded_messages = storage.chat.load_session(user_id, session_id)
             self.assertEqual([row.chat_history_number for row in loaded_messages], [1, 2])
             self.assertEqual(loaded_messages[0].recommendations[0]["code"], "destination-2")
+            self.assertEqual(
+                loaded_messages[1].travel_destination_filter["regions"][0]["region_name"],
+                "Caribbean",
+            )
+            self.assertEqual(
+                loaded_messages[1].travel_destination_filter["budget"]["max_cost_per_week"],
+                700,
+            )
+            self.assertEqual(
+                loaded_messages[1].travel_destination_filter["seasonality"]["season"],
+                "winter",
+            )
 
-            updated_message = RecommendationSessionMemoryRecord(
+            updated_message = ChatRecord(
                 user_id=user_id,
                 session_id=session_id,
                 chat_history_number=2,
                 user_request="Suggest a beach vacation",
                 system_response="Try Luxury Coast",
-                query="luxury beach holiday",
+                synthesized_query="luxury beach holiday",
                 recommendations=[
                     {
                         "code": "destination-3",
                         "score": 0.95,
                     },
                 ],
-                interest_preference={"beach": 1.0, "luxury": 1.0},
-                logistical_preference={"max_cost_per_week": 1500},
             )
-            storage.recommendation_sessions.upsert_many([updated_message])
+            storage.chat.upsert_many([updated_message])
 
-            reloaded_messages = storage.recommendation_sessions.load_session(user_id, session_id)
+            reloaded_messages = storage.chat.load_session(user_id, session_id)
             self.assertEqual(reloaded_messages[1].system_response, "Try Luxury Coast")
             self.assertEqual(reloaded_messages[1].recommendations[0]["code"], "destination-3")
 
-            other_session_message = RecommendationSessionMemoryRecord(
+            other_session_message = ChatRecord(
                 user_id=user_id,
                 session_id=other_session_id,
                 chat_history_number=1,
                 user_request="City break",
                 system_response="Try Culture Capital",
-                query="city museum",
+                synthesized_query="city museum",
                 recommendations=[],
             )
-            storage.recommendation_sessions.upsert_many([other_session_message])
+            storage.chat.upsert_many([other_session_message])
 
-            storage.recommendation_sessions.delete_session(user_id, session_id)
+            storage.chat.delete_session(user_id, session_id)
 
-            self.assertEqual(storage.recommendation_sessions.load_session(user_id, session_id), [])
-            self.assertEqual(len(storage.recommendation_sessions.load_session(user_id, other_session_id)), 1)
+            self.assertEqual(storage.chat.load_session(user_id, session_id), [])
+            self.assertEqual(len(storage.chat.load_session(user_id, other_session_id)), 1)
 
 
 if __name__ == "__main__":

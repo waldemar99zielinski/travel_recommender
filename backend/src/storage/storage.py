@@ -15,7 +15,7 @@ from storage.health import check_storage_health
 from storage.health import validate_storage_health
 from storage.db.session import create_session_factory
 from storage.db.unit_of_work import StorageUnitOfWork
-from storage.stores.recommendation_session_store import RecommendationSessionStore
+from storage.stores.chat_store import ChatStore
 from storage.stores.storage_metadata_store import StorageMetadataStore
 from storage.stores.travel_destination_store import TravelDestinationStore
 
@@ -60,7 +60,7 @@ class Storage:
             embedding_model=embedding_model,
         )
         self.storage_metadata = StorageMetadataStore(unit_of_work=self.unit_of_work)
-        self.recommendation_sessions = RecommendationSessionStore(unit_of_work=self.unit_of_work)
+        self.chat = ChatStore(unit_of_work=self.unit_of_work)
 
     def check_health(self) -> StorageHealthReport:
         """Return current storage health report for observability and readiness checks."""

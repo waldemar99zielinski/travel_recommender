@@ -4,9 +4,12 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
-from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.models.chat_record import ChatRecord
 from storage.models.storage_metadata import StorageMetadataRecord
 from storage.models.travel_destination import TravelDestinationRecord
+from storage.stores.query_models import QueriedTravelDestination
+from storage.stores.query_models import TravelDestinationQuery
+from storage.stores.search_models import TravelCostStatistics
 from storage.stores.search_models import ScoredTravelDestination
 from storage.stores.search_models import TravelSearchConstraints
 
@@ -18,9 +21,15 @@ class TravelDestinationStoreProtocol(Protocol):
 
     def all(self) -> list[TravelDestinationRecord]: ...
 
+    def cost_per_week_statistics(self) -> TravelCostStatistics: ...
+
     def upsert_many(self, rows: Sequence[TravelDestinationRecord]) -> None: ...
 
     def list_by_ids(self, destination_ids: Sequence[str]) -> list[TravelDestinationRecord]: ...
+
+    def query(self, request: TravelDestinationQuery) -> list[QueriedTravelDestination]: ...
+
+    def find(self, request: TravelDestinationQuery) -> list[TravelDestinationRecord]: ...
 
     def semantic_search(
         self,
@@ -52,17 +61,26 @@ class TravelDestinationStoreProtocol(Protocol):
         limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
+    def keyword_boosted_search(
+        self,
+        semantic_query: str,
+        keywords: list[str],
+        *,
+        keyword_boost: float = 0.3,
+        limit: int | None = None,
+    ) -> list[ScoredTravelDestination]: ...
 
-class RecommendationSessionStoreProtocol(Protocol):
-    """Contract for recommendation session memory operations."""
+
+class ChatStoreProtocol(Protocol):
+    """Contract for chat session memory operations."""
 
     def load_session(
         self,
         user_id: UUID | str,
         session_id: UUID | str,
-    ) -> list[RecommendationSessionMemoryRecord]: ...
+    ) -> list[ChatRecord]: ...
 
-    def upsert_many(self, rows: Sequence[RecommendationSessionMemoryRecord]) -> None: ...
+    def upsert_many(self, rows: Sequence[ChatRecord]) -> None: ...
 
     def delete_session(self, user_id: UUID | str, session_id: UUID | str) -> None: ...
 

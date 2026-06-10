@@ -11,6 +11,7 @@ from storage.configuration import MigrationConfiguration
 from storage.configuration import StorageConfiguration
 from storage.configuration import StorageEngineConfiguration
 from storage.storage import Storage
+from storage.stores.query_models import TravelDestinationQuery
 from storage.stores.search_models import TravelSearchConstraints
 from storage.test.utils import KeywordTextEmbeddingModel
 from storage.test.utils import build_db_url_with_schema_search_path
@@ -135,6 +136,82 @@ class TestTravelDestinationStoreE2E(unittest.TestCase):
         with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
             with self.assertRaises(ValueError):
                 storage.travel_destinations.semantic_search("   ")
+
+    def test_query_filters_and_sorts_destinations(self) -> None:
+        query = TravelDestinationQuery.model_validate(
+            {
+                "filters": [
+                    {"field": "parent_region", "operator": "eq", "value": "Europe"},
+                    {"field": "cost_per_week", "operator": "lte", "value": 700},
+                ],
+                "sort": [{"field": "popularity", "direction": "desc"}],
+                "limit": 5,
+            }
+        )
+
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.query(query)
+
+        result_ids = [result.destination.id for result in results]
+        self.assertEqual(result_ids, ["CITY_CULT", "BUD_HIKE"])
+        self.assertTrue(all(result.ranking_score == 1.0 for result in results))
+
+    def test_query_supports_text_search_with_structured_filters(self) -> None:
+        query = TravelDestinationQuery.model_validate(
+            {
+                "text_query": "exclusive sea views",
+                "filters": [
+                    {"field": "parent_region", "operator": "eq", "value": "Europe"},
+                ],
+                "limit": 3,
+            }
+        )
+
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.query(query)
+
+        self.assertGreaterEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "LUX_BEACH")
+        self.assertGreater(results[0].text_score, 0.0)
+
+    def test_query_supports_semantic_search_and_datetime_filters(self) -> None:
+        query = TravelDestinationQuery.model_validate(
+            {
+                "semantic_query": "alpine ski snow mountain",
+                "filters": [
+                    {"field": "created_at", "operator": "gte", "value": "2000-01-01T00:00:00+00:00"},
+                    {"field": "parent_region", "operator": "eq", "value": "Europe"},
+                ],
+                "limit": 3,
+            }
+        )
+
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.query(query)
+
+        self.assertGreaterEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "ALP_SKI")
+        self.assertGreater(results[0].semantic_score, 0.0)
+
+    def test_query_blends_text_and_semantic_without_hard_text_filter(self) -> None:
+        query = TravelDestinationQuery.model_validate(
+            {
+                "text_query": "zzzz-no-lexical-match",
+                "semantic_query": "luxury tropical beach resort",
+                "text_weight": 0.2,
+                "semantic_weight": 0.8,
+                "limit": 3,
+            }
+        )
+
+        with Storage(self.storage_configuration, embedding_model=self.embedding_model) as storage:
+            results = storage.travel_destinations.query(query)
+
+        self.assertGreaterEqual(len(results), 1)
+        self.assertEqual(results[0].destination.id, "LUX_BEACH")
+        self.assertEqual(results[0].text_score, 0.0)
+        self.assertGreater(results[0].semantic_score, 0.0)
+        self.assertGreater(results[0].ranking_score, 0.0)
 
 
 if __name__ == "__main__":

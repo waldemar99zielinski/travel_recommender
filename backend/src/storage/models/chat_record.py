@@ -8,16 +8,17 @@ from uuid import UUID
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlmodel import Field
 from sqlmodel import SQLModel
 
 
-class RecommendationSessionMemoryRecord(SQLModel, table=True):
+class ChatRecord(SQLModel, table=True):
     """PostgreSQL record for persisted recommendation session memory."""
 
-    __tablename__ = "recommendation_session_memory"  # type: ignore[assignment]
+    __tablename__ = "chat_record"
 
     user_id: UUID | None = Field(
         default=None,
@@ -25,7 +26,7 @@ class RecommendationSessionMemoryRecord(SQLModel, table=True):
             PostgreSQLUUID(as_uuid=True),
             primary_key=True,
             nullable=False,
-            server_default=text("uuidv7()"),
+            server_default=text("gen_random_uuid()"),
         ),
     )
     session_id: UUID | None = Field(
@@ -34,41 +35,43 @@ class RecommendationSessionMemoryRecord(SQLModel, table=True):
             PostgreSQLUUID(as_uuid=True),
             primary_key=True,
             nullable=False,
-            server_default=text("uuidv7()"),
+            server_default=text("gen_random_uuid()"),
         ),
     )
     chat_history_number: int = Field(primary_key=True)
 
+
     user_request: str = Field(default="")
     system_response: str = Field(default="")
-    system_messages: list[dict[str, Any]] = Field(
+
+    synthesized_query: str = Field(default="")
+    travel_destination_filter: dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+    )
+
+    included_regions_ids: list[str] = Field(
         default_factory=list,
         sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
     )
-    query: str = Field(default="")
+    excluded_regions_ids: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+    )
+
     recommendations: list[dict[str, Any]] = Field(
         default_factory=list,
         sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
     )
-    interest_preference: dict[str, Any] = Field(
-        default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+    travel_destinations_evaluations: list[dict[str, Any]] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
     )
-    logistical_preference: dict[str, Any] = Field(
-        default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
-    )
+
+    graph_version: str = Field(default="")
+    message_type: str = Field(default="")
 
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-        ),
-    )
-
-    updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),

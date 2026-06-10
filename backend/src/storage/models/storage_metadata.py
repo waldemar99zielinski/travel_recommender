@@ -13,7 +13,7 @@ from sqlmodel import SQLModel
 class StorageMetadataRecord(SQLModel, table=True):
     """Metadata key-value record for storage runtime contracts."""
 
-    __tablename__ = "storage_metadata"  # type: ignore[assignment]
+    __tablename__ = "storage_metadata"
 
     key: str = Field(primary_key=True)
     value: str

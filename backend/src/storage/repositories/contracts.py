@@ -4,9 +4,12 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
-from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.models.chat_record import ChatRecord
 from storage.models.storage_metadata import StorageMetadataRecord
 from storage.models.travel_destination import TravelDestinationRecord
+from storage.stores.query_models import QueriedTravelDestination
+from storage.stores.query_models import TravelDestinationQuery
+from storage.stores.search_models import TravelCostStatistics
 from storage.stores.search_models import ScoredTravelDestination
 from storage.stores.search_models import TravelSearchConstraints
 
@@ -18,14 +21,28 @@ class TravelDestinationRepositoryProtocol(Protocol):
 
     def list_all(self) -> list[TravelDestinationRecord]: ...
 
+    def cost_per_week_statistics(self) -> TravelCostStatistics: ...
+
     def list_by_ids(self, destination_ids: Sequence[str]) -> list[TravelDestinationRecord]: ...
 
     def upsert_many(self, rows: Sequence[TravelDestinationRecord]) -> None: ...
+
+    def query(
+        self,
+        request: TravelDestinationQuery,
+        query_embedding: Sequence[float] | None = None,
+    ) -> list[QueriedTravelDestination]: ...
+
+    def find(
+        self,
+        request: TravelDestinationQuery,
+    ) -> list[TravelDestinationRecord]: ...
 
     def semantic_search(
         self,
         query_embedding: Sequence[float],
         limit: int | None = None,
+        destination_ids: Sequence[str] | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
     def hybrid_search(
@@ -36,21 +53,28 @@ class TravelDestinationRepositoryProtocol(Protocol):
         limit: int | None = None,
         semantic_weight: float = 0.85,
         logistics_weight: float = 0.15,
+        destination_ids: Sequence[str] | None = None,
+    ) -> list[ScoredTravelDestination]: ...
+
+    def exact_text_search(
+        self,
+        query: str,
+        limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
 
-class RecommendationSessionMemoryRepositoryProtocol(Protocol):
-    """Contract for recommendation session memory persistence."""
+class ChatRepositoryProtocol(Protocol):
+    """Contract for chat session memory persistence."""
 
     def list_by_session(
         self,
-        user_id: UUID | str,
-        session_id: UUID | str,
-    ) -> list[RecommendationSessionMemoryRecord]: ...
+        user_id: UUID,
+        session_id: UUID,
+    ) -> list[ChatRecord]: ...
 
-    def upsert_many(self, rows: Sequence[RecommendationSessionMemoryRecord]) -> None: ...
+    def upsert_many(self, rows: Sequence[ChatRecord]) -> None: ...
 
-    def delete_by_session(self, user_id: UUID | str, session_id: UUID | str) -> None: ...
+    def delete_by_session(self, user_id: UUID, session_id: UUID) -> None: ...
 
 
 class StorageMetadataRepositoryProtocol(Protocol):
