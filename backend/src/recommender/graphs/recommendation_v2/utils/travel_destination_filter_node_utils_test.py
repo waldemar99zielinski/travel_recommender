@@ -9,6 +9,7 @@ from recommender.graphs.recommendation_v2.filter_models import RecommendationV2S
 from recommender.graphs.recommendation_v2.filter_models import RecommendationV2TravelDestinationFilter
 from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
     compose_travel_destination_filter,
+    merge_parent_region_filters,
 )
 
 
@@ -53,13 +54,6 @@ class TestComposeTravelDestinationFilter(unittest.TestCase):
         self.assertEqual(
             composed.serialize(),
             {
-                "parent_region_filters": [
-                    {
-                        "field_name": "parent_region",
-                        "region_name": "Southern Europe",
-                        "type": "include",
-                    }
-                ],
                 "direct_region_filters": [
                     {
                         "field_name": "region",
@@ -76,6 +70,80 @@ class TestComposeTravelDestinationFilter(unittest.TestCase):
                     }
                 },
             },
+        )
+
+
+class TestMergeParentRegionFilters(unittest.TestCase):
+    def test_include_overwrites_existing_exclude(self) -> None:
+        merged = merge_parent_region_filters(
+            existing_parent_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="parent_region",
+                    region_name="Europe",
+                    type="exclude",
+                )
+            ],
+            updated_parent_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="parent_region",
+                    region_name="Europe",
+                    type="include",
+                )
+            ],
+        )
+
+        self.assertEqual(
+            [region_filter.model_dump() for region_filter in merged],
+            [
+                {
+                    "field_name": "parent_region",
+                    "region_name": "Europe",
+                    "type": "include",
+                }
+            ],
+        )
+
+    def test_exclude_removes_existing_include(self) -> None:
+        merged = merge_parent_region_filters(
+            existing_parent_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="parent_region",
+                    region_name="Europe",
+                    type="include",
+                )
+            ],
+            updated_parent_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="parent_region",
+                    region_name="Europe",
+                    type="exclude",
+                )
+            ],
+        )
+
+        self.assertEqual(merged, [])
+
+    def test_new_exclude_is_added(self) -> None:
+        merged = merge_parent_region_filters(
+            existing_parent_region_filters=[],
+            updated_parent_region_filters=[
+                RecommendationV2RegionFilter(
+                    field_name="parent_region",
+                    region_name="Europe",
+                    type="exclude",
+                )
+            ],
+        )
+
+        self.assertEqual(
+            [region_filter.model_dump() for region_filter in merged],
+            [
+                {
+                    "field_name": "parent_region",
+                    "region_name": "Europe",
+                    "type": "exclude",
+                }
+            ],
         )
 
 

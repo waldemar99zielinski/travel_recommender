@@ -45,6 +45,7 @@ prompt = ChatPromptTemplate.from_messages(
 
             Rules:
             - Use only the `cost_term` field.
+            - Add or update `cost_term` if and only if the user mentions budget, price, cost, spending, affordability, cheapness, luxury, or another clear money-related context.
             - Keep previous budget filters if the user does not change them.
             - Remove budget filters if the user explicitly drops them, such as "any budget".
             - The output cost_term may contain either `explicit` or `inferred_level`, but never both.
@@ -55,18 +56,25 @@ prompt = ChatPromptTemplate.from_messages(
               - duration: day, week, or month
             - If the user gives a full-trip amount, resolve it to duration=week because the system assumes a trip lasts one week.
             - Use `inferred_level` only when the user implies a qualitative budget level but does not state an explicit money amount.
+            - Do not infer a budget filter from standalone adjectives with no money context.
+            - Words like "low", "high", or "extreme" by themselves are not budget signals unless they clearly refer to price, budget, cost, or spending.
             - If `explicit` is present, omit `inferred_level`.
             - If `inferred_level` is present, omit `explicit`.
             - Do not return region, season, or month filters.
             - Return only the `cost_term` field.
 
             Examples:
-            - "cheap trip" -> cost_term.inferred_level = low
-            - "luxury escape" -> cost_term.inferred_level = high
-            - "I want to spend 200 euro per day" -> cost_term.explicit = {{"value": 200, "operator": "around", "duration": "day"}}
-            - "I want to spend at most 150 euro per day" -> cost_term.explicit = {{"value": 150, "operator": "max", "duration": "day"}}
-            - "I want to spend at least 300 per week" -> cost_term.explicit = {{"value": 300, "operator": "min", "duration": "week"}}
-            - "I want to spend 700 for the trip" -> cost_term.explicit = {{"value": 700, "operator": "around", "duration": "week"}}
+            - "I want a cheap beach trip in southern Europe this summer" -> cost_term.inferred_level = low
+            - "Plan a luxury escape with great hotels and fine dining" -> cost_term.inferred_level = high
+            - "I want a destination with a low-key vibe and quiet beaches" -> no cost_term
+            - "Show me places with high mountains and scenic hiking" -> no cost_term
+            - "I want an extreme adventure with surfing and nightlife" -> no cost_term
+            - "Find me a high-energy city with clubs and live music" -> no cost_term
+            - "I want a low budget trip with good food and warm weather" -> cost_term.inferred_level = low
+            - "I want to spend around 200 euro per day for a sunny island holiday" -> cost_term.explicit = {{"value": 200, "operator": "around", "duration": "day"}}
+            - "For this city break, I want to spend at most 150 euro per day" -> cost_term.explicit = {{"value": 150, "operator": "max", "duration": "day"}}
+            - "I am okay spending at least 300 per week if the beaches are excellent" -> cost_term.explicit = {{"value": 300, "operator": "min", "duration": "week"}}
+            - "I want to spend about 700 for the whole trip and prefer somewhere warm" -> cost_term.explicit = {{"value": 700, "operator": "around", "duration": "week"}}
             """,
         ),
         (

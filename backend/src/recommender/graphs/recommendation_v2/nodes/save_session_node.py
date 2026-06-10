@@ -4,6 +4,7 @@ from typing import Callable
 
 from recommender.graphs.recommendation_v2.models import RecommendationV2
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
+from recommender.graphs.recommendation_v2.models import RecommendationV2RegionResearch
 from storage.models.chat_record import ChatRecord
 from storage.stores.chat_store import ChatStore
 from recommender.graphs.recommendation_v2.stream_events import (
@@ -31,6 +32,21 @@ def _serialize_travel_destination_filter(state: RecommendationV2GraphState) -> d
     if state.previously_extracted_travel_destination_filter is not None:
         return state.previously_extracted_travel_destination_filter.serialize()
     return {}
+
+
+def _serialize_region_research(
+    state: RecommendationV2GraphState,
+) -> list[dict[str, object]]:
+    if not state.travel_destinations_evaluations:
+        return []
+
+    return [
+        {
+            "region_id": region_id,
+            **region_research.serialize(),
+        }
+        for region_id, region_research in state.travel_destinations_evaluations.items()
+    ]
 
 
 def create_session_memory_save_node(
@@ -61,6 +77,7 @@ def create_session_memory_save_node(
             recommendations=_serialize_recommendations(
                 state.final_recommendations,
             ),
+            travel_destinations_evaluations=_serialize_region_research(state),
             graph_version="v2",
         )
         chat_store.upsert_many([persisted_row])

@@ -9,6 +9,7 @@ from recommender.graphs.recommendation_v2.filter_models import (
     RecommendationV2TravelDestinationFilter,
 )
 from recommender.graphs.recommendation_v2.models import RecommendationV2
+from recommender.graphs.recommendation_v2.models import RecommendationV2RegionResearch
 from recommender.models.session.session import Session
 from storage.models.chat_record import ChatRecord
 
@@ -20,6 +21,8 @@ class EventType(StrEnum):
     FILTER = "filter"
     RECOMMENDATION_GENERATION = "recommendation_generation"
     RECOMMENDATION = "recommendation"
+    DESTINATION_RESEARCH_GENERATION = "desination_research_generation"
+    DESTINATION_RESEARCH = "destination_research"
     RESPONSE_GENERATION = "response_generation"
     RESPONSE = "response"
     DONE = "done"
@@ -50,6 +53,26 @@ class StreamEventRecommendation:
             "recommendations": [
                 recommendation.serialize() for recommendation in self.recommendations
             ],
+        }
+
+
+@dataclass
+class StreamEventDestinationResearchGeneration:
+    region_id: str
+
+    def serialize(self) -> dict[str, object]:
+        return {"region_id": self.region_id}
+
+
+@dataclass
+class StreamEventDestinationResearch:
+    region_id: str
+    destination_research: RecommendationV2RegionResearch
+
+    def serialize(self) -> dict[str, object]:
+        return {
+            "region_id": self.region_id,
+            "destination_research": self.destination_research.serialize(),
         }
 
 

@@ -37,6 +37,25 @@ class RecommendationV2(BaseModel):
         }
 
 
+class RecommendationV2RegionResearch(BaseModel):
+    """Researched content for one recommended region."""
+
+    description: str = Field(
+        ...,
+        description="Tailored researched description for the recommended region",
+    )
+    image_urls: list[str] = Field(
+        default_factory=list,
+        description="Relevant travel image URLs for the recommended region",
+    )
+
+    def serialize(self) -> dict[str, object]:
+        return {
+            "description": self.description,
+            "image_urls": self.image_urls,
+        }
+
+
 def serialize_recommendations(recommendations: list[RecommendationV2] | None) -> str:
     """Serialize recommendations into a compact prompt-friendly string."""
 
@@ -103,6 +122,10 @@ class RecommendationV2GraphState(BaseModel):
         None,
         description="Final recommendations remaining after the filter is applied",
     )
+    travel_destinations_evaluations: dict[str, RecommendationV2RegionResearch] = Field(
+        default_factory=dict,
+        description="Researched region content keyed by recommended region_id",
+    )
     history: list[ChatRecord] | None = Field(
         None,
         description="Persisted session turns loaded from storage",
@@ -139,6 +162,7 @@ def serialize_chat_history(history: list[ChatRecord] | None) -> str:
 __all__ = [
     "RecommendationV2",
     "RecommendationV2GraphState",
+    "RecommendationV2RegionResearch",
     "RecommendationV2StatusEnum",
     "serialize_recommendations",
     "serialize_chat_history",

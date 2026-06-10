@@ -3,6 +3,7 @@ from __future__ import annotations
 from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
+from recommender.common.configuration import Configuration
 from recommender.graphs.recommendation_v2.agents.filter_extraction.budget.agent import (
     RecommendationV2BudgetFilterExtractionAgent,
 )
@@ -17,6 +18,9 @@ from recommender.graphs.recommendation_v2.agents.filter_extraction.season.agent 
 )
 from recommender.graphs.recommendation_v2.agents.query_synthesis.query_synthesis_agent import (
     RecommendationV2SynthesizedUserRequestAgent,
+)
+from recommender.graphs.recommendation_v2.agents.recommendation_research.agent import (
+    RecommendationV2RecommendationResearchAgent,
 )
 from recommender.graphs.recommendation_v2.agents.request_routing.request_routing_agent import (
     RecommendationV2RequestRoutingAgent,
@@ -61,6 +65,9 @@ from recommender.graphs.recommendation_v2.nodes.out_of_scope_response_generation
 from recommender.graphs.recommendation_v2.nodes.recommendation_generation_node import (
     create_recommendation_generation_node,
 )
+from recommender.graphs.recommendation_v2.nodes.recommendation_research_node import (
+    create_recommendation_research_node,
+)
 from recommender.graphs.recommendation_v2.nodes.recommendation_response_generation_node import (
     create_recommendation_response_generation_node,
 )
@@ -80,6 +87,7 @@ from storage.stores.travel_destination_store import TravelDestinationStore
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
+configuration = Configuration()
 
 
 def build_recommendation_v2_graph(
@@ -91,7 +99,8 @@ def build_recommendation_v2_graph(
     logger.verbose("Building recommendation_v2 graph...")
 
     graph_builder = StateGraph(RecommendationV2GraphState)
-    llm = create_llm_chat_model(LLMConfig())
+    llm_config = LLMConfig()
+    llm = create_llm_chat_model(llm_config)
 
     session_load_node = create_session_memory_load_node(recommendation_session_store)
     request_routing_node = create_request_routing_node(
@@ -114,6 +123,13 @@ def build_recommendation_v2_graph(
     )
     gather_requirements_node = create_gather_requirements_node()
     recommendation_generation_node = create_recommendation_generation_node(
+        travel_destination_store,
+    )
+    recommendation_research_node = create_recommendation_research_node(
+        RecommendationV2RecommendationResearchAgent(
+            llm_config=llm_config,
+            tavily_api_key=configuration.tavily_api_key,
+        ),
         travel_destination_store,
     )
     recommendation_response_generation_node = create_recommendation_response_generation_node(
@@ -139,6 +155,7 @@ def build_recommendation_v2_graph(
     graph_builder.add_node(extract_budget_filter_node.__name__, extract_budget_filter_node)
     graph_builder.add_node(gather_requirements_node.__name__, gather_requirements_node)
     graph_builder.add_node(recommendation_generation_node.__name__, recommendation_generation_node)
+    graph_builder.add_node(recommendation_research_node.__name__, recommendation_research_node)
     graph_builder.add_node(
         recommendation_response_generation_node.__name__,
         recommendation_response_generation_node,
@@ -226,9 +243,17 @@ def build_recommendation_v2_graph(
     )
     graph_builder.add_edge(
         recommendation_generation_node.__name__,
+        recommendation_research_node.__name__,
+    )
+    graph_builder.add_edge(
+        recommendation_generation_node.__name__,
         recommendation_response_generation_node.__name__,
     )
 
+    graph_builder.add_edge(
+        recommendation_research_node.__name__,
+        session_save_node.__name__,
+    )
     graph_builder.add_edge(
         recommendation_response_generation_node.__name__,
         session_save_node.__name__,
