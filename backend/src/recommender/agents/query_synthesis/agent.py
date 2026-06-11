@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from typing import cast
-
-from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
 from recommender.agents.base.base_agent import BaseAgent
 from recommender.agents.base.base_agent import BaseAgentBuilder
-from recommender.agents.query_synthesis.recommendation_query_synthesis_prompt import (
-    recommendation_query_synthesis_prompt_template,
+from recommender.agents.query_synthesis.prompt import (
+    prompt,
 )
 from recommender.models.llm.llm import create_llm_chat_model
 from recommender.models.llm.llm_config import LLMConfig
@@ -18,8 +15,8 @@ from utils.logger import LoggerManager
 logger = LoggerManager.get_logger(__name__)
 
 
-class RecommendationQuerySynthesisInput(BaseModel):
-    """Input payload for recommendation query synthesis."""
+class QuerySynthesisInput(BaseModel):
+    """Input payload for interest-focused recommendation query synthesis."""
 
     current_user_request: str = Field(
         ...,
@@ -31,8 +28,8 @@ class RecommendationQuerySynthesisInput(BaseModel):
     )
 
 
-class RecommendationQuerySynthesisResult(BaseModel):
-    """Structured output containing cumulative synthesized query."""
+class QuerySynthesisResult(BaseModel):
+    """Structured output containing cumulative interest-focused synthesized query."""
 
     synthesized_query: str = Field(
         ...,
@@ -40,29 +37,29 @@ class RecommendationQuerySynthesisResult(BaseModel):
     )
 
 
-class RecommendationQuerySynthesisAgentBuilder(BaseAgentBuilder):
-    """Builder for RecommendationQuerySynthesisAgent."""
+class QuerySynthesisAgentBuilder(BaseAgentBuilder):
+    """Builder for QuerySynthesisAgent."""
 
     def __init__(self) -> None:
-        super().__init__(RecommendationQuerySynthesisAgent)
+        super().__init__(QuerySynthesisAgent)
 
-    def build(self) -> "RecommendationQuerySynthesisAgent":
+    def build(self) -> "QuerySynthesisAgent":
         llm = self._llm or create_llm_chat_model(LLMConfig())
-        prompt = self._prompt or recommendation_query_synthesis_prompt_template
-        output_type = self._output_type or RecommendationQuerySynthesisResult
+        prompt_template = self._prompt or prompt
+        output_type = self._output_type or QuerySynthesisResult
 
-        return RecommendationQuerySynthesisAgent(
+        return QuerySynthesisAgent(
             llm=llm,
-            prompt=prompt,
+            prompt=prompt_template,
             output_type=output_type,
         )
 
 
-class RecommendationQuerySynthesisAgent(BaseAgent):
-    """Agent that synthesizes cumulative recommendation query from chat turns."""
+class QuerySynthesisAgent(BaseAgent):
+    """Agent that synthesizes a cumulative interest-focused recommendation query."""
 
     @staticmethod
-    def _fallback_synthesized_query(inputs: RecommendationQuerySynthesisInput) -> str:
+    def _fallback_synthesized_query(inputs: QuerySynthesisInput) -> str:
         previous_synthesized_query = (inputs.previous_synthesized_query or "").strip()
         current_user_request = inputs.current_user_request.strip()
 
@@ -74,13 +71,13 @@ class RecommendationQuerySynthesisAgent(BaseAgent):
             return previous_synthesized_query
 
         raise ValueError(
-            "RecommendationQuerySynthesisAgent cannot build a synthesized query from empty inputs"
+            "QuerySynthesisAgent cannot build a synthesized query from empty inputs"
         )
 
     def invoke(
         self,
-        inputs: RecommendationQuerySynthesisInput,
-    ) -> RecommendationQuerySynthesisResult:
+        inputs: QuerySynthesisInput,
+    ) -> QuerySynthesisResult:
         prompt_inputs = self.prompt.format_messages(
             current_user_request=inputs.current_user_request,
             previous_synthesized_query=inputs.previous_synthesized_query or "",
@@ -91,10 +88,10 @@ class RecommendationQuerySynthesisAgent(BaseAgent):
         if not synthesized_query:
             synthesized_query = self._fallback_synthesized_query(inputs)
             logger.warning(
-                "RecommendationQuerySynthesisAgent returned an empty synthesized_query; using fallback query"
+                "QuerySynthesisAgent returned an empty synthesized_query; using fallback query"
             )
-        return RecommendationQuerySynthesisResult(synthesized_query=synthesized_query)
+        return QuerySynthesisResult(synthesized_query=synthesized_query)
 
     @classmethod
-    def builder(cls) -> RecommendationQuerySynthesisAgentBuilder:
-        return RecommendationQuerySynthesisAgentBuilder()
+    def builder(cls) -> QuerySynthesisAgentBuilder:
+        return QuerySynthesisAgentBuilder()

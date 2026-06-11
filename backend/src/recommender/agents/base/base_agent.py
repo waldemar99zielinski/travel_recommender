@@ -67,8 +67,8 @@ class BaseAgent(ABC):
         Accepts a dictionary of prompt variables OR a list of messages.
         """
         # The agent handles the formatting automatically based on input type
-        response = self._runnable.invoke(inputs)
-        return response 
+        results = self._runnable.invoke(inputs)
+        return results
 
     @classmethod
     @abstractmethod
@@ -86,12 +86,12 @@ class BaseReActAgent(ABC):
     """
 
     llm: BaseChatModel
-    prompt: BasePromptTemplate
+    prompt: Optional[BasePromptTemplate]
     output_type: type[Any]
     system_prompt: str
-    tools: Sequence[BaseTool] = field(default_factory=list)
+    tools: Sequence[BaseTool]
 
-    _agent: Any = field(init=False, repr=False)
+    _agent: Runnable = field(init=False, repr=False)
 
     def __post_init__(self):
         self._agent = create_agent(
@@ -101,9 +101,17 @@ class BaseReActAgent(ABC):
             response_format=self.output_type,
         )
 
-    def invoke(self, inputs: Sequence[BaseMessage]) -> Any:
-        result = self._agent.invoke({"messages": list(inputs)})
-        return result.get("structured_response")
+    def invoke(self, inputs: Union[Dict[str, Any], Sequence[BaseMessage]]) -> Any:
+        normalized_inputs: Dict[str, Any]
+        if isinstance(inputs, dict):
+            normalized_inputs = inputs
+        else:
+            normalized_inputs = {"messages": list(inputs)}
+
+        result = self._agent.invoke(normalized_inputs)
+        if isinstance(result, dict) and "structured_response" in result:
+            return result["structured_response"]
+        return result
 
     @classmethod
     @abstractmethod
