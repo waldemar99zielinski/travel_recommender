@@ -21,18 +21,46 @@ logger = LoggerManager.get_logger(__name__)
 def _build_search_query(inputs: RecommendationV2RecommendationResearchInput) -> str:
     return "\n".join(
         [
-            f"Research the travel region '{inputs.region_name}'.",
+            "You research one travel region and must return output that matches "
+            "RecommendationV2RecommendationResearchResult.",
+            f"Region to research: {inputs.region_name}.",
             (
-                "Focus on the user's travel intent and what they can concretely do there: "
+                "Primary user intent to satisfy: "
                 f"{inputs.synthesized_user_query}."
             ),
-            "Use the internal region description as grounding context:",
+            "Use this internal region description as grounding context:",
             inputs.region_description,
-            "Conversation context:",
+            "Use this conversation context for nuance:",
             serialize_chat_history(inputs.conversation),
+            "Research instructions:",
             (
-                "Return a concise travel-recommendation style answer grounded in web research, "
-                "with attention to the most relevant travel images."
+                "Prioritize web results about the activities, scenery, atmosphere, seasonality, "
+                "and trip style that best match the user's intent in this region."
+            ),
+            (
+                "Prefer pages and images that show the specific experiences the user would likely "
+                "care about, not generic region photos, maps, flags, logos, or unrelated landmarks."
+            ),
+            "Output rules:",
+            "Return only the structured fields for RecommendationV2RecommendationResearchResult.",
+            (
+                "Write description as one polished paragraph of around 10 sentences, in a travel "
+                "recommendation style, with concrete but non-hallucinated detail about what the user "
+                "can do, see, and enjoy there. Do NOT include the references or sources. JUST DESCRIBE."
+            ),
+            (
+                "Keep the description focused on the region's unique travel appeal and the user's intent"
+            ),
+            (
+                "Keep the description grounded in the search results and the provided region "
+                "description, and make it feel tailored to the user's request rather than generic."
+            ),
+            (
+                "Do not mention sources, references, citations, web research, or the search process."
+            ),
+            (
+                "For image_urls, include only relevant travel-photo URLs that visually match the "
+                "user intent and the description; if none are relevant, return an empty list."
             ),
         ]
     )
@@ -96,14 +124,20 @@ class RecommendationV2RecommendationResearchAgent:
         #     answer,
         # )
 
-        images = []
-        for r in result.get("results", []):
-            images_object = r.get("images", [])
-            for image in images_object:
-                image_url = image.get("url")
-                if image_url:
-                    images.append(image_url)
+        # images = []
+        # for r in result.get("results", []):
+        #     images_object = r.get("images", [])
+        #     for image in images_object:
+        #         image_url = image.get("url")
+        #         if image_url:
+        #             images.append(image_url)
 
+
+        logger.verbose(
+            "\n\nRegion research result for region=%s answer:\n\n%s",
+            inputs.region_name,
+            answer,
+        )
         # logger.verbose(
         #     "\n\nRegion research result for region=%s urls:\n\n%s",
         #     inputs.region_name,
@@ -111,7 +145,7 @@ class RecommendationV2RecommendationResearchAgent:
 
         response = RecommendationV2RecommendationResearchResult.model_validate(answer)
 
-        response.image_urls = images
+        # response.image_urls = images[:6]
 
         return response
 

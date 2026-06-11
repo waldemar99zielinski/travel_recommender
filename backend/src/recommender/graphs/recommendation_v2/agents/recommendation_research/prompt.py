@@ -22,7 +22,7 @@ prompt = ChatPromptTemplate.from_messages(
 
             Output rules:
             - Return only the structured output fields.
-            - Write `description` as one concise paragraph of 3 to 5 sentences.
+            - Write `description` as one concise paragraph of 10 sentences.
             - The description must be grounded in the search results and the provided region_description.
             - Focus on user-relevant experiences, activities, scenery, and trip fit.
             - Do not mention the search process, sources, or tool usage in the description.
