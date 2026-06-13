@@ -86,5 +86,3 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.image_ref }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
