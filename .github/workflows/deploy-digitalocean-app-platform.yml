@@ -1,0 +1,59 @@
+name: Build And Deploy To DigitalOcean App Platform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - frontend/**
+      - .github/workflows/**
+  workflow_dispatch:
+    inputs:
+      deploy_backend:
+        description: Build and deploy the backend.
+        required: false
+        type: boolean
+        default: true
+      deploy_frontend:
+        description: Build and deploy the frontend.
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: do-app-platform-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_backend:
+    name: Build Backend Image
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_backend }}
+    uses: ./.github/workflows/build-backend-image.yml
+    secrets: inherit
+
+  build_frontend:
+    name: Build Frontend Image
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_frontend }}
+    uses: ./.github/workflows/build-frontend-image.yml
+    secrets: inherit
+
+  deploy_backend:
+    name: Deploy Backend App
+    if: ${{ needs.build_backend.result == 'success' }}
+    needs:
+      - build_backend
+    uses: ./.github/workflows/deploy-backend-app.yml
+    with:
+      image_tag: ${{ needs.build_backend.outputs.image_tag }}
+    secrets: inherit
+
+  deploy_frontend:
+    name: Deploy Frontend App
+    if: ${{ needs.build_frontend.result == 'success' }}
+    needs:
+      - build_frontend
+    uses: ./.github/workflows/deploy-frontend-app.yml
+    with:
+      image_tag: ${{ needs.build_frontend.outputs.image_tag }}
+    secrets: inherit
