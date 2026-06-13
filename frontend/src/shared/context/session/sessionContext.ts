@@ -4,7 +4,9 @@ import type {
     SessionDeleteResponseDto,
     SessionDto,
     SessionStateResponseDto,
+    SessionVersion,
 } from "@/models/session.models";
+import type { ChatRecordDto } from "@/models/chat.models";
 import type { FetchStatus } from "@/shared/hooks/apiHookTypes";
 
 export interface SessionContextValue {
@@ -24,6 +26,10 @@ export interface SessionContextValue {
     removeSession: (
         session?: SessionDto | null,
     ) => Promise<SessionDeleteResponseDto | null>;
+
+    forcedSessionVersion: SessionVersion | null;
+    setForcedSessionVersion: (version: SessionVersion | null) => void;
+    sessionChatHistory: ChatRecordDto[];
 }
 
 export const SessionContext =

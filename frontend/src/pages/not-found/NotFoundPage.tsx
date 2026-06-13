@@ -7,9 +7,7 @@ export function NotFoundPage() {
 
     return (
         <Stack
-            sx={{ height: "100vh", px: 2 }}
-            alignItems="center"
-            justifyContent="center"
+            sx={{ height: "100vh", px: 2, alignItems: "center", justifyContent: "center" }}
             spacing={2}
         >
             <Typography variant="h4">{t("notFound.title")}</Typography>

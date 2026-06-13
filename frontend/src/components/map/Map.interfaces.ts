@@ -6,14 +6,6 @@ import type {
 import type { RecommendationItemDto } from "@/models/recommendation.models";
 import type { SelectedForRecommendationStatusType } from "@/features/recommendation/context/handlers/useRecommendationMapState";
 
-export type MapRankingLabelMode = "rank" | "score" | "rank-score";
-
-export interface MapRegionRankingConfig {
-    topN?: number;
-    labelMode?: MapRankingLabelMode;
-    forceTopColor?: boolean;
-}
-
 export type MapInteractionMode = "browse" | "selecting-for-recommendation";
 
 export type SetMode = "add" | "remove";
@@ -37,7 +29,6 @@ export interface MapCanvasProps {
     selectedRegionId: string | null;
     onSelectRegion: (regionId: string | null) => void;
     focusedRegionId: string | null;
-    rankingConfig: Required<MapRegionRankingConfig>;
 
     selectionForRecommendationProps: MapSelectionForRecommendationProps;
 }
@@ -48,17 +39,10 @@ export interface MapProps {
     selectedRegionId: string | null;
     onSelectRegion: (regionId: string | null) => void;
     focusedRegionId: string | null;
-    rankingConfig?: MapRegionRankingConfig;
 
     selectionForRecommendationProps: MapSelectionForRecommendationProps;
 }
 
 export interface MapPopupCardProps {
     properties: EnrichedRegionFeatureProperties;
-}
-
-export interface MapRankLabelProps {
-    rank: number;
-    score: number;
-    mode: MapRankingLabelMode;
 }

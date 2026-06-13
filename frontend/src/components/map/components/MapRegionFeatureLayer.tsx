@@ -1,28 +1,28 @@
-import { GeoJSON, Popup, Tooltip } from "react-leaflet";
+import { useEffect, useRef } from "react";
+
+import L from "leaflet";
+import { GeoJSON, Tooltip } from "react-leaflet";
 
 import type { MapCanvasProps } from "@/components/map/Map.interfaces";
-import { MapPopupCard } from "@/components/map/components/MapPopupCard";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
 import {
     getMapRegionStyle,
-    shouldShowMapRegionRankLabel,
 } from "@/components/map/model/mapRegionPresentation";
 
 interface MapRegionFeatureLayerProps {
     feature: MapCanvasProps["enrichedRegions"]["features"][number];
-    colorScale: (score: number) => string;
-    rankingConfig: MapCanvasProps["rankingConfig"];
     selectionForRecommendationProps: MapCanvasProps["selectionForRecommendationProps"];
     onSelectRegion: MapCanvasProps["onSelectRegion"];
+    selectedRegionId: MapCanvasProps["selectedRegionId"];
 }
 
 export function MapRegionFeatureLayer({
     feature,
-    colorScale,
-    rankingConfig,
     selectionForRecommendationProps,
     onSelectRegion,
+    selectedRegionId,
 }: MapRegionFeatureLayerProps) {
+    const layerRef = useRef<L.GeoJSON | null>(null);
     const regionId = feature.properties.u_name;
     const regionStatus =
         selectionForRecommendationProps.regionSelectedForRecommendationStatus.get(
@@ -35,21 +35,28 @@ export function MapRegionFeatureLayer({
         );
     }
 
+    const isSelected = selectedRegionId === regionId;
+
     const regionStyle = getMapRegionStyle(
         feature.properties,
         regionStatus,
-        rankingConfig,
-        colorScale,
+        isSelected,
     );
-    const showRankLabel = shouldShowMapRegionRankLabel(
-        feature.properties,
-        rankingConfig.topN,
-    );
-    const showPopup = selectionForRecommendationProps.selectionMode === "browse";
+    const showRankLabel =
+        feature.properties.recommendation != null && feature.properties.rank != null;
+
+    useEffect(() => {
+        if (!isSelected) {
+            return;
+        }
+
+        layerRef.current?.bringToFront();
+    }, [isSelected]);
 
     return (
         <GeoJSON
             key={regionId}
+            ref={layerRef}
             data={feature}
             style={{
                 fillOpacity: regionStyle.fillOpacity,
@@ -87,17 +94,8 @@ export function MapRegionFeatureLayer({
         >
             {showRankLabel && (
                 <Tooltip permanent direction="center" opacity={1}>
-                    <MapRankLabel
-                        rank={feature.properties.rank!}
-                        score={feature.properties.recommendation!.score}
-                        mode={rankingConfig.labelMode}
-                    />
+                    <MapRankLabel rank={feature.properties.rank!} mode="rank" />
                 </Tooltip>
-            )}
-            {showPopup && (
-                <Popup>
-                    <MapPopupCard properties={feature.properties} />
-                </Popup>
             )}
         </GeoJSON>
     );

@@ -13,15 +13,8 @@ export function Map({
     selectedRegionId,
     onSelectRegion,
     focusedRegionId,
-    rankingConfig,
     selectionForRecommendationProps,
 }: MapProps) {
-    const resolvedRankingConfig = {
-        topN: rankingConfig?.topN ?? 10,
-        labelMode: rankingConfig?.labelMode ?? "score",
-        forceTopColor: rankingConfig?.forceTopColor ?? false,
-    };
-
     const enrichedRegions = useMemo(
         () => enrichRegions(regions, recommendations),
         [regions, recommendations],
@@ -42,7 +35,6 @@ export function Map({
                 selectedRegionId={selectedRegionId}
                 onSelectRegion={onSelectRegion}
                 focusedRegionId={focusedRegionId}
-                rankingConfig={resolvedRankingConfig}
                 selectionForRecommendationProps={selectionForRecommendationProps}
             />
 

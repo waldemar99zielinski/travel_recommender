@@ -19,7 +19,10 @@ export function Chat(props: ChatProps) {
         isLoading,
         errorMessage,
         loadingDetail,
+        loadingStep,
+        isDestinationResearchLoading,
         headerAction,
+        onRecommendationSelect,
     } = props;
 
     return (
@@ -47,6 +50,9 @@ export function Chat(props: ChatProps) {
                         onGoingChatTurn={onGoingChatTurn}
                         isLoading={isLoading}
                         loadingDetail={loadingDetail}
+                        loadingStep={loadingStep}
+                        isDestinationResearchLoading={isDestinationResearchLoading}
+                        onRecommendationSelect={onRecommendationSelect}
                     />
                 </ChatConversationPanel>
                 <ChatErrorAlert errorMessage={errorMessage} />

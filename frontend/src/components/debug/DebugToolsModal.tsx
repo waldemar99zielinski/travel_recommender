@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
     Button,
@@ -21,11 +21,8 @@ import {
     setBaseLogLevel,
     type LogLevel,
 } from "@/shared/lib";
-import {
-    appConfiguration,
-    type RecommendationApiVersion,
-} from "@/shared/configuration";
-import { useAppConfigContext } from "@/shared/context";
+import { useAppConfigContext, useSessionContext } from "@/shared/context";
+import { sessionVersions, type SessionVersion } from "@/models/session.models";
 
 const debugLogger = createLogger({ scope: "DebugToolsModal" });
 const LOG_LEVEL_OPTIONS: LogLevel[] = [
@@ -36,8 +33,6 @@ const LOG_LEVEL_OPTIONS: LogLevel[] = [
     "error",
     "silent",
 ];
-const RECOMMENDATION_API_VERSION_OPTIONS: RecommendationApiVersion[] = ["v1", "v2", "v3"];
-
 function isDebugShortcut(event: KeyboardEvent): boolean {
     return (
         event.ctrlKey &&
@@ -51,15 +46,13 @@ function isDebugShortcut(event: KeyboardEvent): boolean {
 export function DebugToolsModal() {
     const {
         config,
-        resetRecommendationApiVersion,
-        setRecommendationApiVersion,
     } = useAppConfigContext();
     const [open, setOpen] = useState(false);
-    const [selectedLogLevel, setSelectedLogLevel] = useState<LogLevel>(() =>
-        getBaseLogLevel(),
-    );
-    const [selectedRecommendationApiVersion, setSelectedRecommendationApiVersion] =
-        useState<RecommendationApiVersion>(config.recommendationApiVersion);
+    const [baseLogLevel, setBaseLogLevelState] = useState<LogLevel>(getBaseLogLevel);
+    const {
+        forcedSessionVersion,
+        setForcedSessionVersion,
+    } = useSessionContext();
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -69,7 +62,12 @@ export function DebugToolsModal() {
 
             event.preventDefault();
             event.stopPropagation();
-            setOpen((previous) => !previous);
+            if (open) {
+                setOpen(false);
+                return;
+            }
+
+            setOpen(true);
         };
 
         document.addEventListener("keydown", onKeyDown, true);
@@ -77,22 +75,37 @@ export function DebugToolsModal() {
         return () => {
             document.removeEventListener("keydown", onKeyDown, true);
         };
+    }, [open]);
+
+    const handleLogLevelChange = useCallback((level: LogLevel) => {
+        setBaseLogLevel(level);
+        setBaseLogLevelState(level);
     }, []);
 
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
+    const handleSessionVersionChange = useCallback(
+        (value: string) => {
+            const version = value === "" ? null : (value as SessionVersion);
+            setForcedSessionVersion(version);
+        },
+        [setForcedSessionVersion],
+    );
 
-        setSelectedLogLevel(getBaseLogLevel());
-        setSelectedRecommendationApiVersion(config.recommendationApiVersion);
-    }, [config.recommendationApiVersion, open]);
+    const handleReset = useCallback(() => {
+        clearStoredBaseLogLevel();
+        setForcedSessionVersion(null);
+        const defaultLevel = getBaseLogLevel();
+        setBaseLogLevelState(defaultLevel);
+        debugLogger.info("Reset base log level", { baseLevel: defaultLevel });
+    }, [setForcedSessionVersion]);
 
     return (
         <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs">
             <DialogTitle>Debug Tools</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ pt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Application version {config.version}
+                    </Typography>
                     <Typography variant="body2" color="text.secondary">
                         Open with Ctrl + Shift + Y. Settings are stored in local storage.
                     </Typography>
@@ -102,9 +115,9 @@ export function DebugToolsModal() {
                         <Select
                             labelId="debug-log-level-label"
                             label="Log level"
-                            value={selectedLogLevel}
+                            value={baseLogLevel}
                             onChange={(event) =>
-                                setSelectedLogLevel(event.target.value as LogLevel)
+                                handleLogLevelChange(event.target.value as LogLevel)
                             }
                         >
                             {LOG_LEVEL_OPTIONS.map((level) => (
@@ -116,20 +129,21 @@ export function DebugToolsModal() {
                     </FormControl>
 
                     <FormControl fullWidth>
-                        <InputLabel id="debug-recommendation-api-version-label">
-                            Recommendation API version
+                        <InputLabel id="debug-forced-session-version-label">
+                            Forced Session Version
                         </InputLabel>
                         <Select
-                            labelId="debug-recommendation-api-version-label"
-                            label="Recommendation API version"
-                            value={selectedRecommendationApiVersion}
+                            labelId="debug-forced-session-version-label"
+                            label="Forced Session Version"
+                            value={forcedSessionVersion ?? ""}
                             onChange={(event) =>
-                                setSelectedRecommendationApiVersion(
-                                    event.target.value as RecommendationApiVersion,
-                                )
+                                handleSessionVersionChange(event.target.value)
                             }
                         >
-                            {RECOMMENDATION_API_VERSION_OPTIONS.map((version) => (
+                            <MenuItem key={""} value={""}>
+                                {"null"}
+                            </MenuItem>
+                            {sessionVersions.map((version) => (
                                 <MenuItem key={version} value={version}>
                                     {version}
                                 </MenuItem>
@@ -139,37 +153,10 @@ export function DebugToolsModal() {
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    onClick={() => {
-                        clearStoredBaseLogLevel();
-                        resetRecommendationApiVersion();
-                        const baseLevel = getBaseLogLevel();
-                        setSelectedLogLevel(baseLevel);
-                        setSelectedRecommendationApiVersion(
-                            appConfiguration.recommendationApiVersion,
-                        );
-                        debugLogger.info("Reset base log level", { baseLevel });
-                    }}
-                >
+                <Button onClick={handleReset}>
                     Reset
                 </Button>
                 <Button onClick={() => setOpen(false)}>Close</Button>
-                <Button
-                    variant="contained"
-                    onClick={() => {
-                        setBaseLogLevel(selectedLogLevel);
-                        setRecommendationApiVersion(selectedRecommendationApiVersion);
-                        debugLogger.info("Updated base log level", {
-                            level: selectedLogLevel,
-                        });
-                        debugLogger.info("Updated recommendation API version", {
-                            version: selectedRecommendationApiVersion,
-                        });
-                        setOpen(false);
-                    }}
-                >
-                    Apply
-                </Button>
             </DialogActions>
         </Dialog>
     );

@@ -3,6 +3,10 @@ import {
 } from "@/shared/api/config.api";
 import type { RecommendationApiVersion } from "@/shared/configuration";
 
+export interface DestinationApiUrlBuilder {
+    listDestinations(): string;
+}
+
 export interface HealthApiUrlBuilder {
     fetchHealth(): string;
 }
@@ -15,6 +19,12 @@ export interface SessionApiUrlBuilder {
     createSession(): string;
     getSession(userId: string, sessionId: string): string;
     removeSession(userId: string, sessionId: string): string;
+}
+
+export function createDestinationApiUrlBuilder(baseUrl: string): DestinationApiUrlBuilder {
+    return {
+        listDestinations: () => `${baseUrl}/api/v1/destinations`,
+    };
 }
 
 export function createHealthApiUrlBuilder(baseUrl: string): HealthApiUrlBuilder {
@@ -43,5 +53,6 @@ export function createSessionApiUrlBuilder(baseUrl: string): SessionApiUrlBuilde
     };
 }
 
+export const destinationApiUrlBuilder = createDestinationApiUrlBuilder(apiConfig.baseUrl);
 export const sessionApiUrlBuilder = createSessionApiUrlBuilder(apiConfig.baseUrl);
 export const healthApiUrlBuilder = createHealthApiUrlBuilder(apiConfig.baseUrl);

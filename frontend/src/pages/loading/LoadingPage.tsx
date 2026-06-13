@@ -6,9 +6,7 @@ export function LoadingPage() {
 
     return (
         <Stack
-            sx={{ minHeight: "100vh", px: 2 }}
-            alignItems="center"
-            justifyContent="center"
+            sx={{ minHeight: "100vh", px: 2, alignItems: "center", justifyContent: "center" }}
             spacing={2}
         >
             <CircularProgress />

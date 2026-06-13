@@ -20,9 +20,9 @@ import { MapSelectionModeEffects } from "@/components/map/components/MapSelectio
 
 export function MapCanvas({
     enrichedRegions,
+    selectedRegionId,
     onSelectRegion,
     focusedRegionId,
-    rankingConfig,
     selectionForRecommendationProps,
 }: MapCanvasProps) {
     return (
@@ -50,8 +50,8 @@ export function MapCanvas({
                 />
                 <MapRegionsLayer
                     enrichedRegions={enrichedRegions}
+                    selectedRegionId={selectedRegionId}
                     onSelectRegion={onSelectRegion}
-                    rankingConfig={rankingConfig}
                     selectionForRecommendationProps={selectionForRecommendationProps}
                 />
             </MapContainer>

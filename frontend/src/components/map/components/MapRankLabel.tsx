@@ -1,9 +1,20 @@
 import { Typography } from "@mui/material";
 
-import type { MapRankLabelProps } from "@/components/map/Map.interfaces";
 import { formatRecommendationScore } from "@/components/map/model/mapColors";
 
+type MapRankingLabelMode = "rank" | "score" | "rank-score";
+
+interface MapRankLabelProps {
+    rank: number;
+    score?: number;
+    mode: MapRankingLabelMode;
+}
+
 function buildLabel({ rank, score, mode }: MapRankLabelProps): string {
+    if (score == null) {
+        return `${rank}`;
+    }
+
     const formattedScore = formatRecommendationScore(score);
 
     if (mode === "score") {

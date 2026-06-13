@@ -58,6 +58,11 @@ export function ChatMessageCard({
     turn,
     isStreaming = false,
     loadingDetail = null,
+    loadingStep = null,
+    isDestinationResearchLoading = false,
+    showTravelDestinationFilter = false,
+    showRecommendations = false,
+    onRecommendationSelect,
 }: ChatMessageCardProps) {
     const userRequest = turn.user_request?.trim();
     const systemResponse = turn.system_response?.trim();
@@ -85,6 +90,11 @@ export function ChatMessageCard({
                                 turn={turn}
                                 isStreaming={isStreaming}
                                 loadingDetail={loadingDetail}
+                                loadingStep={loadingStep}
+                                isDestinationResearchLoading={isDestinationResearchLoading}
+                                showTravelDestinationFilter={showTravelDestinationFilter}
+                                showRecommendations={showRecommendations}
+                                onRecommendationSelect={onRecommendationSelect}
                             />
                         </CardContent>
                     </Card>

@@ -12,6 +12,7 @@ import HighlightAlt from "@mui/icons-material/HighlightAlt";
 import { useTranslation } from "react-i18next";
 
 import type { MapInteractionMode } from "@/components/map/Map.interfaces";
+import { appConfiguration } from "@/shared/configuration/appConfiguration";
 
 interface MapModeSelectorProps {
     mode: MapInteractionMode;
@@ -22,26 +23,36 @@ export function MapModeSelector({ mode, onChange }: MapModeSelectorProps) {
     const { t } = useTranslation();
     const [menuOpen, setMenuOpen] = useState(false);
     const anchorRef = useRef<HTMLDivElement | null>(null);
+    const isDisabled = appConfiguration.environment === "production";
 
     return (
         <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
             <Box sx={{ position: "relative" }} ref={anchorRef}>
                 <Box
-                    onClick={() => setMenuOpen((prev) => !prev)}
+                    onClick={() => {
+                        if (isDisabled) {
+                            return;
+                        }
+
+                        setMenuOpen((prev) => !prev);
+                    }}
                     sx={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         width: 30,
                         height: 30,
-                        cursor: "pointer",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
                         bgcolor: "#ffffff",
                         borderRadius: 0.2,
                         boxShadow: "0 0 0 2px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1)",
                         lineHeight: 0,
                         padding: 0,
                         outline: "none",
-                        "&:hover": { bgcolor: "#f4f4f4" },
+                        opacity: isDisabled ? 0.5 : 1,
+                        "&:hover": {
+                            bgcolor: isDisabled ? "#ffffff" : "#f4f4f4",
+                        },
                     }}
                 >
                     {mode === "browse" ? (
@@ -51,7 +62,7 @@ export function MapModeSelector({ mode, onChange }: MapModeSelectorProps) {
                     )}
                 </Box>
                 <Popper
-                    open={menuOpen}
+                    open={!isDisabled && menuOpen}
                     anchorEl={anchorRef.current}
                     placement="right-start"
                     sx={{ zIndex: 1300 }}

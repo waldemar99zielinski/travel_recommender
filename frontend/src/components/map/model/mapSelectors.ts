@@ -5,7 +5,7 @@ import type {
 } from "@/models/region.model";
 import type { RecommendationItemDto } from "@/models/recommendation.models";
 
-function normalizeRegionId(regionId: string): string {
+export function normalizeRegionId(regionId: string): string {
     return regionId.trim().replace(/[\s-]+/g, "_").toUpperCase();
 }
 
@@ -13,17 +13,9 @@ export function enrichRegions(
     regions: RegionFeatureCollection,
     recommendations: RecommendationItemDto[],
 ): EnrichedRegionFeatureCollection {
-    const recommendationsByScore = [...recommendations].sort((left, right) => {
-        if (right.score !== left.score) {
-            return right.score - left.score;
-        }
-
-        return left.id.localeCompare(right.id);
-    });
-
     const rankedById = new Map(
-        recommendationsByScore.map((recommendation, index) => [
-            normalizeRegionId(recommendation.id),
+        recommendations.map((recommendation, index) => [
+            normalizeRegionId(recommendation.region_id),
             { recommendation, rank: index + 1 },
         ]),
     );

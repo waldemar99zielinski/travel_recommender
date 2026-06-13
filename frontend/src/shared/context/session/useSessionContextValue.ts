@@ -4,6 +4,7 @@ import type {
     SessionDeleteResponseDto,
     SessionDto,
     SessionStateResponseDto,
+    SessionVersion,
 } from "@/models/session.models";
 import {
     createSession as createSessionRequest,
@@ -14,22 +15,15 @@ import type { SessionContextValue } from "@/shared/context/session/sessionContex
 import { useApiRequest } from "@/shared/hooks/useApiRequest";
 import { createLogger } from "@/shared/lib";
 import { sessionStorage } from "@/shared/storage";
+import { sessionForcedVersionStorage } from "@/shared/storage/sessionForcedVersion";
+import type { ChatRecordDto } from "@/models/chat.models";
 
 const logger = createLogger({ scope: "SessionContext" });
 
-function isSameSession(
-    left: SessionDto | null | undefined,
-    right: SessionDto | null | undefined,
-): boolean {
-    if (left == null || right == null) {
-        return left == null && right == null;
-    }
-
-    return left.user_id === right.user_id && left.session_id === right.session_id;
-}
-
 export function useSessionContextValue(): SessionContextValue {
     const [session, setSession] = useState<SessionDto | null>(() => sessionStorage.load());
+    const [sessionChatHistory, setSessionChatHistory] = useState<ChatRecordDto[]>([]);
+    const [forcedSessionVersion, _setForceSessionVersion] = useState<SessionVersion | null>(() => sessionForcedVersionStorage.get() as SessionVersion | null);
 
     const createSessionHandler = useCallback(async (userId?: string) => {
         const response = await createSessionRequest({
@@ -39,41 +33,31 @@ export function useSessionContextValue(): SessionContextValue {
         logger.debug("Created recommendation session", {
             session: response.session,
         });
-        if (!isSameSession(session, response.session)) {
-            setSession(response.session);
+
+        setSessionChatHistory([]); 
+
+        if (forcedSessionVersion != null) {
+            logger.warn("Forcing session version with value", {
+                version: forcedSessionVersion,
+            })
+            response.session.version = forcedSessionVersion;
         }
+
         sessionStorage.save(response.session);
+        setSession(response.session);
         return response.session;
-    }, [session]);
+    }, [session, forcedSessionVersion]);
 
     const [createSessionData, createSessionStatus, createSessionError, createSession] =
         useApiRequest<SessionDto, string>(createSessionHandler, {
             requestName: "createSession",
         });
 
-    const ensureSession = useCallback(
-        async (userId?: string): Promise<SessionDto> => {
-            if (session != null) {
-                logger.trace("Session already active, skipping session creation");
-                return session;
-            }
-
-            const createdSession = await createSession(userId);
-            if (createdSession == null) {
-                throw new Error("Failed to create session");
-            }
-
-            return createdSession;
-        },
-        [createSession, session],
-    );
-
     const getSessionHandler = useCallback(
         async (requestedSession?: SessionDto | null) => {
             const targetSession = requestedSession ?? session;
             if (targetSession == null) {
-                logger.debug("Get session skipped because no session is active");
-                return null;
+               throw new Error("getSession called without active session");
             }
 
             const response = await getSessionRequest(targetSession);
@@ -82,19 +66,18 @@ export function useSessionContextValue(): SessionContextValue {
                     session: targetSession,
                 });
 
-                if (isSameSession(session, targetSession)) {
-                    sessionStorage.clear();
-                    setSession(null);
-                }
+                setSession(targetSession);
+                setSessionChatHistory([]);
 
-                return null;
-            }
-
-            if (!isSameSession(session, response.session)) {
-                setSession(response.session);
+                return {
+                    session: targetSession,
+                    chat_history: [],
+                };
             }
 
             sessionStorage.save(response.session);
+            setSession(response.session);
+            setSessionChatHistory(response.chat_history);
 
             return response;
         },
@@ -108,6 +91,29 @@ export function useSessionContextValue(): SessionContextValue {
         requestName: "getSession",
     });
 
+    const ensureSession = useCallback(
+        async (userId?: string): Promise<SessionDto> => {
+            if (session != null) {
+                logger.trace("Session already active");
+                
+                if (getSessionStatus === "idle") {
+                    logger.trace("Ensuring session by fetching session state");
+                    await getSession(session);
+                }
+
+                return session;
+            }
+
+            const createdSession = await createSession(userId);
+            if (createdSession == null) {
+                throw new Error("Failed to create session");
+            }
+
+            return createdSession;
+        },
+        [createSession, session, getSession, getSessionStatus],
+    );
+
     const removeSessionHandler = useCallback(
         async (
             requestedSession?: SessionDto | null,
@@ -116,6 +122,7 @@ export function useSessionContextValue(): SessionContextValue {
             if (targetSession == null) {
                 logger.debug("Remove session skipped because no session is active");
                 sessionStorage.clear();
+                setSessionChatHistory([]);
                 setSession(null);
                 return null;
             }
@@ -128,6 +135,7 @@ export function useSessionContextValue(): SessionContextValue {
                 return response;
             } finally {
                 sessionStorage.clear();
+                setSessionChatHistory([]);
                 setSession(null);
             }
         },
@@ -141,6 +149,18 @@ export function useSessionContextValue(): SessionContextValue {
                 requestName: "removeSession",
             },
         );
+
+    const setForcedSessionVersion = useCallback((version: SessionVersion | null) => {
+        if (version == null) {
+            sessionForcedVersionStorage.clear();
+            _setForceSessionVersion(null);
+            logger.info("Cleared forced session version");
+        } else {
+            sessionForcedVersionStorage.set(version);
+            _setForceSessionVersion(version);
+            logger.info("Set forced session version", { version });
+        }
+    }, [_setForceSessionVersion]);
 
     return {
         session,
@@ -157,5 +177,8 @@ export function useSessionContextValue(): SessionContextValue {
         removeSessionStatus,
         removeSessionError,
         removeSession,
+        forcedSessionVersion,
+        setForcedSessionVersion,
+        sessionChatHistory: sessionChatHistory,
     };
 }

@@ -10,9 +10,7 @@ export function ErrorPage({ message }: ErrorPageProps) {
 
     return (
         <Stack
-            sx={{ minHeight: "100vh", px: 2 }}
-            alignItems="center"
-            justifyContent="center"
+            sx={{ minHeight: "100vh", px: 2, alignItems: "center", justifyContent: "center" }}
             spacing={2}
         >
             <Typography variant="h4">{t("error.title")}</Typography>

@@ -1,4 +1,4 @@
-import type { SessionDto } from "@/models/session.models";
+import type { SessionDto, SessionVersion } from "@/models/session.models";
 import { browserStorage } from "@/shared/storage/browserStorage";
 import { STORAGE_KEYS } from "@/shared/storage/storageKeys";
 
@@ -30,6 +30,7 @@ export function parseSessionStorageValue(value: string | null): SessionDto | nul
         return {
             user_id: parsedValue.user_id.trim(),
             session_id: parsedValue.session_id.trim(),
+            version: parsedValue.version.trim() as SessionVersion,
         };
     } catch {
         return null;
@@ -45,6 +46,7 @@ export const sessionStorage = {
         const normalizedSession: SessionDto = {
             user_id: session.user_id.trim(),
             session_id: session.session_id.trim(),
+            version: session.version.trim() as SessionVersion,
         };
 
         browserStorage.setItem(

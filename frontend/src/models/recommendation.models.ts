@@ -1,54 +1,58 @@
 import { z } from "zod";
 
 import {
-    type ChatMessageDto,
-    chatMessageDtoSchema,
-} from "@/models/chat-message.models";
-import {
     type SessionDto,
     sessionRefDtoSchema,
-} from "@/models/session.models";
+} from "@/models/session-ref.models";
+
+export interface RecommendationRequestDto {
+    session: SessionDto;
+    message: string;
+    included_region_ids: string[];
+    excluded_region_ids: string[];
+}
 
 export interface RecommendationItemDto {
-    id: string;
-    title: string;
-    score: number;
+    region_id: string;
+    region_name: string;
+}
+
+export interface RecommendationV2RegionResearchDto {
     description: string;
+    image_urls: string[];
 }
 
-export interface RecommendationResponseDto {
-    messages: ChatMessageDto[];
-    recommendations: RecommendationItemDto[];
-}
-
-export interface RecommendationRequestDto extends SessionDto {
-    message: string;
+export interface RecommendationV2TravelDestinationEvaluationDto
+    extends RecommendationV2RegionResearchDto {
+    region_id: string;
 }
 
 export const recommendationItemDtoSchema = z.object({
-    id: z.string(),
-    title: z.string(),
-    score: z.number().finite(),
-    description: z.string(),
+    region_id: z.string().trim().min(1),
+    region_name: z.string().trim().min(1),
 }) satisfies z.ZodType<RecommendationItemDto>;
 
-export const recommendationResponseDtoSchema = z.object({
-    messages: z.array(chatMessageDtoSchema),
-    recommendations: z.array(recommendationItemDtoSchema),
-}) satisfies z.ZodType<RecommendationResponseDto>;
+export const recommendationV2RegionResearchDtoSchema = z.object({
+    description: z.string(),
+    image_urls: z.array(z.string()),
+}) satisfies z.ZodType<RecommendationV2RegionResearchDto>;
 
-export const recommendationRequestDtoSchema = sessionRefDtoSchema.extend({
+export const recommendationV2TravelDestinationEvaluationDtoSchema = z.object({
+    region_id: z.string().trim().min(1),
+    description: z.string(),
+    image_urls: z.array(z.string()),
+}) satisfies z.ZodType<RecommendationV2TravelDestinationEvaluationDto>;
+
+export const recommendationRequestDtoSchema = z.object({
+    session: sessionRefDtoSchema,
     message: z.string().trim().min(1),
+    included_region_ids: z.array(z.string()),
+    excluded_region_ids: z.array(z.string()),
+    request_type: z.enum(["user_message", "explore_destination"]),
 }) satisfies z.ZodType<RecommendationRequestDto>;
 
 export function validateRecommendationRequestDto(
     payload: unknown,
 ): RecommendationRequestDto {
     return recommendationRequestDtoSchema.parse(payload);
-}
-
-export function validateRecommendationResponseDto(
-    payload: unknown,
-): RecommendationResponseDto {
-    return recommendationResponseDtoSchema.parse(payload);
 }

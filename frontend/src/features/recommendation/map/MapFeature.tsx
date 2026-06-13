@@ -1,105 +1,87 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
 
-import { Alert, CircularProgress, Stack, Typography } from "@mui/material";
-import { useTranslation } from "react-i18next";
+import {
+    Box,
+} from "@mui/material";
 
 import { Map } from "@/components/map/Map";
-import { useRecommendationFeatureContext } from "@/features/recommendation/useRecommendationFeatureContext";
-import { useRegionsApi } from "@/shared/hooks/useRegionsApi";
+import { OverlayPanelFeature } from "@/features/recommendation/map/OverlayPanelFeature";
+import { useRecommendationFeatureContext } from "@/features/recommendation/context/useRecommendationFeatureContext";
+import { recommendationItemDtoSchema } from "@/models/recommendation.models";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "MapFeature" });
 
 export function MapFeature() {
-    const { t } = useTranslation();
-    const [regions, regionsStatus, regionsError, fetchRegionsData] = useRegionsApi();
+    // const { t } = useTranslation();
     const {
-        recommendationResponse,
-        selectedRegionId,
-        setSelectedRegionId,
-        focusedRegionId,
-        setFocusedRegionId,
+        regions,
+
+        chatState: { chatRecords, onGoingChatTurn },
+        mapState: {
+            selectedRegionId,
+            setSelectedRegionId,
+            focusedRegionId,
+            setFocusedRegionId,
+            regionForRecommendationSelection: {
+                selectionMode,
+                setSelectionMode,
+                regionSelectedForRecommendationStatus,
+                setRegionSelectedForRecommendationStatus,
+                addRegionsToDraftSelection,
+                moveDraftSelectionToIncluded,
+                moveDraftSelectionToExcluded,
+                clearDraftSelectedRegionIds,
+            },
+        },
     } = useRecommendationFeatureContext();
 
-    const recommendations = recommendationResponse?.recommendations ?? [];
+    const latestChatTurn = onGoingChatTurn ?? chatRecords[chatRecords.length - 1] ?? null;
+    const parsedRecommendations = recommendationItemDtoSchema
+        .array()
+        .safeParse(latestChatTurn?.recommendations ?? []);
+    const latestRecommendations = parsedRecommendations.success
+        ? parsedRecommendations.data
+        : [];
 
-    useEffect(() => {
-        const loadRegions = async () => {
-            logger.trace("Fetching regions for map");
+    const handleRegionSelect = useCallback(
+        (regionId: string | null) => {
+            setSelectedRegionId(regionId);
+            setFocusedRegionId(null);
+            logger.trace("Region selected on map", { regionId });
+        },
+        [setSelectedRegionId, setFocusedRegionId],
+    );
 
-            const result = await fetchRegionsData();
-            if (result == null) {
-                logger.warn("Map regions request finished without data");
-                return;
-            }
-
-            logger.debug("Map regions ready", {
-                regionsCount: result.features.length,
-            });
-        };
-
-        void loadRegions();
-    }, [fetchRegionsData]);
-
-    useEffect(() => {
-        if (regionsError == null) {
-            return;
-        }
-
-        logger.error("Unable to load map regions", {
-            error: regionsError,
-        });
-    }, [regionsError]);
-
-    if (regionsStatus === "loading") {
-        return (
-            <Stack
-                sx={{ height: "100%" }}
-                alignItems="center"
-                justifyContent="center"
-                spacing={2}
-            >
-                <CircularProgress />
-                <Typography color="text.secondary">
-                    {t("recommendation.loadingMapData")}
-                </Typography>
-            </Stack>
-        );
-    }
-
-    if (regionsError != null) {
-        return (
-            <Stack sx={{ height: "100%", p: 2 }} justifyContent="center">
-                <Alert severity="error">{regionsError}</Alert>
-            </Stack>
-        );
-    }
-
-    if (regions == null) {
-        return (
-            <Stack sx={{ height: "100%", p: 2 }} justifyContent="center">
-                <Alert severity="error">
-                    {t("recommendation.noRegionsFound")}
-                </Alert>
-            </Stack>
-        );
-    }
 
     return (
-        <Map
-            regions={regions}
-            recommendations={recommendations}
-            selectedRegionId={selectedRegionId}
-            focusedRegionId={focusedRegionId}
-            rankingConfig={{
-                topN: 10,
-                labelMode: "rank",
+        <Box
+            sx={{
+                position: "relative",
+                display: "flex",
+                flex: 1,
+                minHeight: { xs: 420, lg: "100%" },
             }}
-            onSelectRegion={(regionId) => {
-                setSelectedRegionId(regionId);
-                setFocusedRegionId(null);
-                logger.trace("Region selected on map", { regionId });
-            }}
-        />
+        >
+            <Map
+                regions={regions}
+                recommendations={latestRecommendations}
+                selectedRegionId={selectedRegionId}
+                focusedRegionId={focusedRegionId}
+                onSelectRegion={handleRegionSelect}
+                selectionForRecommendationProps={{
+                    selectionMode,
+                    setSelectionMode,
+                    regionSelectedForRecommendationStatus,
+                    addRegionsToDraftSelection,
+                    setRegionSelectedForRecommendationStatus,
+                    moveDraftSelectionToIncluded,
+                    moveDraftSelectionToExcluded,
+                    clearDraftSelectedRegionIds,
+                }}
+            />
+
+            <OverlayPanelFeature />
+        </Box>
     );
 }

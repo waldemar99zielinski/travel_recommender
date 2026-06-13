@@ -2,7 +2,7 @@ import { useContext } from "react";
 
 import {
     RecommendationFeatureContext,
-} from "@/features/recommendation/recommendationFeatureContext";
+} from "@/features/recommendation/context/recommendationFeatureContext";
 import { createLogger } from "@/shared/lib";
 
 const logger = createLogger({ scope: "useRecommendationFeatureContext" });

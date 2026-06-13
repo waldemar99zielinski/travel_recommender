@@ -6,11 +6,11 @@ export const MAP_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 export const MAP_COLORS = {
-    noRecommendationFill: "#cfdae5",
+    noRecommendationFill: "#d6dee8",
     background: "#a3ceff",
     selectedBorder: "#ffffff",
     defaultBorder: "#868686",
-    selectedFill: "#90caf9",
+    recommendedFill: "#52af23",
     draftFill: "#5c6b73",
     includedFill: "#a5d6a7",
     excludedFill: "#ef9a9a",

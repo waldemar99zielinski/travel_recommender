@@ -5,6 +5,13 @@ export {
     type AppConfigContextValue,
 } from "@/shared/context/app-config";
 export {
+    DestinationContextProvider,
+    useDestinationContext,
+    type DestinationContextValue,
+    type DestinationItemDto,
+    type DestinationListResponseDto,
+} from "@/shared/context/destination";
+export {
     HealthContextProvider,
     useHealthContext,
     type HealthContextValue,

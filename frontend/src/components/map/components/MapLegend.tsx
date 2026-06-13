@@ -1,10 +1,13 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-import {
-    normalizedScoreToColor,
-    SCORE_LEGEND,
-} from "@/components/map/model/mapColors";
+import { MAP_COLORS } from "@/components/map/map.config";
+
+const MAP_LEGEND = [
+    { labelKey: "map.legend.recommended", color: MAP_COLORS.recommendedFill },
+    { labelKey: "map.legend.included", color: MAP_COLORS.includedFill },
+    { labelKey: "map.legend.excluded", color: MAP_COLORS.excludedFill },
+] as const;
 
 export function MapLegend() {
     const { t } = useTranslation();
@@ -23,7 +26,7 @@ export function MapLegend() {
             }}
         >
             <Stack spacing={0.5}>
-                {SCORE_LEGEND.map((entry) => (
+                {MAP_LEGEND.map((entry) => (
                     <Stack
                         key={entry.labelKey}
                         direction="row"
@@ -36,9 +39,7 @@ export function MapLegend() {
                                 height: 14,
                                 borderRadius: 0.5,
                                 border: "1px solid rgba(0,0,0,0.12)",
-                                bgcolor: normalizedScoreToColor(
-                                    entry.normalizedScore,
-                                ),
+                                bgcolor: entry.color,
                             }}
                         />
                         <Typography variant="caption">

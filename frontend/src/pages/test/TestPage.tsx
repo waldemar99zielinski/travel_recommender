@@ -13,10 +13,11 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { Chat } from "@/components/chat/Chat";
+import { TimedProgressLoader } from "@/components/loader/TimedProgressLoader";
 import { MapLegend } from "@/components/map/components/MapLegend";
 import { MapRankLabel } from "@/components/map/components/MapRankLabel";
 import { TravelMapLoader } from "@/components/loader/TravelMapLoader";
-import type { ChatMessage } from "@/components/chat/Chat.interfaces";
+import type { ChatRecordDto } from "@/models/chat.models";
 import { appConfiguration } from "@/shared/configuration";
 import { createLogger } from "@/shared/lib";
 
@@ -36,7 +37,7 @@ function QuickReplyChips({ onSelect }: QuickReplyChipsProps) {
     ];
 
     return (
-        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+        <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
             {quickReplies.map((reply) => (
                 <Chip
                     key={reply}
@@ -55,19 +56,28 @@ export function TestPage() {
     const { t } = useTranslation();
     const [message, setMessage] = useState("");
     const [showLoader, setShowLoader] = useState(true);
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    const [chatRecords, setChatRecords] = useState<ChatRecordDto[]>([
         {
-            id: "preset-assistant-intro",
-            role: "assistant",
-            content: t("test.introMessage"),
+            user_id: "demo-user",
+            session_id: "demo-session",
+            chat_history_number: 0,
+            user_request: "",
+            system_response: t("test.introMessage"),
+            recommendations: [],
+            travel_destinations_evaluations: [],
+            included_regions_ids: [],
+            excluded_regions_ids: [],
         },
         {
-            id: "preset-assistant-clickable",
-            role: "assistant",
-            content: t("test.clickableMessage"),
-            onClick: () => {
-                setMessage(t("test.clickableAutofill"));
-            },
+            user_id: "demo-user",
+            session_id: "demo-session",
+            chat_history_number: 1,
+            user_request: "",
+            system_response: t("test.clickableMessage"),
+            recommendations: [],
+            travel_destinations_evaluations: [],
+            included_regions_ids: [],
+            excluded_regions_ids: [],
         },
     ]);
 
@@ -82,25 +92,6 @@ export function TestPage() {
         };
     }, []);
 
-    const dynamicMessages: ChatMessage[] = [
-        ...chatMessages,
-        {
-            id: "preset-quick-replies",
-            role: "assistant",
-            content: (
-                <Stack spacing={1}>
-                    <Typography variant="body2">{t("test.quickPicks")}</Typography>
-                    <QuickReplyChips
-                        onSelect={(value) => {
-                            setMessage(value);
-                            testPageLogger.debug("Quick reply selected", { value });
-                        }}
-                    />
-                </Stack>
-            ),
-        },
-    ];
-
     const handleSubmit = () => {
         const trimmedMessage = message.trim();
         if (trimmedMessage.length === 0) {
@@ -112,17 +103,18 @@ export function TestPage() {
             length: trimmedMessage.length,
         });
 
-        setChatMessages((previous) => [
+        setChatRecords((previous) => [
             ...previous,
             {
-                id: `user-${Date.now()}`,
-                role: "user",
-                content: trimmedMessage,
-            },
-            {
-                id: `assistant-${Date.now()}`,
-                role: "assistant",
-                content: t("test.demoReply", { message: trimmedMessage }),
+                user_id: "demo-user",
+                session_id: "demo-session",
+                chat_history_number: previous.length,
+                user_request: trimmedMessage,
+                system_response: t("test.demoReply", { message: trimmedMessage }),
+                recommendations: [],
+                travel_destinations_evaluations: [],
+                included_regions_ids: [],
+                excluded_regions_ids: [],
             },
         ]);
         setMessage("");
@@ -155,9 +147,16 @@ export function TestPage() {
                             <Typography variant="body2" color="text.secondary">
                                 {t("test.chatPreviewDescription")}
                             </Typography>
+                            <QuickReplyChips
+                                onSelect={(value) => {
+                                    setMessage(value);
+                                    testPageLogger.debug("Quick reply selected", { value });
+                                }}
+                            />
                             <Divider />
                             <Chat
-                                messages={dynamicMessages}
+                                chatRecords={chatRecords}
+                                onGoingChatTurn={null}
                                 message={message}
                                 onMessageChange={setMessage}
                                 onSubmit={handleSubmit}
@@ -171,7 +170,7 @@ export function TestPage() {
                 <Card variant="outlined">
                     <CardContent>
                         <Stack spacing={2}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
+                            <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
                                 <Switch
                                     checked={showLoader}
                                     onChange={(event) => {
@@ -187,7 +186,14 @@ export function TestPage() {
                                 </Typography>
                             </Stack>
                             {showLoader ? (
-                                <TravelMapLoader />
+                                <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+                                    <TravelMapLoader />
+                                    <TimedProgressLoader
+                                        label={t("test.timerLoaderLabel")}
+                                        durationMs={12000}
+                                        initialElapsedMs={3500}
+                                    />
+                                </Stack>
                             ) : (
                                 <Typography color="text.secondary">
                                     {t("test.loaderHidden")}
@@ -203,7 +209,7 @@ export function TestPage() {
                             <Typography variant="h6">
                                 {t("test.mapSnippetsTitle")}
                             </Typography>
-                            <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                                 <Typography variant="body2" color="text.secondary">
                                     {t("test.rankLabelExample")}
                                 </Typography>

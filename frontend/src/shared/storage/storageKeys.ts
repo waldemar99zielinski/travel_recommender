@@ -1,5 +1,5 @@
 export const STORAGE_KEYS = {
     loggerBaseLevel: "hybrid:logger:base-level",
     currentSession: "hybrid:session:current",
-    recommendationApiVersion: "hybrid:recommendation:api-version",
+    forceSessionVersion: "hybrid:session:force-version",
 } as const;
