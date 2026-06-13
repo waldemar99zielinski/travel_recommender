@@ -9,6 +9,7 @@ from sqlmodel import Session
 from embeddings.protocols import TextEmbeddingModelProtocol
 from storage.configuration import StorageConfiguration
 from storage.db.engine import create_storage_engine
+from storage.db.engine import ensure_pgvector_extension
 from storage.db.migration_runner import run_storage_migrations
 from storage.health import StorageHealthReport
 from storage.health import check_storage_health
@@ -37,6 +38,7 @@ class Storage:
         self.embedding_model = embedding_model
 
         self.engine: Engine = create_storage_engine(config.engine)
+        ensure_pgvector_extension(self.engine)
 
         embedding_dimension = embedding_model.get_dimentions()
         if embedding_dimension <= 0:

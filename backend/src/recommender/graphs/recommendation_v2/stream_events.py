@@ -90,8 +90,10 @@ class StreamEventChatRecord:
             "synthesized_query": self.chat_record.synthesized_query,
             "recommendations": self.chat_record.recommendations,
             "travel_destinations_evaluations": self.chat_record.travel_destinations_evaluations,
+            "travel_destination_filter": self.chat_record.travel_destination_filter,
+            "included_regions_ids": [],
+            "excluded_regions_ids": [],
             "graph_version": self.chat_record.graph_version,
-            "message_type": self.chat_record.message_type,
         }
 
 

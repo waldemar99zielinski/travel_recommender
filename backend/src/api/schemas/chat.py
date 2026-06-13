@@ -42,7 +42,7 @@ class ChatRecordDto(BaseModel):
             system_response=record.system_response,
             recommendations=record.recommendations,
             travel_destinations_evaluations=record.travel_destinations_evaluations,
-            included_regions_ids=record.included_regions_ids,
-            excluded_regions_ids=record.excluded_regions_ids,
+            included_regions_ids=list(getattr(record, "included_regions_ids", [])),
+            excluded_regions_ids=list(getattr(record, "excluded_regions_ids", [])),
             travel_destination_filter=record.travel_destination_filter,
         )

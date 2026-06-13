@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 
 from pydantic import Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
@@ -29,6 +30,13 @@ class LLMConfig(BaseSettings):
     base_url: Optional[str] = Field(default=None)
 
     extra: Optional[dict[str, Any]] = Field(default=None)
+
+    @field_validator("max_tokens", mode="before")
+    @classmethod
+    def parse_optional_max_tokens(cls, value: Any) -> Any:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     def get_common(self) -> dict[str, Any]:
         return {

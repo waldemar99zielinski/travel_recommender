@@ -1,4 +1,5 @@
 import unittest
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -16,7 +17,9 @@ from api.schemas.session import SessionCreateResponseDto
 from api.schemas.session import SessionDeleteResponseDto
 from api.schemas.session import SessionRefDto
 from api.schemas.session import SessionStateResponseDto
+from api.services.session_service import SessionService
 from storage.health import StorageHealthReport
+from storage.models.chat_record import ChatRecord
 
 
 class FakeRecommendationService:
@@ -71,7 +74,30 @@ class FakeStorage:
         )
 
 
-def create_test_client() -> TestClient:
+class FakeChatStore:
+    def __init__(self, rows: list[ChatRecord] | None = None) -> None:
+        self._rows = list(rows or [])
+
+    def load_session(self, user_id: str, session_id: str) -> list[ChatRecord]:
+        return [
+            row
+            for row in self._rows
+            if str(row.user_id) == user_id and str(row.session_id) == session_id
+        ]
+
+    def delete_session(self, user_id: str, session_id: str) -> None:
+        self._rows = [
+            row
+            for row in self._rows
+            if not (str(row.user_id) == user_id and str(row.session_id) == session_id)
+        ]
+
+
+class FakeTravelDestinationStore:
+    pass
+
+
+def create_test_client(session_service: object | None = None) -> TestClient:
     configuration = ApiConfiguration(
         env=ApiEnvironment.development,
         log_level=ApiLogLevel.info,
@@ -83,7 +109,7 @@ def create_test_client() -> TestClient:
         embedding_model=FakeEmbeddingModel(),
         storage=FakeStorage(),
         recommendation_service=FakeRecommendationService(),
-        session_service=FakeSessionService(),
+        session_service=session_service or FakeSessionService(),
     )
     return TestClient(app)
 
@@ -113,6 +139,49 @@ class TestSessionEndpoints(unittest.TestCase):
         self.assertEqual(delete_body["session"]["user_id"], "user-1")
         self.assertEqual(delete_body["session"]["session_id"], "session-1")
         self.assertEqual(delete_body["session"]["version"], "v1")
+
+    def test_get_session_returns_cors_header(self) -> None:
+        with create_test_client() as client:
+            response = client.get(
+                "/api/v1/sessions/user-1/session-1",
+                headers={"Origin": "http://localhost:5173"},
+            )
+
+        self.assertEqual(response.headers.get("access-control-allow-origin"), "http://localhost:5173")
+
+    def test_get_session_returns_persisted_history_without_region_id_arrays(self) -> None:
+        user_id = uuid4()
+        session_id = uuid4()
+        persisted_row = ChatRecord(
+            user_id=user_id,
+            session_id=session_id,
+            chat_history_number=0,
+            user_request="Recommend a quiet beach trip",
+            system_response="Consider the Algarve.",
+            synthesized_query="quiet beach trip europe",
+            recommendations=[{"region_id": "PRT_ALG", "region_name": "Algarve"}],
+            travel_destination_filter={"seasonality": {"season": "summer"}},
+            travel_destinations_evaluations=[],
+            graph_version="v2",
+        )
+        session_service = SessionService(
+            chat_store=FakeChatStore([persisted_row]),
+            travel_destination_store=FakeTravelDestinationStore(),
+        )
+
+        with create_test_client(session_service=session_service) as client:
+            response = client.get(f"/api/v1/sessions/{user_id}/{session_id}")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["session"]["version"], "v2")
+        self.assertEqual(len(body["chat_history"]), 1)
+        self.assertEqual(body["chat_history"][0]["included_regions_ids"], [])
+        self.assertEqual(body["chat_history"][0]["excluded_regions_ids"], [])
+        self.assertEqual(
+            body["chat_history"][0]["travel_destination_filter"],
+            {"seasonality": {"season": "summer"}},
+        )
 
 
 if __name__ == "__main__":

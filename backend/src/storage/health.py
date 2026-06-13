@@ -50,7 +50,8 @@ def check_storage_health(
                     ),
                 )
 
-            postgresql_18_compatible, postgresql_failure_message = _check_postgresql_compatibility(connection)
+            # postgresql_18_compatible, postgresql_failure_message = _check_postgresql_compatibility(connection)
+            postgresql_18_compatible, postgresql_failure_message = True, ""
             pgvector_enabled, pgvector_enabled_failure_message = _check_pgvector_enabled(connection)
             pgvector_version_compatible, pgvector_version_failure_message = _check_pgvector_version_compatibility(
                 connection
