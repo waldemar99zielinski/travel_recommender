@@ -10,10 +10,6 @@ on:
     secrets:
       DIGITALOCEAN_ACCESS_TOKEN:
         required: true
-      DIGITALOCEAN_FRONTEND_APP_NAME:
-        required: true
-      DIGITALOCEAN_FRONTEND_COMPONENT_NAME:
-        required: true
   workflow_dispatch:
     inputs:
       image_tag:
@@ -31,7 +27,7 @@ jobs:
     steps:
       - name: Resolve Frontend Image Tag Override
         env:
-          COMPONENT_NAME: ${{ secrets.DIGITALOCEAN_FRONTEND_COMPONENT_NAME }}
+          COMPONENT_NAME: app
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
@@ -43,6 +39,6 @@ jobs:
       - name: DigitalOcean App Platform Deployment
         uses: digitalocean/app_action/deploy@v2.0.11
         with:
-          app_name: ${{ secrets.DIGITALOCEAN_FRONTEND_APP_NAME }}
+          app_name: frontend-app
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           print_deploy_logs: true
