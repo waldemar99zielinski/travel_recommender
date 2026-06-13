@@ -1,13 +1,6 @@
 name: Build And Deploy To DigitalOcean App Platform
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - backend/**
-      - frontend/**
-      - .github/workflows/**
   workflow_dispatch:
     inputs:
       deploy_backend:
