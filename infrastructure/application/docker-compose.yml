@@ -1,0 +1,49 @@
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    image: travel-recommender-backend:latest
+    restart: unless-stopped
+    environment:
+      API_ENV: ${API_ENV:-production}
+      API_LOG_LEVEL: ${API_LOG_LEVEL:-info}
+      API_CORS_ALLOW_ORIGINS: ${API_CORS_ALLOW_ORIGINS:-http://localhost:8080}
+      STORAGE_ENGINE__DB_URL: ${STORAGE_ENGINE__DB_URL:?Set STORAGE_ENGINE__DB_URL in infrastructure/application/.env}
+      STORAGE_ENGINE__ECHO: ${STORAGE_ENGINE__ECHO:-false}
+      STORAGE_ENGINE__POOL_PRE_PING: ${STORAGE_ENGINE__POOL_PRE_PING:-true}
+      STORAGE_ENGINE__POOL_SIZE: ${STORAGE_ENGINE__POOL_SIZE:-5}
+      STORAGE_ENGINE__MAX_OVERFLOW: ${STORAGE_ENGINE__MAX_OVERFLOW:-10}
+      STORAGE_MIGRATIONS__ENABLED: ${STORAGE_MIGRATIONS__ENABLED:-true}
+      STORAGE_MIGRATIONS__LOCK_KEY: ${STORAGE_MIGRATIONS__LOCK_KEY:-540021}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-llama3.1}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-}
+      LLM_TIMEOUT_S: ${LLM_TIMEOUT_S:-60}
+      LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-2}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      EMBEDDINGS_PROVIDER: ${EMBEDDINGS_PROVIDER:-ollama}
+      EMBEDDINGS_MODEL_NAME: ${EMBEDDINGS_MODEL_NAME:-nomic-embed-text}
+      EMBEDDINGS_BASE_URL: ${EMBEDDINGS_BASE_URL:-}
+      EMBEDDINGS_API_KEY: ${EMBEDDINGS_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8000}:80"
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    image: travel-recommender-frontend:latest
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-production}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+      REGIONS_DATA_URL: ${REGIONS_DATA_URL:-/regions.json}
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
