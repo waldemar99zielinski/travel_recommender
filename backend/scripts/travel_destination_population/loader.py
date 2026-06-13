@@ -8,7 +8,8 @@ from travel_destination_population.paths import ensure_src_path
 
 ensure_src_path()
 
-from embeddings.loader import load_text_embedding_model
+from embeddings.configuration import TextEmbeddingModelConfiguration
+from embeddings.loader import create_text_embedding_model
 from storage.bootstrap.travel_destination_csv_bootstrap import (
     load_travel_destination_records_from_csv,
 )
@@ -32,10 +33,11 @@ def populate_travel_destination_store(
     *,
     csv_path: Path,
     storage_configuration: StorageConfiguration,
+    embedding_configuration: TextEmbeddingModelConfiguration,
     batch_size: int,
 ) -> int:
     """Load CSV records, generate embeddings, and upsert them through TravelDestinationStore."""
-    embedding_model = load_text_embedding_model()
+    embedding_model = create_text_embedding_model(embedding_configuration)
     storage = Storage(storage_configuration, embedding_model=embedding_model)
 
     try:
