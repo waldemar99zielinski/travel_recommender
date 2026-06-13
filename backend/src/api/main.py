@@ -1,26 +1,20 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from api.app import create_app
 from api.core.configuration import load_api_configuration
 from api.services.recommendation_v0_service import RecommendationV0Service
 from api.services.recommendation_v1_service import RecommendationV1Service
 from api.services.recommendation_v2_service import RecommendationV2Service
 from api.services.session_service import SessionService
-from embeddings.configuration import load_ollama_text_embedding_model_configuration
-from embeddings.ollama_text_embedding_model import OllamaTextEmbeddingModel
+from embeddings.loader import load_text_embedding_model
 from recommender.graphs.recommendation_v0 import build_recommendation_v0_graph
 from recommender.graphs.recommendation_v1 import build_recommendation_v1_graph
 from recommender.graphs.recommendation_v2 import build_recommendation_v2_graph
-from storage.bootstrap.travel_destination_csv_bootstrap import load_travel_destination_records_from_csv
-from storage.bootstrap.travel_destination_seed import seed_travel_destinations
 from storage.configuration import load_storage_configuration
 from storage.storage import Storage
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
-DEFAULT_SEED_CSV_PATH = Path(__file__).resolve().parents[2] / "data" / "regionmodel_with_detailed_descriptions.csv"
 
 logger.info("Starting API setup")
 
@@ -34,26 +28,11 @@ logger.info(
 )
 
 logger.info("Initializing embedding model")
-embedding_configuration = load_ollama_text_embedding_model_configuration()
-embedding_model = OllamaTextEmbeddingModel(embedding_configuration)
+embedding_model = load_text_embedding_model()
 
 logger.info("Initializing storage")
 storage_configuration = load_storage_configuration()
 storage = Storage(storage_configuration, embedding_model=embedding_model)
-
-if storage.travel_destinations.size() == 0:
-    logger.info("Storage is empty, bootstrapping travel destinations from %s", DEFAULT_SEED_CSV_PATH)
-    records = load_travel_destination_records_from_csv(
-        DEFAULT_SEED_CSV_PATH,
-        embedding_model=embedding_model,
-    )
-    inserted_rows = seed_travel_destinations(
-        storage.unit_of_work,
-        records,
-        embedding_dimension=storage.embedding_dimension,
-        batch_size=200,
-    )
-    logger.info("Storage bootstrap completed: inserted_rows=%s", inserted_rows)
 
 logger.info("Compiling recommendation graph")
 recommendation_graph = build_recommendation_v0_graph(

@@ -1,5 +1,27 @@
 # React + TypeScript + Vite
 
+## Runtime configuration
+
+For local Vite development, copy `.env.example` and configure:
+
+- `FRONTEND_HOST`
+- `FRONTEND_PORT`
+- `VITE_API_BASE_URL`
+- `VITE_REGIONS_DATA_URL`
+
+For the nginx Docker image, use `.env.runtime.example` and provide runtime values for:
+
+- `APP_ENVIRONMENT`
+- `API_BASE_URL`
+- `REGIONS_DATA_URL`
+
+Example:
+
+```bash
+docker build -t frontend-nginx .
+docker run --rm -p 8080:80 --env-file .env.runtime.example frontend-nginx
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

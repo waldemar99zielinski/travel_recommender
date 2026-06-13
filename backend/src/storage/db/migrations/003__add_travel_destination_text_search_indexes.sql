@@ -9,6 +9,6 @@ ON travel_destinations
 USING gin (
     to_tsvector(
         'simple',
-        coalesce(region, '') || ' ' || coalesce(parent_region, '') || ' ' || coalesce(description, '')
+        coalesce(description, '')
     )
 );

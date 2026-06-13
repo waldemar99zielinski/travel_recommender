@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Callable
 
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from storage.stores.recommendation_session_store import RecommendationSessionStore
+from storage.stores.chat_store import ChatStore
 
 
 def create_session_memory_load_node(
-    recommendation_session_store: RecommendationSessionStore,
+    recommendation_session_store: ChatStore,
 ) -> Callable[[RecommendationGraphState], dict[str, object]]:
     """Create node to load session memory from database."""
 

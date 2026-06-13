@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
+EmbeddingProvider = Literal["ollama", "openai"]
 
-class OllamaTextEmbeddingModelConfiguration(BaseSettings):
-    """Configuration for the Ollama text embedding provider."""
+
+class TextEmbeddingModelConfiguration(BaseSettings):
+    """Configuration for the active text embedding provider."""
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",
@@ -16,22 +19,30 @@ class OllamaTextEmbeddingModelConfiguration(BaseSettings):
         extra="ignore",
     )
 
+    provider: EmbeddingProvider = Field(
+        default="ollama",
+        description="Embedding provider used by the backend.",
+    )
     model_name: str = Field(
         min_length=1,
-        description="Ollama model identifier used for embedding generation.",
+        description="Provider model identifier used for embedding generation.",
     )
-    base_url: str = Field(
-        min_length=1,
-        description="Ollama host URL (for example http://localhost:11434).",
+    base_url: str | None = Field(
+        default=None,
+        description="Optional provider base URL override.",
+    )
+    api_key: str | None = Field(
+        default=None,
+        description="Optional provider API key, required for OpenAI embeddings.",
     )
 
 
-def load_ollama_text_embedding_model_configuration(
+def load_text_embedding_model_configuration(
     *,
     env_file: Path | str | None = None,
-) -> OllamaTextEmbeddingModelConfiguration:
-    """Load Ollama embedding settings from environment variables."""
+) -> TextEmbeddingModelConfiguration:
+    """Load embedding settings from environment variables."""
     if env_file is None:
-        return OllamaTextEmbeddingModelConfiguration()
+        return TextEmbeddingModelConfiguration()
 
-    return OllamaTextEmbeddingModelConfiguration(_env_file=env_file)
+    return TextEmbeddingModelConfiguration(_env_file=env_file)

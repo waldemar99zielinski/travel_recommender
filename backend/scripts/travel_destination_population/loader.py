@@ -8,8 +8,7 @@ from travel_destination_population.paths import ensure_src_path
 
 ensure_src_path()
 
-from embeddings.configuration import load_ollama_text_embedding_model_configuration
-from embeddings.ollama_text_embedding_model import OllamaTextEmbeddingModel
+from embeddings.loader import load_text_embedding_model
 from storage.bootstrap.travel_destination_csv_bootstrap import (
     load_travel_destination_records_from_csv,
 )
@@ -36,8 +35,7 @@ def populate_travel_destination_store(
     batch_size: int,
 ) -> int:
     """Load CSV records, generate embeddings, and upsert them through TravelDestinationStore."""
-    embedding_configuration = load_ollama_text_embedding_model_configuration()
-    embedding_model = OllamaTextEmbeddingModel(embedding_configuration)
+    embedding_model = load_text_embedding_model()
     storage = Storage(storage_configuration, embedding_model=embedding_model)
 
     try:

@@ -6,7 +6,7 @@ from pydantic import Field
 
 from recommender.models.data_flow.user_preferences import UserInterestPreferences, UserLogisticalPreferences
 from recommender.models.session.session import Session
-from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
+from storage.models.chat_record import ChatRecord
 from storage.stores.search_models import ScoredTravelDestination
 
 
@@ -15,6 +15,7 @@ class RecommendationStatusEnum(str, Enum):
 
     IN_PROGRESS = "in_progress"
     RECOMMENDATION_GENERATED = "recommendation_generated"
+    OUT_OF_SCOPE = "out_of_scope"
 
     NO_PREFERENCES = "no_preferences"
     SUCCESS = "success"
@@ -47,7 +48,7 @@ class RecommendationGraphState(BaseModel):
         None,
         description="Final response message shared across graph branches"
     )
-    history: Optional[list[RecommendationSessionMemoryRecord]] = Field(
+    history: Optional[list[ChatRecord]] = Field(
         None,
         description="Persisted session turns loaded from storage"
     )

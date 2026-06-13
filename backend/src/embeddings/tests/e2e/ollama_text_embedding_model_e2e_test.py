@@ -8,7 +8,7 @@ from urllib.request import urlopen
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
-from embeddings.configuration import OllamaTextEmbeddingModelConfiguration
+from embeddings.configuration import TextEmbeddingModelConfiguration
 from embeddings.ollama_text_embedding_model import OllamaTextEmbeddingModel
 
 TEST_EMBEDDINGS_MODEL_NAME = "nomic-embed-text"
@@ -18,7 +18,8 @@ TEST_EMBEDDINGS_BASE_URL = "http://localhost:11434"
 class TestOllamaTextEmbeddingModelE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        configuration = OllamaTextEmbeddingModelConfiguration(
+        configuration = TextEmbeddingModelConfiguration(
+            provider="ollama",
             model_name=TEST_EMBEDDINGS_MODEL_NAME,
             base_url=TEST_EMBEDDINGS_BASE_URL,
         )

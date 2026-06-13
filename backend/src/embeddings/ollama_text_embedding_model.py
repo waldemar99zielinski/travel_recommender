@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from langchain_core.embeddings import Embeddings
 from langchain_ollama import OllamaEmbeddings
 
-from embeddings.configuration import OllamaTextEmbeddingModelConfiguration
+from embeddings.configuration import TextEmbeddingModelConfiguration
 from embeddings.protocols import TextEmbeddingModelProtocol
 from utils.logger import LoggerManager
 
@@ -20,16 +20,21 @@ class OllamaTextEmbeddingModel(TextEmbeddingModelProtocol):
 
     def __init__(
         self,
-        configuration: OllamaTextEmbeddingModelConfiguration,
+        configuration: TextEmbeddingModelConfiguration,
         *,
         backend: Embeddings | None = None,
     ) -> None:
         if configuration is None:
             raise ValueError("configuration is required")
+        if configuration.provider != "ollama":
+            raise ValueError("provider must be 'ollama' for OllamaTextEmbeddingModel")
 
         model_name = configuration.model_name.strip()
         if not model_name:
             raise ValueError("model_name must not be empty")
+        base_url = configuration.base_url.strip() if configuration.base_url is not None else None
+        if not base_url:
+            raise ValueError("base_url must not be empty for Ollama embeddings")
 
         self.configuration = configuration
         self.model_name = model_name
@@ -39,7 +44,7 @@ class OllamaTextEmbeddingModel(TextEmbeddingModelProtocol):
         logger.info(
             "Initializing OllamaTextEmbeddingModel: model=%s base_url=%s custom_backend=%s",
             self.model_name,
-            self.configuration.base_url,
+            base_url,
             using_custom_backend,
         )
 
@@ -49,7 +54,7 @@ class OllamaTextEmbeddingModel(TextEmbeddingModelProtocol):
         else:
             backend_parameters: dict[str, str] = {
                 "model": model_name,
-                "base_url": configuration.base_url,
+                "base_url": base_url,
             }
 
             self.backend = OllamaEmbeddings(**backend_parameters)

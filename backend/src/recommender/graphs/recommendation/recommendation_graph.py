@@ -4,8 +4,8 @@ from langgraph.graph import StateGraph
 
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
 from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
-from recommender.agents.query_synthesis.recommendation_query_synthesis_agent import (
-    RecommendationQuerySynthesisAgent,
+from recommender.agents.query_synthesis.agent import (
+    QuerySynthesisAgent,
 )
 from recommender.agents.response_generation.recommendation_response_generation_agent import (
     RecommendationResponseGenerationAgent,
@@ -22,7 +22,7 @@ from recommender.graphs.recommendation.nodes.response_node import create_respons
 from recommender.graphs.recommendation.nodes.session_memory_load_node import create_session_memory_load_node
 from recommender.graphs.recommendation.nodes.session_memory_update_node import create_session_memory_update_node
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from storage.stores.recommendation_session_store import RecommendationSessionStore
+from storage.stores.chat_store import ChatStore
 from storage.stores.travel_destination_store import TravelDestinationStore
 
 from utils.logger import LoggerManager
@@ -32,19 +32,18 @@ logger = LoggerManager.get_logger(__name__)
 
 def build_recommendation_graph(
     travel_destination_store: TravelDestinationStore,
-    recommendation_session_store: RecommendationSessionStore,
+    recommendation_session_store: ChatStore,
 ):
     logger.verbose("Building recommendation graph...")
     graph_builder = StateGraph(RecommendationGraphState)
 
     user_interest_preference_extraction_agent = UserInterestPreferenceExtractionAgent.builder().build()
     user_logistical_preference_extraction_agent = UserLogisticalPreferenceExtractionAgent.builder().build()
-    recommendation_query_synthesis_agent = RecommendationQuerySynthesisAgent.builder().build()
+    query_synthesis_agent = QuerySynthesisAgent.builder().build()
     recommendation_response_generation_agent = RecommendationResponseGenerationAgent.builder().build()
 
-
     preference_extraction_node = create_preference_extraction_node(
-        recommendation_query_synthesis_agent,
+        query_synthesis_agent,
         user_interest_preference_extraction_agent,
         user_logistical_preference_extraction_agent,
     )

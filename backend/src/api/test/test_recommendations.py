@@ -83,8 +83,12 @@ class FakeStorage:
 
 
 def create_test_client() -> TestClient:
+    return create_test_client_for_env(ApiEnvironment.development)
+
+
+def create_test_client_for_env(env: ApiEnvironment) -> TestClient:
     configuration = ApiConfiguration(
-        env=ApiEnvironment.development,
+        env=env,
         log_level=ApiLogLevel.info,
         host="127.0.0.1",
         port=8000,
@@ -181,6 +185,34 @@ class TestRecommendationEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         body = response.json()
         self.assertEqual(body["code"], "validation_error")
+
+    def test_chat_v0_endpoint_returns_not_implemented_in_production(self) -> None:
+        payload = {
+            "session": {"user_id": "user-1", "session_id": "session-1"},
+            "message": "Recommend a calm trip",
+        }
+
+        with create_test_client_for_env(ApiEnvironment.production) as client:
+            response = client.post("/api/v0/recommendations/chat", json=payload)
+
+        self.assertEqual(response.status_code, 501)
+        body = response.json()
+        self.assertEqual(body["code"], "not_implemented")
+        self.assertEqual(body["details"], {"environment": "production", "version": "v0"})
+
+    def test_chat_v1_endpoint_returns_not_implemented_in_production(self) -> None:
+        payload = {
+            "session": {"user_id": "user-1", "session_id": "session-1"},
+            "message": "Recommend a calm trip",
+        }
+
+        with create_test_client_for_env(ApiEnvironment.production) as client:
+            response = client.post("/api/v1/recommendations/chat", json=payload)
+
+        self.assertEqual(response.status_code, 501)
+        body = response.json()
+        self.assertEqual(body["code"], "not_implemented")
+        self.assertEqual(body["details"], {"environment": "production", "version": "v1"})
 
 if __name__ == "__main__":
     unittest.main()

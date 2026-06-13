@@ -1,4 +1,5 @@
 from __future__ import annotations
+from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -7,8 +8,8 @@ from pydantic import Field
 class Session(BaseModel):
     """Conversation scope identifiers for recommendation graph execution."""
 
-    user_id: str = Field(..., description="User identifier owning the conversation")
-    session_id: str = Field(..., description="Session/thread identifier for conversation memory")
+    user_id: UUID = Field(..., description="User identifier owning the conversation")
+    session_id: UUID = Field(..., description="Session/thread identifier for conversation memory")
 
     def __repr__(self) -> str:
         lines = ["Session("]

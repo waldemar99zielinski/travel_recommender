@@ -4,22 +4,37 @@ from typing import Callable
 from uuid import UUID
 
 from recommender.graphs.recommendation.models import RecommendationGraphState
-from storage.models.recommendation_session_memory import RecommendationSessionMemoryRecord
-from storage.stores.recommendation_session_store import RecommendationSessionStore
+from storage.identifiers import normalize_identifier_to_uuid
+from storage.stores.search_models import ScoredTravelDestination
+from storage.models.chat_record import ChatRecord
+from storage.stores.chat_store import ChatStore
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
 
 
 def _coerce_uuid(value: str, *, field_name: str) -> UUID:
-    try:
-        return UUID(value)
-    except ValueError as error:
-        raise ValueError(f"{field_name} must be a valid UUID") from error
+    return normalize_identifier_to_uuid(value, field_name=field_name)
+
+
+def _serialize_recommendations(
+    recommendations: list[ScoredTravelDestination] | None,
+) -> list[dict[str, object]]:
+    if not recommendations:
+        return []
+
+    return [
+        {
+            "code": item.destination.id,
+            "score": float(item.ranking_score),
+        }
+        for item in recommendations
+    ]
+
 
 
 def create_session_memory_update_node(
-    recommendation_session_store: RecommendationSessionStore,
+    recommendation_session_store: ChatStore,
 ) -> Callable[[RecommendationGraphState], dict[str, object]]:
     """Create node to save session memory to database."""
 
@@ -33,28 +48,17 @@ def create_session_memory_update_node(
         next_chat_number = len(previous_history)
 
         synthesized_query = state.query if state.query is not None else state.user_input
-        user_request = state.user_input
-        system_response = state.response if state.response is not None else ""
-        interest_preference = (
-            state.extracted_user_interests_preferences.model_dump()
-            if state.extracted_user_interests_preferences is not None
-            else {}
-        )
-        logistical_preference = (
-            state.extracted_user_logistical_preferences.model_dump()
-            if state.extracted_user_logistical_preferences is not None
-            else {}
-        )
+        recommendations = _serialize_recommendations(state.recommendation)
 
-        persisted_row = RecommendationSessionMemoryRecord(
+        persisted_row = ChatRecord(
             user_id=_coerce_uuid(user_id, field_name="user_id"),
             session_id=_coerce_uuid(session_id, field_name="session_id"),
             chat_history_number=next_chat_number,
-            user_request=user_request,
-            system_response=system_response,
-            query=synthesized_query,
-            interest_preference=interest_preference,
-            logistical_preference=logistical_preference,
+            user_request=state.user_input,
+            system_response=state.response or "",
+            synthesized_query=synthesized_query,
+            recommendations=recommendations,
+            graph_version="recommendation",
         )
         recommendation_session_store.upsert_many([persisted_row])
 

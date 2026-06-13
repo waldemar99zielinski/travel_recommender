@@ -1,36 +1,34 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+from pathlib import Path
 from typing import Any, Literal, Optional
 
-from langchain_core.language_models.chat_models import BaseChatModel
+from pydantic import Field
+from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
 LLMProvider = Literal["chatgpt", "ollama"]
 
-@dataclass()
-class LLMConfig:
-    """
-    Unified chat model config.
 
-    Defaults to Llama 3.1 via Ollama.
+class LLMConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[4] / ".env",
+        env_prefix="LLM_",
+        extra="ignore",
+    )
 
-    Required deps (install only what you use):
-      - chatgpt → langchain-openai
-      - ollama  → langchain-ollama
-    """
+    provider: LLMProvider = Field(default="ollama")
+    model: str = Field(default="llama3.1")
 
-    provider: LLMProvider = "ollama"
-    model: str = "llama3.1"
+    temperature: float = Field(default=0.2)
+    max_tokens: Optional[int] = Field(default=None)
+    timeout_s: float = Field(default=60.0)
+    max_retries: int = Field(default=2)
 
-    # Common
-    temperature: float = 0.2
-    max_tokens: Optional[int] = None
-    timeout_s: float = 60.0
-    max_retries: int = 2
+    api_key: Optional[str] = Field(default=None)
+    base_url: Optional[str] = Field(default=None)
 
-    # Provider specific
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None  # OpenAI-compatible or Ollama host
-
-    extra: Optional[dict[str, Any]] = None
+    extra: Optional[dict[str, Any]] = Field(default=None)
 
     def get_common(self) -> dict[str, Any]:
         return {

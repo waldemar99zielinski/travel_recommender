@@ -3,9 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from embeddings.configuration import OllamaTextEmbeddingModelConfiguration
-from embeddings.configuration import load_ollama_text_embedding_model_configuration
-from embeddings.ollama_text_embedding_model import OllamaTextEmbeddingModel
+from embeddings.loader import load_text_embedding_model
 from embeddings.protocols import TextEmbeddingModelProtocol
 from storage.bootstrap.travel_destination_csv_bootstrap import (
     load_travel_destination_records_from_csv,
@@ -58,7 +56,7 @@ def bootstrap_travel_destinations_from_csv(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Bootstrap travel destinations into PostgreSQL storage using CSV + Ollama embeddings.",
+        description="Bootstrap travel destinations into PostgreSQL storage using CSV + configured embeddings.",
     )
     parser.add_argument(
         "--csv-path",
@@ -97,12 +95,7 @@ def main() -> None:
         migrations=MigrationConfiguration(enabled=not args.skip_migrations),
     )
 
-    runtime_embedding_configuration = load_ollama_text_embedding_model_configuration()
-    embedding_configuration = OllamaTextEmbeddingModelConfiguration(
-        model_name=runtime_embedding_configuration.model_name,
-        base_url=runtime_embedding_configuration.base_url,
-    )
-    embedding_model = OllamaTextEmbeddingModel(embedding_configuration)
+    embedding_model = load_text_embedding_model()
 
     bootstrap_travel_destinations_from_csv(
         csv_file_path=args.csv_path,

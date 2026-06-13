@@ -50,15 +50,6 @@ class ChatRecord(SQLModel, table=True):
         sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
     )
 
-    included_regions_ids: list[str] = Field(
-        default_factory=list,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
-    )
-    excluded_regions_ids: list[str] = Field(
-        default_factory=list,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
-    )
-
     recommendations: list[dict[str, Any]] = Field(
         default_factory=list,
         sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
@@ -69,7 +60,6 @@ class ChatRecord(SQLModel, table=True):
     )
 
     graph_version: str = Field(default="")
-    message_type: str = Field(default="")
 
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

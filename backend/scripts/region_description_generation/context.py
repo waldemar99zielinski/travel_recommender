@@ -89,15 +89,22 @@ Your job:
 - First infer what kind of region it is from the database context: country, subnational macro-region, island group, cross-border area, or another tourism region type.
 - Then research the region at that level instead of assuming it is a city or a single attraction.
 - Use the database scores as grounding signals. If the data says hiking, beaches, culture, or winter sports are strong or weak, reflect that emphasis proportionally.
+- Identify the region by name clearly and describe it as a real place with a distinct landscape, settlement pattern, culture, and travel identity.
 
 Output rules:
 - Return only the final description in the `description` field.
-- Write 220 to 380 words in plain text with no markdown, bullets, or citations.
-- Make it embedding-friendly: dense with concrete geography, atmosphere, signature places, activities, culture, cuisine, and seasonal character.
+- Write 700 to 1000 words in plain text with no markdown, bullets, or citations.
+- Make it embedding-friendly: dense with concrete geography, atmosphere, signature places, activities, culture, cuisine, architecture, and seasonal character.
+- Include the exact region name naturally in the opening sentence and again where useful later in the description.
+- Explain what the region is most famous for, what travelers most commonly do there, and what experiences define it beyond a generic summary.
+- Mention the most important cities, towns, villages, or resort areas that help a traveler understand the region.
+- Describe the recurring built environment and architectural character that appears across the region, such as historic centers, port districts, chalet villages, spa towns, vineyard settlements, fortified towns, fishing harbors, modern resort strips, religious complexes, or other reappearing building patterns when relevant.
+- Mention recurring annual or seasonal events, festivals, pilgrimages, harvest traditions, markets, sporting events, or cultural celebrations only when they are well-established and structurally characteristic of the region.
+- Show how landscapes, settlements, activities, and traditions connect to each other so the description reads as one rich regional portrait rather than a list.
 - Prefer durable facts over temporary or fast-changing details.
 - If the region spans multiple countries or a broad territory, say so clearly.
 - Avoid fluff, generic travel-ad language, and phrases like "offers a unique travel experience".
-- Avoid hotel-specific, event-specific, or price-specific claims unless they are structurally characteristic of the region.
+- Avoid hotel-specific, one-off event-specific, or price-specific claims unless they are structurally characteristic of the region.
 """.strip()
 
 

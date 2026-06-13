@@ -1,3 +1,5 @@
+import { runtimeConfiguration } from "@/shared/configuration/runtimeConfiguration";
+
 export type AppEnvironment = "dev" | "production";
 
 export interface AppConfiguration {
@@ -6,6 +8,14 @@ export interface AppConfiguration {
 }
 
 function resolveEnvironment(): AppEnvironment {
+    if (runtimeConfiguration.environment === "dev") {
+        return "dev";
+    }
+
+    if (runtimeConfiguration.environment === "production") {
+        return "production";
+    }
+
     const mode = import.meta.env.MODE;
 
     if (mode === "development" || mode === "dev") {

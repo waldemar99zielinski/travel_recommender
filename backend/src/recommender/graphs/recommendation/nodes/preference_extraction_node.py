@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Callable
 
-from recommender.agents.query_synthesis.recommendation_query_synthesis_agent import (
-    RecommendationQuerySynthesisAgent,
-    RecommendationQuerySynthesisInput,
+from recommender.agents.query_synthesis.agent import (
+    QuerySynthesisAgent,
+    QuerySynthesisInput,
 )
 from recommender.agents.preference_extraction.user_interest_preference_extraction_agent import UserInterestPreferenceExtractionAgent
 from recommender.agents.preference_extraction.user_logistical_preference_extraction_agent import UserLogisticalPreferenceExtractionAgent
@@ -19,14 +19,14 @@ def _latest_query_from_history(state: RecommendationGraphState) -> str | None:
         return None
 
     for row in reversed(state.history):
-        if row.query.strip():
-            return row.query
+        if row.synthesized_query.strip():
+            return row.synthesized_query
 
     return None
 
 
 def create_preference_extraction_node(
-    recommendation_query_synthesis_agent: RecommendationQuerySynthesisAgent,
+    query_synthesis_agent: QuerySynthesisAgent,
     user_interest_preference_extraction_agent: UserInterestPreferenceExtractionAgent,
     user_logistical_preference_extraction_agent: UserLogisticalPreferenceExtractionAgent,
 ) -> Callable[[RecommendationGraphState], dict[str, object]]:
@@ -41,7 +41,7 @@ def create_preference_extraction_node(
 
         previous_synthesized_query = _latest_query_from_history(state)
 
-        query_synthesis_input = RecommendationQuerySynthesisInput(
+        query_synthesis_input = QuerySynthesisInput(
             current_user_request=state.user_input,
             previous_synthesized_query=previous_synthesized_query,
         )
@@ -50,7 +50,7 @@ def create_preference_extraction_node(
             f"Running query synthesis with current_user_request='{state.user_input}' and query_synthesis_input='{query_synthesis_input}'"
         )
 
-        query_synthesis_result = recommendation_query_synthesis_agent.invoke(query_synthesis_input)
+        query_synthesis_result = query_synthesis_agent.invoke(query_synthesis_input)
 
         logger.info("Synthesized query for extraction: %s", query_synthesis_result.synthesized_query)
 

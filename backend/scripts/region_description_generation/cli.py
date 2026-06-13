@@ -58,7 +58,7 @@ def parse_args() -> argparse.Namespace:
         "--search-tool",
         type=str,
         choices=("web_search_preview", "web_search"),
-        default="web_search_preview",
+        default="web_search",
         help="Built-in OpenAI web search tool type.",
     )
     parser.add_argument(
@@ -71,13 +71,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--temperature",
         type=float,
-        default=0.2,
+        default=0.4,
         help="Model temperature for generation.",
     )
     parser.add_argument(
         "--max-output-tokens",
         type=int,
-        default=900,
+        default=1800,
         help="Maximum output tokens per generated description.",
     )
     return parser.parse_args()

@@ -13,7 +13,6 @@ class AgentOutput(BaseModel):
 
     recommendations: list[RecommendationV1] = Field(
         default_factory=list,
-        description="List of recommended regions with relevance scores",
+        description="List of recommended regions with explanations",
     )
-
 

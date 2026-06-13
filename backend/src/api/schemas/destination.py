@@ -10,12 +10,14 @@ class DestinationItemDto(BaseModel):
     """Public representation of a travel destination with id and description."""
 
     id: str = Field(..., description="Unique destination identifier")
+    parent_region: str = Field(..., description="Parent region of the destination")
     description: str = Field(..., description="Destination description text")
 
     @classmethod
     def from_record(cls, record: TravelDestinationRecord) -> DestinationItemDto:
         return cls(
             id=record.id,
+            parent_region=record.parent_region,
             description=record.description,
         )
 
