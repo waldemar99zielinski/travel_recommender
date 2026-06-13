@@ -10,7 +10,7 @@ on:
     secrets:
       DIGITALOCEAN_ACCESS_TOKEN:
         required: true
-      DIGITALOCEAN_APP_NAME:
+      DIGITALOCEAN_BACKEND_APP_NAME:
         required: true
       DIGITALOCEAN_BACKEND_COMPONENT_NAME:
         required: true
@@ -43,6 +43,6 @@ jobs:
       - name: DigitalOcean App Platform Deployment
         uses: digitalocean/app_action/deploy@v2.0.11
         with:
-          app_name: ${{ secrets.DIGITALOCEAN_APP_NAME }}
+          app_name: ${{ secrets.DIGITALOCEAN_BACKEND_APP_NAME }}
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           print_deploy_logs: true
