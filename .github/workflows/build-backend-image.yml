@@ -59,7 +59,7 @@ jobs:
           REGISTRY_NAME: ${{ secrets.DIGITALOCEAN_REGISTRY_NAME }}
         run: |
           set -euo pipefail
-          IMAGE_REPOSITORY="backend"
+          IMAGE_REPOSITORY="app"
           VERSION="$(python3 -c "import tomllib; from pathlib import Path; print(tomllib.loads(Path('backend/pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
           IMAGE_TAG="backend-v_${VERSION}"
           IMAGE_REF="registry.digitalocean.com/${REGISTRY_NAME}/${IMAGE_REPOSITORY}:${IMAGE_TAG}"

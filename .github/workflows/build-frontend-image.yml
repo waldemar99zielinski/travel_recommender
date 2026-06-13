@@ -59,7 +59,7 @@ jobs:
           REGISTRY_NAME: ${{ secrets.DIGITALOCEAN_REGISTRY_NAME }}
         run: |
           set -euo pipefail
-          IMAGE_REPOSITORY="frontend"
+          IMAGE_REPOSITORY="app"
           VERSION="$(node -p "require('./frontend/package.json').version")"
           IMAGE_TAG="frontend-v_${VERSION}"
           IMAGE_REF="registry.digitalocean.com/${REGISTRY_NAME}/${IMAGE_REPOSITORY}:${IMAGE_TAG}"

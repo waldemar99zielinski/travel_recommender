@@ -10,9 +10,7 @@ on:
     secrets:
       DIGITALOCEAN_ACCESS_TOKEN:
         required: true
-      DIGITALOCEAN_REGISTRY_NAME:
-        required: true
-      DIGITALOCEAN_BACKEND_APP_ID:
+      DIGITALOCEAN_APP_NAME:
         required: true
       DIGITALOCEAN_BACKEND_COMPONENT_NAME:
         required: true
@@ -31,63 +29,20 @@ jobs:
       contents: read
 
     steps:
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Update Backend App Spec
+      - name: Resolve Backend Image Tag Override
         env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          DIGITALOCEAN_REGISTRY_NAME: ${{ secrets.DIGITALOCEAN_REGISTRY_NAME }}
-          APP_ID: ${{ secrets.DIGITALOCEAN_BACKEND_APP_ID }}
           COMPONENT_NAME: ${{ secrets.DIGITALOCEAN_BACKEND_COMPONENT_NAME }}
-          IMAGE_REPOSITORY: backend
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
 
-          API_URL="https://api.digitalocean.com/v2/apps/${APP_ID}"
+          IMAGE_TAG_ENV_NAME="IMAGE_TAG_${COMPONENT_NAME}"
 
-          curl -fsS \
-            -H "Authorization: Bearer ${DIGITALOCEAN_ACCESS_TOKEN}" \
-            "${API_URL}" \
-            > app.json
+          echo "${IMAGE_TAG_ENV_NAME}=${IMAGE_TAG}" >> "$GITHUB_ENV"
 
-          if [ "$(jq -r --arg component "${COMPONENT_NAME}" '.app.spec.services | any(.name == $component)' app.json)" != "true" ]; then
-            echo "Backend App Platform component not found: ${COMPONENT_NAME}" >&2
-            exit 1
-          fi
-
-          jq \
-            --arg component "${COMPONENT_NAME}" \
-            --arg registry "${DIGITALOCEAN_REGISTRY_NAME}" \
-            --arg repository "${IMAGE_REPOSITORY}" \
-            --arg tag "${IMAGE_TAG}" \
-            '
-              .app.spec
-              | .services |= map(
-                  if .name == $component then
-                    .image = ((.image // {}) + {
-                      registry_type: "DOCR",
-                      registry: $registry,
-                      repository: $repository,
-                      tag: $tag
-                    })
-                  else
-                    .
-                  end
-                )
-            ' app.json > spec.json
-
-          jq '{spec: .}' spec.json > update.json
-
-          curl -fsS -X PUT \
-            -H "Authorization: Bearer ${DIGITALOCEAN_ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            "${API_URL}" \
-            --data @update.json \
-            > response.json
-
-          echo "Triggered backend deployment for image registry.digitalocean.com/${DIGITALOCEAN_REGISTRY_NAME}/${IMAGE_REPOSITORY}:${IMAGE_TAG}"
-          jq -r '.app.active_deployment.id // empty' response.json
+      - name: DigitalOcean App Platform Deployment
+        uses: digitalocean/app_action/deploy@v2.0.11
+        with:
+          app_name: ${{ secrets.DIGITALOCEAN_APP_NAME }}
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          print_deploy_logs: true
