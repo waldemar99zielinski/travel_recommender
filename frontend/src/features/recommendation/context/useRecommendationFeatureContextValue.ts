@@ -12,28 +12,18 @@ export function useRecommendationFeatureContextValue(
 ): RecommendationFeatureContextValue {
     const mapState = useRecommendationMapState(regions);
 
-    const setIncludedRegionIds = useCallback(
-        (ids: string[]) => {
-            mapState.regionForRecommendationSelection.setRegionSelectedForRecommendationStatus(
-                ids,
-                "included",
-            );
-        },
-        [mapState.regionForRecommendationSelection],
-    );
-    const setExcludedRegionIds = useCallback(
-        (ids: string[]) => {
-            mapState.regionForRecommendationSelection.setRegionSelectedForRecommendationStatus(
-                ids,
-                "excluded",
+    const applyResolvedRegionFilters = useCallback(
+        (includedIds: string[], excludedIds: string[]) => {
+            mapState.regionForRecommendationSelection.replaceResolvedRegionFilterStatuses(
+                includedIds,
+                excludedIds,
             );
         },
         [mapState.regionForRecommendationSelection],
     );
 
     const chatState = useRecommendationChat({
-        setIncludedRegionIds,
-        setExcludedRegionIds,
+        applyResolvedRegionFilters,
     });
     const sessionState = useRecommendationSession();
 

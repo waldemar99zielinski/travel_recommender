@@ -10,7 +10,11 @@ const DEFAULT_DESTINATION_RESEARCH_LOADING_DURATION_MS = 30_000;
 export function OverlayPanelFeature() {
     const {
         regions,
-        chatState: { chatRecords, onGoingChatTurn, destinationResearchStarted },
+        chatState: {
+            chatRecords,
+            onGoingChatTurn,
+            destinationResearchRegionIds,
+        },
         mapState: { selectedRegionId, setSelectedRegionId },
     } = useRecommendationFeatureContext();
 
@@ -33,12 +37,17 @@ export function OverlayPanelFeature() {
                   (evaluation) =>
                       normalizeRegionId(evaluation.region_id) === normalizedSelectedId,
               ) ?? null;
+    const isDestinationResearchRequestedForSelectedRegion =
+        normalizedSelectedId != null &&
+        destinationResearchRegionIds.some(
+            (regionId) => normalizeRegionId(regionId) === normalizedSelectedId,
+        );
 
     const isDestinationResearchLoading =
         selectedRegionId != null &&
         selectedDestinationResearch == null &&
         onGoingChatTurn != null &&
-        destinationResearchStarted;
+        isDestinationResearchRequestedForSelectedRegion;
     const overlayPanel =
         selectedRegionId == null
             ? null

@@ -7,6 +7,7 @@ import type {
 } from "@/models/recommendation.models";
 import type {
     ProgressStage,
+    RecommendationDestinationResearchGenerationEventData,
     RecommendationDestinationResearchEventData,
     TravelDestinationFilter,
 } from "@/models/recommendation.stream.models";
@@ -57,13 +58,16 @@ export interface UseRecommendationChat {
     step: ProgressStage;
     onGoingChatTurn: Partial<ChatRecordDto> | null;
     destinationResearchStarted: boolean;
+    destinationResearchRegionIds: string[];
 
     submitRecommendationMessage: (message: string) => Promise<void>;
 }
 
 interface UseRecommendationChatOptions {
-    setIncludedRegionIds: (ids: string[]) => void;
-    setExcludedRegionIds: (ids: string[]) => void;
+    applyResolvedRegionFilters: (
+        includedRegionIds: string[],
+        excludedRegionIds: string[],
+    ) => void;
 }
 
 export const STEP_LABELS: Record<string, string> = {
@@ -77,8 +81,7 @@ export const STEP_LABELS: Record<string, string> = {
 };
 
 export function useRecommendationChat({
-    setIncludedRegionIds,
-    setExcludedRegionIds,
+    applyResolvedRegionFilters,
 }: UseRecommendationChatOptions): UseRecommendationChat {
     const { ensureSession, session, sessionChatHistory } = useSessionContext();
     const [chatRecords, setChatRecords] = useState<ChatRecordDto[]>(sessionChatHistory);
@@ -86,40 +89,27 @@ export function useRecommendationChat({
     const [step, setStep] = useState<ProgressStage>("idle");
     const [destinationResearchStarted, setDestinationResearchStarted] =
         useState(false);
+    const [destinationResearchRegionIds, setDestinationResearchRegionIds] = useState<
+        string[]
+    >([]);
     const destinationContext = useDestinationContext();
-    const applyResolvedRegionFilters = useEffectEvent(
-        (includedRegionIds: string[], excludedRegionIds: string[]) => {
-            if (includedRegionIds.length > 0) {
-                setIncludedRegionIds(includedRegionIds);
-            }
-
-            if (excludedRegionIds.length > 0) {
-                setExcludedRegionIds(excludedRegionIds);
-            }
-        },
-    );
+    const syncResolvedRegionFilters = useEffectEvent(applyResolvedRegionFilters);
 
     useEffect(() => {
         setChatRecords(sessionChatHistory);
         setOnGoingChatTurn(null);
         setStep("idle");
         setDestinationResearchStarted(false);
+        setDestinationResearchRegionIds([]);
     }, [session?.session_id, sessionChatHistory]);
 
     useEffect(() => {
-        if (
-            !onGoingChatTurn?.travel_destination_filter &&
-            !chatRecords.at(-1)?.travel_destination_filter
-        ) {
-            return;
-        }
-
         const filterToProcess =
             onGoingChatTurn?.travel_destination_filter ??
             chatRecords.at(-1)?.travel_destination_filter;
 
         if (filterToProcess == null) {
-            applyResolvedRegionFilters([], []); 
+            syncResolvedRegionFilters([], []);
             return;
         }
 
@@ -147,7 +137,7 @@ export function useRecommendationChat({
             excludedRegionIds.push(...destinations.map((destination) => destination.id));
         });
 
-        applyResolvedRegionFilters(includedRegionIds, excludedRegionIds);
+        syncResolvedRegionFilters(includedRegionIds, excludedRegionIds);
     }, [onGoingChatTurn?.travel_destination_filter, chatRecords, destinationContext]);
 
     const submitRecommendationMessage = async (message: string): Promise<void> => {
@@ -185,6 +175,7 @@ export function useRecommendationChat({
                 excluded_regions_ids: [],
             });
             setDestinationResearchStarted(false);
+            setDestinationResearchRegionIds([]);
 
             for await (const sseEvent of stream) {
                 switch (sseEvent.event) {
@@ -223,6 +214,14 @@ export function useRecommendationChat({
                     case "desination_research_generation": {
                         setStep("desination_research_generation");
                         setDestinationResearchStarted(true);
+                        const data =
+                            sseEvent.data as RecommendationDestinationResearchGenerationEventData;
+
+                        setDestinationResearchRegionIds((prev) =>
+                            prev.includes(data.region_id)
+                                ? prev
+                                : [...prev, data.region_id],
+                        );
                         break;
                     }
 
@@ -271,6 +270,7 @@ export function useRecommendationChat({
                         }
                         setOnGoingChatTurn(null);
                         setDestinationResearchStarted(false);
+                        setDestinationResearchRegionIds([]);
                         break;
                     }
 
@@ -293,6 +293,7 @@ export function useRecommendationChat({
             setOnGoingChatTurn(null);
             setStep("idle");
             setDestinationResearchStarted(false);
+            setDestinationResearchRegionIds([]);
             logger.error("Recommendation streaming failed", error);
             throw Error("Failed to submit recommendation message");
         }
@@ -304,6 +305,7 @@ export function useRecommendationChat({
         step,
         onGoingChatTurn,
         destinationResearchStarted,
+        destinationResearchRegionIds,
         submitRecommendationMessage,
     };
 }

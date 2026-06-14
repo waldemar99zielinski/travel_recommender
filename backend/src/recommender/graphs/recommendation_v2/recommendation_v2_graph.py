@@ -181,7 +181,10 @@ def build_recommendation_v2_graph(
                 "Request routing decision must be available before routing the recommendation_v2 graph"
             )
 
-        if state.request_routing_decision == "new_recommendation_run":
+        if state.request_routing_decision in {
+            "new_recommendation_run",
+            "need_more_information_from_user",
+        }:
             return [
                 synthesize_user_request_node.__name__,
                 extract_parent_region_filter_node.__name__,
@@ -190,14 +193,27 @@ def build_recommendation_v2_graph(
                 extract_budget_filter_node.__name__,
             ]
 
-        if state.request_routing_decision == "need_more_information_from_user":
-            return need_more_information_response_generation_node.__name__
-
         if state.request_routing_decision == "out_of_system_scope":
             return out_of_scope_response_generation_node.__name__
 
         raise RuntimeError(
             f"Unknown request routing decision: {state.request_routing_decision}"
+        )
+
+    def gathered_requirements_router(state: RecommendationV2GraphState) -> str:
+        if state.request_routing_decision is None:
+            raise RuntimeError(
+                "Request routing decision must be available before routing gathered recommendation_v2 requirements"
+            )
+
+        if state.request_routing_decision == "new_recommendation_run":
+            return recommendation_generation_node.__name__
+
+        if state.request_routing_decision == "need_more_information_from_user":
+            return need_more_information_response_generation_node.__name__
+
+        raise RuntimeError(
+            "Gathered recommendation_v2 requirements can only route recommendation or need-more-information flows"
         )
 
     graph_builder.add_conditional_edges(
@@ -237,9 +253,9 @@ def build_recommendation_v2_graph(
     )
 
     # requirement fan in node
-    graph_builder.add_edge(
+    graph_builder.add_conditional_edges(
         gather_requirements_node.__name__,
-        recommendation_generation_node.__name__,
+        gathered_requirements_router,
     )
     graph_builder.add_edge(
         recommendation_generation_node.__name__,

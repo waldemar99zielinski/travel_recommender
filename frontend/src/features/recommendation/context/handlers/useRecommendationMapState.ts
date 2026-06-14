@@ -17,6 +17,10 @@ export interface RegionForRecommendationState {
 
     regionSelectedForRecommendationStatus: Map<string, SelectedForRecommendationStatusType>;
     setRegionSelectedForRecommendationStatus: (ids: string[], status: SelectedForRecommendationStatusType) => void;
+    replaceResolvedRegionFilterStatuses: (
+        includedIds: string[],
+        excludedIds: string[],
+    ) => void;
 
     addRegionsToDraftSelection: (ids: string[]) => void;
     moveDraftSelectionToIncluded: () => void;
@@ -69,6 +73,31 @@ export function useRecommendationMapState(
 
             ids.forEach((id) => {
                 newMap.set(id, status);
+            });
+
+            return newMap;
+        });
+    };
+
+    const replaceResolvedRegionFilterStatuses = (
+        includedIds: string[],
+        excludedIds: string[],
+    ) => {
+        setRegionsSelectedForRecommendationStatus((prev) => {
+            const newMap = new Map(prev);
+
+            newMap.forEach((status, regionId) => {
+                if (status === "included" || status === "excluded") {
+                    newMap.set(regionId, "unset");
+                }
+            });
+
+            includedIds.forEach((id) => {
+                newMap.set(id, "included");
+            });
+
+            excludedIds.forEach((id) => {
+                newMap.set(id, "excluded");
             });
 
             return newMap;
@@ -152,6 +181,7 @@ export function useRecommendationMapState(
             setSelectionMode,
             regionSelectedForRecommendationStatus,
             setRegionSelectedForRecommendationStatus,
+            replaceResolvedRegionFilterStatuses,
             addRegionsToDraftSelection,
             moveDraftSelectionToIncluded,
             moveDraftSelectionToExcluded,

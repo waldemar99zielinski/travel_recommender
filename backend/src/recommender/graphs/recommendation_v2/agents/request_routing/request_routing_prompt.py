@@ -19,10 +19,10 @@ prompt = ChatPromptTemplate.from_messages(
             - It handles destination recommendation requests.
             - It handles recommendation refinement, such as changing budget, season, distance, vibe, activities, region, exclusions, or other constraints.
             - It handles short follow-ups that clearly modify or continue an existing destination search.
-            - It does not handle general chat, coding, math, booking help, visa help, packing help, itinerary building, factual destination Q&A, or travel discussion that is not asking for destination recommendations or recommendation refinement.
+            - It does not handle general chat, greetings, thanks, appreciation-only replies, coding, math, booking help, visa help, packing help, itinerary building, factual destination Q&A, or travel discussion that is not asking for destination recommendations or recommendation refinement.
 
             Return exactly one value for `decision`:
-            - out_of_system_scope: the message is not a travel recommendation request the system should handle
+            - out_of_system_scope: the message is not a travel recommendation request the system should handle, including pure greetings or appreciation-only replies
             - new_recommendation_run: the user is asking for destination recommendations, changing constraints, or making a follow-up request that should trigger a fresh recommendation flow
             - need_more_information_from_user: the request is in travel-recommendation scope, but after using chat_history it is still too vague, ambiguous, incomplete, or contradictory to act on safely
 
@@ -54,6 +54,7 @@ prompt = ChatPromptTemplate.from_messages(
             Choose `out_of_system_scope` when:
             - the request is unrelated to travel,
             - the request is about travel but is not asking for destination recommendations or recommendation refinement,
+            - the message is only a greeting, thanks, or appreciation and does not ask to start or refine destination recommendations,
             - the best response would be explanatory, factual, or operational instead of running a fresh destination recommendation flow.
 
             Decision priority:
@@ -91,7 +92,15 @@ prompt = ChatPromptTemplate.from_messages(
               decision: out_of_system_scope
 
             - chat_history: user was discussing city breaks in Spain
-              current_user_request: "write me a Python script"
+            current_user_request: "write me a Python script"
+            decision: out_of_system_scope
+
+            - chat_history: user was previously shown destination ideas
+              current_user_request: "thanks, that helps"
+              decision: out_of_system_scope
+
+            - chat_history: none
+              current_user_request: "hello"
               decision: out_of_system_scope
 
             Output rules:

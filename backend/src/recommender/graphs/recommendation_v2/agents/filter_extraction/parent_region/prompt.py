@@ -38,6 +38,7 @@ prompt = ChatPromptTemplate.from_messages(
             - Each entry must have name (the parent_region name) and type ("include" or "exclude").
             - Use type="include" when the user wants that parent region.
             - Use type="exclude" when the user rules that parent region out.
+            - If the user explicitly says to remove, exclude, avoid, or no longer consider a specific previously mentioned parent region, return that named parent region with type="exclude".
 
             Examples:
 
@@ -46,6 +47,15 @@ prompt = ChatPromptTemplate.from_messages(
 
             current_user_request: "Anywhere except Asia"
             parent_regions: [{{{{"name": "Asia", "type": "exclude"}}}}]
+
+            current_user_request: "Do not consider Europe anymore"
+            parent_regions: [{{{{"name": "Europe", "type": "exclude"}}}}]
+
+            current_user_request: "Remove South America from the search"
+            parent_regions: [{{{{"name": "South America", "type": "exclude"}}}}]
+
+            current_user_request: "I want Europe but no longer Asia"
+            parent_regions: [{{{{"name": "Europe", "type": "include"}}}}, {{{{ "name": "Asia", "type": "exclude"}}}}]
 
             current_user_request: "Somewhere in South America"
             parent_regions: [{{{{"name": "South America", "type": "include"}}}}]

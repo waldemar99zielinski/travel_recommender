@@ -22,7 +22,7 @@ prompt = ChatPromptTemplate.from_messages(
             - months may contain only jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec.
             - Normalize "fall" to autumn.
             - Keep previous season and month filters if the user does not change them.
-            - Remove season and month filters if the user explicitly drops them, such as "any season" or "timing doesn't matter".
+            - Remove season and month filters if the user explicitly drops or removes them, such as "any season", "timing doesn't matter", or "remove the timing filter".
             - If the user explicitly changes the timing, update the relevant fields instead of keeping the old ones.
             - If the user gives only a season, set season and clear months unless the user also explicitly mentions months.
             - If the user gives only months, set months and clear season unless the user also explicitly mentions a season.
@@ -53,6 +53,12 @@ prompt = ChatPromptTemplate.from_messages(
               output: {{"season": "winter", "months": ["feb"]}}
             - previous_season_filter: {{"season": "spring", "months": ["apr"]}}
               current_user_request: "any season is fine"
+              output: {{"season": null, "months": []}}
+            - previous_season_filter: {{"season": "summer", "months": []}}
+              current_user_request: "remove the timing filter"
+              output: {{"season": null, "months": []}}
+            - previous_season_filter: {{"months": ["sep", "oct"]}}
+              current_user_request: "timing does not matter anymore"
               output: {{"season": null, "months": []}}
             - previous_season_filter: {{}}
               current_user_request: "I want a beach trip in late summer"

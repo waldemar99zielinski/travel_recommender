@@ -47,7 +47,7 @@ prompt = ChatPromptTemplate.from_messages(
             - Use only the `cost_term` field.
             - Add or update `cost_term` if and only if the user mentions budget, price, cost, spending, affordability, cheapness, luxury, or another clear money-related context.
             - Keep previous budget filters if the user does not change them.
-            - Remove budget filters if the user explicitly drops them, such as "any budget".
+            - Remove budget filters if the user explicitly drops or removes them, such as "any budget", "remove the budget filter", or "budget does not matter anymore".
             - The output cost_term may contain either `explicit` or `inferred_level`, but never both.
             - Use `explicit` when the user directly gives a concrete money amount or bound that should be encoded structurally.
             - The explicit form must use:
@@ -75,6 +75,12 @@ prompt = ChatPromptTemplate.from_messages(
             - "For this city break, I want to spend at most 150 euro per day" -> cost_term.explicit = {{"value": 150, "operator": "max", "duration": "day"}}
             - "I am okay spending at least 300 per week if the beaches are excellent" -> cost_term.explicit = {{"value": 300, "operator": "min", "duration": "week"}}
             - "I want to spend about 700 for the whole trip and prefer somewhere warm" -> cost_term.explicit = {{"value": 700, "operator": "around", "duration": "week"}}
+            - previous_budget_filter: {{"cost_term": {{"inferred_level": "low"}}}}
+              current_user_request: "Actually, any budget is fine now"
+              output: {{"cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"explicit": {{"value": 200, "operator": "max", "duration": "day"}}}}}}
+              current_user_request: "Remove the budget filter"
+              output: {{"cost_term": null}}
             """,
         ),
         (
