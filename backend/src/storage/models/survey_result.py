@@ -25,8 +25,8 @@ class SurveyResultsData(BaseModel):
     """Survey results stored as a flat JSONB dict in the database.
 
     Contains question scores (numeric keys, numeric values) as well as
-    metadata fields such as ``age`` and ``llm`` (string values).
-    Example: ``{"1": 5.0, "2": 3.5, "age": "25-29", "llm": "intermediate"}``.
+    metadata fields such as ``age`` (string value).
+    Example: ``{"1": 5.0, "2": 3.5, "age": "25-34"}``.
     """
 
     scores: dict[str, str | float | int] = PydanticField(default_factory=dict)

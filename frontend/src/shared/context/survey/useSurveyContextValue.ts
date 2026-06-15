@@ -23,7 +23,6 @@ function createEmptySurveyDraft(): SurveyDraftState {
         scores: {},
         comment: "",
         ageRange: null,
-        llmExperience: null,
     };
 }
 
@@ -40,8 +39,7 @@ export function useSurveyContextValue(): SurveyContextValue {
     const allQuestionsAnswered =
         surveyQuestions.length > 0 &&
         surveyQuestions.every((question) => surveyDraft.scores[String(question.id)] != null) &&
-        surveyDraft.ageRange != null &&
-        surveyDraft.llmExperience != null;
+        surveyDraft.ageRange != null;
 
     const setSurveyScore = useCallback((questionId: number, score: number) => {
         setSurveyDraft((prev) => ({
@@ -64,13 +62,6 @@ export function useSurveyContextValue(): SurveyContextValue {
         setSurveyDraft((prev) => ({
             ...prev,
             ageRange,
-        }));
-    }, []);
-
-    const setSurveyLlmExperience = useCallback((llmExperience: string | null) => {
-        setSurveyDraft((prev) => ({
-            ...prev,
-            llmExperience,
         }));
     }, []);
 
@@ -99,8 +90,8 @@ export function useSurveyContextValue(): SurveyContextValue {
             throw new Error("Cannot submit survey before all questions are answered");
         }
 
-        if (surveyDraft.ageRange == null || surveyDraft.llmExperience == null) {
-            throw new Error("Age range and LLM experience are required");
+        if (surveyDraft.ageRange == null) {
+            throw new Error("Age range is required");
         }
 
         const session = await ensureSession();
@@ -111,7 +102,6 @@ export function useSurveyContextValue(): SurveyContextValue {
             scores: {
                 ...surveyDraft.scores,
                 age: surveyDraft.ageRange!,
-                llm: surveyDraft.llmExperience!,
             },
             comment: comment.length === 0 ? null : comment,
         });
@@ -150,7 +140,6 @@ export function useSurveyContextValue(): SurveyContextValue {
         setSurveyScore,
         setSurveyComment,
         setSurveyAgeRange,
-        setSurveyLlmExperience,
         clearSurveyDraft,
         submitSurveyData,
         submitSurveyStatus,

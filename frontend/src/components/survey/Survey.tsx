@@ -29,7 +29,6 @@ export function Survey({ title }: SurveyProps) {
         setSurveyScore,
         setSurveyComment,
         setSurveyAgeRange,
-        setSurveyLlmExperience,
         submitSurvey,
         submitSurveyStatus,
         submitSurveyError,
@@ -65,27 +64,11 @@ export function Survey({ title }: SurveyProps) {
                     onChange={(e) => setSurveyAgeRange(e.target.value || null)}
                     MenuProps={{ sx: { zIndex: 13000 } }}
                 >
-                    <MenuItem value="under_15">Under 15</MenuItem>
-                    <MenuItem value="15-19">15–19</MenuItem>
-                    <MenuItem value="20-24">20–24</MenuItem>
-                    <MenuItem value="25-29">25–29</MenuItem>
-                    <MenuItem value="30-34">30–34</MenuItem>
-                    <MenuItem value="35+">35+</MenuItem>
-                </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-                <InputLabel id="llm-experience-label">LLM Experience</InputLabel>
-                <Select
-                    labelId="llm-experience-label"
-                    label="LLM Experience"
-                    value={surveyDraft.llmExperience ?? ""}
-                    onChange={(e) => setSurveyLlmExperience(e.target.value || null)}
-                    MenuProps={{ sx: { zIndex: 13000 } }}
-                >
-                    <MenuItem value="beginner">Beginner — Little to no experience</MenuItem>
-                    <MenuItem value="intermediate">Intermediate — Regular use</MenuItem>
-                    <MenuItem value="advanced">Advanced — Deep technical use</MenuItem>
+                    <MenuItem value="under_18">Under 18</MenuItem>
+                    <MenuItem value="18-24">18–24</MenuItem>
+                    <MenuItem value="25-34">25–34</MenuItem>
+                    <MenuItem value="35-54">35–54</MenuItem>
+                    <MenuItem value="55_or_older">55 or older</MenuItem>
                 </Select>
             </FormControl>
 

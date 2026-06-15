@@ -10,7 +10,6 @@ export interface SurveyDraftState {
     scores: Record<string, number | string>;
     comment: string;
     ageRange: string | null;
-    llmExperience: string | null;
 }
 
 export interface SurveyContextValue {
@@ -29,7 +28,6 @@ export interface SurveyContextValue {
     setSurveyScore: (questionId: number, score: number) => void;
     setSurveyComment: (comment: string) => void;
     setSurveyAgeRange: (ageRange: string | null) => void;
-    setSurveyLlmExperience: (llmExperience: string | null) => void;
     clearSurveyDraft: () => void;
 
     submitSurveyData: SurveyResultResponseDto | null;
