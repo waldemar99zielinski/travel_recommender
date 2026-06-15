@@ -15,14 +15,21 @@ prompt = ChatPromptTemplate.from_messages(
             - Return the updated season and month filters after applying the current_user_request.
             - Treat current_user_request as an update to the previous season filter.
             - Interpret the user's timing intent, but encode it only with the supported season and month fields.
+            - Always return all three fields: `filter_removed`, `season`, and `months`.
 
             Rules:
             - Use only season and months.
+            - Set filter_removed=true only when current_user_request explicitly says to remove, clear, drop, reset, ignore, or stop using all filters/constraints, or explicitly says to remove, clear, drop, reset, ignore, or stop using the season, month, timing, weather, or date filter specifically.
+            - Do not set filter_removed=true for vague preference changes, such as "different time", "more flexible", "less strict", "show more options", or "not that important", unless the user explicitly mentions removing all filters or removing the timing-related filter.
+            - If current_user_request explicitly removes all filters/constraints, output exactly: {{"filter_removed": true, "season": null, "months": []}}.
+            - If current_user_request explicitly removes the timing-related filter, output exactly: {{"filter_removed": true, "season": null, "months": []}}.
+            - Do not keep a previous season or previous months after an explicit timing or all-filter removal request.
+            - If no seasonality filter is explicitly removed, set filter_removed=false.
             - season may be only one of: winter, spring, summer, autumn.
             - months may contain only jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec.
             - Normalize "fall" to autumn.
             - Keep previous season and month filters if the user does not change them.
-            - Remove season and month filters if the user explicitly drops or removes them, such as "any season", "timing doesn't matter", or "remove the timing filter".
+            - Remove season and month filters if the user explicitly drops, clears, or removes them, such as "any season", "timing doesn't matter", "remove the timing filter", or "drop the summer filter".
             - If the user explicitly changes the timing, update the relevant fields instead of keeping the old ones.
             - If the user gives only a season, set season and clear months unless the user also explicitly mentions months.
             - If the user gives only months, set months and clear season unless the user also explicitly mentions a season.
@@ -53,10 +60,22 @@ prompt = ChatPromptTemplate.from_messages(
               output: {{"season": "winter", "months": ["feb"]}}
             - previous_season_filter: {{"season": "spring", "months": ["apr"]}}
               current_user_request: "any season is fine"
-              output: {{"season": null, "months": []}}
+              output: {{"filter_removed": true, "season": null, "months": []}}
             - previous_season_filter: {{"season": "summer", "months": []}}
               current_user_request: "remove the timing filter"
-              output: {{"season": null, "months": []}}
+              output: {{"filter_removed": true, "season": null, "months": []}}
+            - previous_season_filter: {{"season": "summer", "months": []}}
+              current_user_request: "drop the summer filter"
+              output: {{"filter_removed": true, "season": null, "months": []}}
+            - previous_season_filter: {{"season": "summer", "months": ["jul"]}}
+              current_user_request: "remove all filters"
+              output: {{"filter_removed": true, "season": null, "months": []}}
+            - previous_season_filter: {{"season": "winter", "months": ["jan"]}}
+              current_user_request: "clear every filter and show me anything"
+              output: {{"filter_removed": true, "season": null, "months": []}}
+            - previous_season_filter: {{"months": ["sep", "oct"]}}
+              current_user_request: "reset all constraints"
+              output: {{"filter_removed": true, "season": null, "months": []}}
             - previous_season_filter: {{"months": ["sep", "oct"]}}
               current_user_request: "timing does not matter anymore"
               output: {{"season": null, "months": []}}
@@ -66,6 +85,9 @@ prompt = ChatPromptTemplate.from_messages(
             - previous_season_filter: {{}}
               current_user_request: "somewhere nice in September or October"
               output: {{"season": null, "months": ["sep", "oct"]}}
+            - previous_season_filter: {{"season": "summer", "months": []}}
+              current_user_request: "show me more flexible options"
+              output: {{"filter_removed": false, "season": "summer", "months": []}}
             """,
         ),
         (

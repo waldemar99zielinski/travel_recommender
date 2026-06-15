@@ -31,6 +31,11 @@ class RecommendationV2ParentRegionFilterExtractionInput(BaseModel):
 class RecommendationV2ParentRegionFilterExtractionResult(BaseModel):
     """Structured parent_region filters extracted for recommendation_v2."""
 
+    filter_removed: bool = Field(
+        False,
+        description="Whether the user explicitly requested removal of the parent-region filter category.",
+    )
+
     parent_regions: list[ParentRegionEntry] | None = Field(
         None,
         description="Parent-region filters mapped from the current user request with include/exclude intent",

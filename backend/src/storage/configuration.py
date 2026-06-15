@@ -19,6 +19,11 @@ class StorageEngineConfiguration(BaseModel):
     pool_pre_ping: bool = Field(default=True, description="Check connections before reuse")
     pool_size: int = Field(default=5, ge=1, description="Connection pool size")
     max_overflow: int = Field(default=10, ge=0, description="Maximum overflow connections")
+    connect_timeout_s: int = Field(
+        default=10,
+        ge=1,
+        description="Database connection timeout in seconds",
+    )
 
 
 class MigrationConfiguration(BaseModel):

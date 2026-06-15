@@ -181,15 +181,24 @@ class TravelDestinationRepository:
         self._validate_embedding_dimension(query_embedding)
         self._validate_limit(limit)
 
-        distance_expression = col(TravelDestinationRecord.embedding).op("<->")(list(query_embedding)).cast(Float)
-        semantic_score_expression = literal(1.0) / (literal(1.0) + distance_expression)
+        normalized_destination_ids = self._normalize_destination_ids(destination_ids)
+        if destination_ids is not None and not normalized_destination_ids:
+            return []
+
+        distance_expression = col(TravelDestinationRecord.embedding).op("<=>")(list(query_embedding)).cast(Float)
+        semantic_score_expression = (literal(1.0) - distance_expression).cast(Float)
 
         statement = (
             select(TravelDestinationRecord)
             .add_columns(distance_expression.label("embedding_distance"))
             .add_columns(semantic_score_expression.label("semantic_score"))
         )
-        statement = statement.order_by(distance_expression)
+        statement = self._apply_destination_id_filter(statement, normalized_destination_ids)
+        statement = statement.order_by(
+            semantic_score_expression.desc(),
+            distance_expression,
+            col(TravelDestinationRecord.id).asc(),
+        )
         if limit is not None:
             statement = statement.limit(limit)
 
@@ -225,8 +234,8 @@ class TravelDestinationRepository:
         if destination_ids is not None and not normalized_destination_ids:
             return []
 
-        distance_expression = col(TravelDestinationRecord.embedding).op("<->")(list(query_embedding)).cast(Float)
-        semantic_score_expression = literal(1.0) / (literal(1.0) + distance_expression)
+        distance_expression = col(TravelDestinationRecord.embedding).op("<=>")(list(query_embedding)).cast(Float)
+        semantic_score_expression = (literal(1.0) - distance_expression).cast(Float)
         logistics_score_expression = self._build_logistics_score_expression(constraints).cast(Float)
 
         ranking_score_expression = (
@@ -334,6 +343,30 @@ class TravelDestinationRepository:
             for row in rows
             if float(row[1]) > 0.0
         ]
+
+    def keyword_matching_destination_ids(self, keywords: Sequence[str]) -> set[str]:
+        """Return destination IDs whose text fields contain at least one keyword."""
+        normalized_keywords: list[str] = []
+        for keyword in keywords:
+            normalized_keyword = self._normalize_search_term(keyword)
+            if normalized_keyword and normalized_keyword not in normalized_keywords:
+                normalized_keywords.append(normalized_keyword)
+
+        if not normalized_keywords:
+            return set()
+
+        text_expressions = (
+            self._normalize_text_expression(col(TravelDestinationRecord.region)),
+            self._normalize_text_expression(col(TravelDestinationRecord.parent_region)),
+            self._normalize_text_expression(col(TravelDestinationRecord.description)),
+        )
+        match_expressions = []
+        for keyword in normalized_keywords:
+            pattern = f"%{keyword}%"
+            match_expressions.extend(expression.like(pattern) for expression in text_expressions)
+
+        statement = select(TravelDestinationRecord.id).where(or_(*match_expressions))
+        return set(self.session.exec(statement).all())
 
     def find(
         self,
@@ -465,8 +498,8 @@ class TravelDestinationRepository:
         if query_embedding is None:
             return literal(0.0).cast(Float), literal(0.0).cast(Float)
 
-        distance_expression = col(TravelDestinationRecord.embedding).op("<->")(list(query_embedding)).cast(Float)
-        semantic_score_expression = (literal(1.0) / (literal(1.0) + distance_expression)).cast(Float)
+        distance_expression = col(TravelDestinationRecord.embedding).op("<=>")(list(query_embedding)).cast(Float)
+        semantic_score_expression = (literal(1.0) - distance_expression).cast(Float)
         return semantic_score_expression, distance_expression
 
     def _build_query_ranking_expression(

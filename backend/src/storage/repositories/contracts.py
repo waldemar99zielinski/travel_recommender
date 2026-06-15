@@ -62,6 +62,8 @@ class TravelDestinationRepositoryProtocol(Protocol):
         limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 
+    def keyword_matching_destination_ids(self, keywords: Sequence[str]) -> set[str]: ...
+
 
 class ChatRepositoryProtocol(Protocol):
     """Contract for chat session memory persistence."""

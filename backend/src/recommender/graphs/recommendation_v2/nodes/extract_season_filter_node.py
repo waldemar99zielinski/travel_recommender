@@ -68,6 +68,7 @@ def create_extract_season_filter_node(
 
         return {
             "extracted_seasonality_filter": seasonality_filter,
+            "seasonality_filter_removed": season_result.filter_removed,
         }
 
     return extract_season_filter_node

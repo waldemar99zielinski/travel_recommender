@@ -29,8 +29,6 @@ def _serialize_recommendations(
 def _serialize_travel_destination_filter(state: RecommendationV2GraphState) -> dict[str, object]:
     if state.gathered_travel_destination_filter is not None:
         return state.gathered_travel_destination_filter.serialize()
-    if state.previously_extracted_travel_destination_filter is not None:
-        return state.previously_extracted_travel_destination_filter.serialize()
     return {}
 
 

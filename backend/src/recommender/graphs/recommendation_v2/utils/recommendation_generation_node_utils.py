@@ -7,6 +7,13 @@ from recommender.graphs.recommendation_v2.filter_models import (
 from storage.stores.search_models import ScoredTravelDestination
 from storage.stores.search_models import TravelCostStatistics
 
+_SEASON_MONTHS = {
+    "winter": ("dec", "jan", "feb"),
+    "spring": ("mar", "apr", "may"),
+    "summer": ("jun", "jul", "aug"),
+    "autumn": ("sep", "oct", "nov"),
+}
+
 
 def apply_parent_region_filters(
     scored_destinations: list[ScoredTravelDestination],
@@ -44,6 +51,21 @@ def apply_parent_region_filters(
         ]
 
     return filtered_destinations
+
+
+def resolve_seasonality_months(
+    travel_destination_filter: RecommendationV2TravelDestinationFilter | None,
+) -> tuple[str, ...]:
+    if travel_destination_filter is None:
+        return ()
+
+    seasonality = travel_destination_filter.seasonality
+    months: list[str] = []
+    if seasonality.season is not None:
+        months.extend(_SEASON_MONTHS[seasonality.season])
+    months.extend(seasonality.months)
+
+    return tuple(dict.fromkeys(months))
 
 
 def resolve_weekly_cost(explicit_cost: ExplicitCostTermFilter) -> float:
@@ -129,6 +151,7 @@ __all__ = [
     "apply_budget_filters",
     "apply_parent_region_filters",
     "budget_filter_needs_statistics",
+    "resolve_seasonality_months",
     "resolve_budget_bounds",
     "resolve_weekly_cost",
 ]

@@ -66,7 +66,7 @@ class TravelDestinationStoreProtocol(Protocol):
         semantic_query: str,
         keywords: list[str],
         *,
-        keyword_boost: float = 0.3,
+        seasonality_months: Sequence[str] = (),
         limit: int | None = None,
     ) -> list[ScoredTravelDestination]: ...
 

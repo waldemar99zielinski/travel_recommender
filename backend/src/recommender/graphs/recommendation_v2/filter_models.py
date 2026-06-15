@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import field_validator
 from pydantic import model_validator
 
 MonthCode = Literal[
@@ -341,6 +342,11 @@ class RecommendationV2BudgetFilter(BaseModel):
         description="Maximum acceptable weekly cost if the user explicitly sets a budget cap",
     )
 
+    @field_validator("cost_term", mode="before")
+    @classmethod
+    def normalize_empty_cost_term(cls, value: Any) -> Any:
+        return normalize_optional_cost_term(value)
+
     @model_validator(mode="after")
     def validate_cost_range(self) -> RecommendationV2BudgetFilter:
         if (
@@ -383,10 +389,6 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
     parent_region_filters: list[RecommendationV2RegionFilter] = Field(
         default_factory=list,
         description="Parent-region filters with explicit include or exclude intent",
-    )
-    direct_region_filters: list[RecommendationV2RegionFilter] = Field(
-        default_factory=list,
-        description="Direct region filters with explicit include or exclude intent",
     )
     seasonality: RecommendationV2SeasonalityFilter = Field(
         default_factory=RecommendationV2SeasonalityFilter,
@@ -438,7 +440,6 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
         return any(
             (
                 bool(self.parent_region_filters),
-                bool(self.direct_region_filters),
                 self.seasonality.has_any_constraints(),
                 self.budget.has_any_constraints(),
             )
@@ -452,11 +453,6 @@ class RecommendationV2TravelDestinationFilter(BaseModel):
             serialized["parent_region_filters"] = [
                 region.model_dump() for region in self.parent_region_filters
             ]
-        if self.direct_region_filters:
-            serialized["direct_region_filters"] = [
-                region.model_dump() for region in self.direct_region_filters
-            ]
-
         seasonality = self.seasonality.serialize()
         if seasonality:
             serialized["seasonality"] = seasonality
@@ -479,6 +475,20 @@ def serialize_travel_destination_filter(
     return json.dumps(travel_destination_filter.serialize(), indent=2)
 
 
+def normalize_optional_cost_term(value: Any) -> Any:
+    """Treat an empty cost_term object as an absent budget term."""
+
+    if not isinstance(value, dict):
+        return value
+
+    explicit = value.get("explicit")
+    inferred_level = value.get("inferred_level")
+    if explicit is None and inferred_level is None:
+        return None
+
+    return value
+
+
 __all__ = [
     "CostTerm",
     "CostTermDuration",
@@ -494,5 +504,6 @@ __all__ = [
     "RegionFilterType",
     "SeasonCode",
     "TravelDestinationRegionField",
+    "normalize_optional_cost_term",
     "serialize_travel_destination_filter",
 ]

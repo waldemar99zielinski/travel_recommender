@@ -27,6 +27,11 @@ class RecommendationV2SeasonFilterExtractionInput(BaseModel):
 class RecommendationV2SeasonFilterExtractionResult(BaseModel):
     """Structured season filters extracted for recommendation_v2."""
 
+    filter_removed: bool = Field(
+        False,
+        description="Whether the user explicitly requested removal of the seasonality filter category.",
+    )
+
     season: SeasonCode | None = Field(
         None,
         description="Updated season filter after applying the current user request",

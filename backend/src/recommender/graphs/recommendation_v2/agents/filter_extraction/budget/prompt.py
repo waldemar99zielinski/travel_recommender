@@ -42,12 +42,19 @@ prompt = ChatPromptTemplate.from_messages(
             Goal:
             - Return the updated budget filters after applying the current_user_request.
             - Treat current_user_request as an update to the previous budget filter.
+            - Always return both fields: `filter_removed` and `cost_term`.
 
             Rules:
-            - Use only the `cost_term` field.
+            - Use only the `filter_removed` and `cost_term` fields.
+            - Set filter_removed=true only when current_user_request explicitly says to remove, clear, drop, reset, ignore, or stop using all filters/constraints, or explicitly says to remove, clear, drop, reset, ignore, or stop using the budget, price, cost, spending, cheap, affordability, or luxury filter specifically.
+            - Do not set filter_removed=true for vague preference changes, such as "something different", "more flexible", "less strict", "show more options", or "not that important", unless the user explicitly mentions removing all filters or removing the budget-related filter.
+            - If current_user_request explicitly removes all filters/constraints, output exactly: {{"filter_removed": true, "cost_term": null}}.
+            - If current_user_request explicitly removes the budget-related filter, output exactly: {{"filter_removed": true, "cost_term": null}}.
+            - Do not keep a previous cost_term after an explicit budget or all-filter removal request.
+            - If no budget filter is explicitly removed, set filter_removed=false.
             - Add or update `cost_term` if and only if the user mentions budget, price, cost, spending, affordability, cheapness, luxury, or another clear money-related context.
             - Keep previous budget filters if the user does not change them.
-            - Remove budget filters if the user explicitly drops or removes them, such as "any budget", "remove the budget filter", or "budget does not matter anymore".
+            - Remove budget filters if the user explicitly drops, clears, or removes them, such as "any budget", "remove the budget filter", "drop the cheap filter", or "budget does not matter anymore".
             - The output cost_term may contain either `explicit` or `inferred_level`, but never both.
             - Use `explicit` when the user directly gives a concrete money amount or bound that should be encoded structurally.
             - The explicit form must use:
@@ -61,7 +68,7 @@ prompt = ChatPromptTemplate.from_messages(
             - If `explicit` is present, omit `inferred_level`.
             - If `inferred_level` is present, omit `explicit`.
             - Do not return region, season, or month filters.
-            - Return only the `cost_term` field.
+            - Return only the `filter_removed` and `cost_term` fields.
 
             Examples:
             - "I want a cheap beach trip in southern Europe this summer" -> cost_term.inferred_level = low
@@ -77,10 +84,25 @@ prompt = ChatPromptTemplate.from_messages(
             - "I want to spend about 700 for the whole trip and prefer somewhere warm" -> cost_term.explicit = {{"value": 700, "operator": "around", "duration": "week"}}
             - previous_budget_filter: {{"cost_term": {{"inferred_level": "low"}}}}
               current_user_request: "Actually, any budget is fine now"
-              output: {{"cost_term": null}}
+              output: {{"filter_removed": true, "cost_term": null}}
             - previous_budget_filter: {{"cost_term": {{"explicit": {{"value": 200, "operator": "max", "duration": "day"}}}}}}
               current_user_request: "Remove the budget filter"
-              output: {{"cost_term": null}}
+              output: {{"filter_removed": true, "cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"inferred_level": "low"}}}}
+              current_user_request: "Drop the cheap filter"
+              output: {{"filter_removed": true, "cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"inferred_level": "low"}}}}
+              current_user_request: "remove all constraints"
+              output: {{"filter_removed": true, "cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"explicit": {{"value": 300, "operator": "max", "duration": "week"}}}}}}
+              current_user_request: "clear every filter and show me anything"
+              output: {{"filter_removed": true, "cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"inferred_level": "high"}}}}
+              current_user_request: "reset all constraints"
+              output: {{"filter_removed": true, "cost_term": null}}
+            - previous_budget_filter: {{"cost_term": {{"inferred_level": "low"}}}}
+              current_user_request: "show me more flexible options"
+              output: {{"filter_removed": false, "cost_term": {{"inferred_level": "low"}}}}
             """,
         ),
         (

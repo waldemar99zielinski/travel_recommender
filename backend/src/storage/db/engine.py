@@ -22,6 +22,7 @@ def create_storage_engine(config: StorageEngineConfiguration) -> Engine:
         pool_pre_ping=config.pool_pre_ping,
         pool_size=config.pool_size,
         max_overflow=config.max_overflow,
+        connect_args={"connect_timeout": config.connect_timeout_s},
     )
 
 

@@ -26,7 +26,15 @@ prompt = ChatPromptTemplate.from_messages(
             {allowed_parent_region_values}
 
             Rules:
+            - Always return both fields: `filter_removed` and `parent_regions`.
             - Use only the current_user_request.
+            - Set filter_removed=true only when current_user_request explicitly says to remove, clear, drop, reset, ignore, or stop using all filters/constraints, or explicitly says to remove, clear, drop, reset, ignore, or stop using broad-region, continent, parent-region, or region filters specifically.
+            - Do not set filter_removed=true for vague preference changes, such as "somewhere else", "different area", "more flexible", "less strict", "show more options", or "not that important", unless the user explicitly mentions removing all filters or removing the region-related filter.
+            - If current_user_request explicitly removes all filters/constraints, return filter_removed=true and parent_regions=null.
+            - If current_user_request explicitly removes broad-region, continent, parent-region, or region filters as a category, return filter_removed=true and parent_regions=null unless it names a specific region to remove.
+            - If current_user_request names a specific existing parent-region filter to remove, return filter_removed=false and return that exact region with type="exclude" so the merge step can remove it.
+            - If no parent-region filter is explicitly removed, set filter_removed=false.
+            - Do not create a new include/exclude filter from a generic removal request.
             - NEVER infer a parent_region from vibe, climate, food, language, landmarks, activities, or other indirect hints.
             - NEVER fill parent_regions just because the user mentioned travel or destinations in general.
             - ONLY fill when a concrete continent or large region is explicitly named.
@@ -34,11 +42,12 @@ prompt = ChatPromptTemplate.from_messages(
             - Do not invent parent_regions.
             - Do not return values outside the allowed list.
             - Do not return season, month, budget, price, or activity filters.
-            - Return only the `parent_regions` field.
+            - Return only the `filter_removed` and `parent_regions` fields.
             - Each entry must have name (the parent_region name) and type ("include" or "exclude").
             - Use type="include" when the user wants that parent region.
             - Use type="exclude" when the user rules that parent region out.
-            - If the user explicitly says to remove, exclude, avoid, or no longer consider a specific previously mentioned parent region, return that named parent region with type="exclude".
+            - If the user explicitly asks to remove, clear, or drop a specific previously mentioned parent-region filter, return that named parent region with type="exclude" so the existing include filter is removed.
+            - If the user explicitly asks to avoid, exclude, or no longer consider a parent region, return that named parent region with type="exclude" as an active exclusion.
 
             Examples:
 
@@ -51,8 +60,32 @@ prompt = ChatPromptTemplate.from_messages(
             current_user_request: "Do not consider Europe anymore"
             parent_regions: [{{{{"name": "Europe", "type": "exclude"}}}}]
 
-            current_user_request: "Remove South America from the search"
+            current_user_request: "Remove the South America filter"
             parent_regions: [{{{{"name": "South America", "type": "exclude"}}}}]
+
+            current_user_request: "Drop the Europe region constraint"
+            filter_removed: false
+            parent_regions: [{{{{"name": "Europe", "type": "exclude"}}}}]
+
+            current_user_request: "Remove all filters"
+            filter_removed: true
+            parent_regions: null
+
+            current_user_request: "Clear all constraints"
+            filter_removed: true
+            parent_regions: null
+
+            current_user_request: "Reset all filters and show me anything"
+            filter_removed: true
+            parent_regions: null
+
+            current_user_request: "Ignore all previous constraints"
+            filter_removed: true
+            parent_regions: null
+
+            current_user_request: "Show me somewhere else"
+            filter_removed: false
+            parent_regions: null
 
             current_user_request: "I want Europe but no longer Asia"
             parent_regions: [{{{{"name": "Europe", "type": "include"}}}}, {{{{ "name": "Asia", "type": "exclude"}}}}]

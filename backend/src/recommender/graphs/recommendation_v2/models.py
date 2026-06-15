@@ -94,17 +94,25 @@ class RecommendationV2GraphState(BaseModel):
         default_factory=list,
         description="Parent-region filters extracted from the current turn with include/exclude intent",
     )
-    extracted_direct_region_filters: list[RecommendationV2RegionFilter] = Field(
-        default_factory=list,
-        description="Direct region filters extracted from the current turn with include/exclude intent",
+    parent_region_filter_removed: bool = Field(
+        False,
+        description="Whether the current turn explicitly removes parent-region filters",
     )
     extracted_seasonality_filter: RecommendationV2SeasonalityFilter | None = Field(
         None,
         description="Seasonality filter extracted for the current turn",
     )
+    seasonality_filter_removed: bool = Field(
+        False,
+        description="Whether the current turn explicitly removes seasonality filters",
+    )
     extracted_budget_filter: RecommendationV2BudgetFilter | None = Field(
         None,
         description="Budget filter extracted for the current turn",
+    )
+    budget_filter_removed: bool = Field(
+        False,
+        description="Whether the current turn explicitly removes budget filters",
     )
     gathered_travel_destination_filter: RecommendationV2TravelDestinationFilter | None = Field(
         None,

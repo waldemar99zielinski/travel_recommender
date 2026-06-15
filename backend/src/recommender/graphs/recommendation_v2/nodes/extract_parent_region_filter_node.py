@@ -68,12 +68,15 @@ def create_extract_parent_region_filter_node(
                         entry.model_dump(),
                     )
 
-        existing_filters = []
-        if state.previously_extracted_travel_destination_filter is not None:
-            existing_filters = (
-                state.previously_extracted_travel_destination_filter.parent_region_filters
-            )
-        valid_filters = merge_parent_region_filters(existing_filters, extracted_filters)
+        if result.filter_removed:
+            valid_filters = []
+        else:
+            existing_filters = []
+            if state.previously_extracted_travel_destination_filter is not None:
+                existing_filters = (
+                    state.previously_extracted_travel_destination_filter.parent_region_filters
+                )
+            valid_filters = merge_parent_region_filters(existing_filters, extracted_filters)
 
         logger.verbose(
             "Extracted recommendation_v2 parent-region filters for user_id=%s, session_id=%s: %s",
@@ -84,6 +87,7 @@ def create_extract_parent_region_filter_node(
 
         return {
             "extracted_parent_region_filters": valid_filters,
+            "parent_region_filter_removed": result.filter_removed,
         }
 
     return extract_parent_region_filter_node

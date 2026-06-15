@@ -7,9 +7,6 @@ from recommender.common.configuration import Configuration
 from recommender.graphs.recommendation_v2.agents.filter_extraction.budget.agent import (
     RecommendationV2BudgetFilterExtractionAgent,
 )
-from recommender.graphs.recommendation_v2.agents.filter_extraction.direct_region.agent import (
-    RecommendationV2DirectRegionFilterExtractionAgent,
-)
 from recommender.graphs.recommendation_v2.agents.filter_extraction.parent_region.agent import (
     RecommendationV2ParentRegionFilterExtractionAgent,
 )
@@ -40,9 +37,6 @@ from recommender.graphs.recommendation_v2.agents.response_generation.recommendat
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
 from recommender.graphs.recommendation_v2.nodes.extract_budget_filter_node import (
     create_extract_budget_filter_node,
-)
-from recommender.graphs.recommendation_v2.nodes.extract_direct_region_filter_node import (
-    create_extract_direct_region_filter_node,
 )
 from recommender.graphs.recommendation_v2.nodes.extract_parent_region_filter_node import (
     create_extract_parent_region_filter_node,
@@ -112,9 +106,6 @@ def build_recommendation_v2_graph(
     extract_parent_region_filter_node = create_extract_parent_region_filter_node(
         RecommendationV2ParentRegionFilterExtractionAgent(llm=llm),
     )
-    extract_direct_region_filter_node = create_extract_direct_region_filter_node(
-        RecommendationV2DirectRegionFilterExtractionAgent(llm=llm),
-    )
     extract_season_filter_node = create_extract_season_filter_node(
         RecommendationV2SeasonFilterExtractionAgent(llm=llm),
     )
@@ -150,7 +141,6 @@ def build_recommendation_v2_graph(
     graph_builder.add_node(request_routing_node.__name__, request_routing_node)
     graph_builder.add_node(synthesize_user_request_node.__name__, synthesize_user_request_node)
     graph_builder.add_node(extract_parent_region_filter_node.__name__, extract_parent_region_filter_node)
-    graph_builder.add_node(extract_direct_region_filter_node.__name__, extract_direct_region_filter_node)
     graph_builder.add_node(extract_season_filter_node.__name__, extract_season_filter_node)
     graph_builder.add_node(extract_budget_filter_node.__name__, extract_budget_filter_node)
     graph_builder.add_node(gather_requirements_node.__name__, gather_requirements_node)
@@ -188,7 +178,6 @@ def build_recommendation_v2_graph(
             return [
                 synthesize_user_request_node.__name__,
                 extract_parent_region_filter_node.__name__,
-                extract_direct_region_filter_node.__name__,
                 extract_season_filter_node.__name__,
                 extract_budget_filter_node.__name__,
             ]
@@ -237,10 +226,6 @@ def build_recommendation_v2_graph(
     )
     graph_builder.add_edge(
         extract_parent_region_filter_node.__name__,
-        gather_requirements_node.__name__,
-    )
-    graph_builder.add_edge(
-        extract_direct_region_filter_node.__name__,
         gather_requirements_node.__name__,
     )
     graph_builder.add_edge(

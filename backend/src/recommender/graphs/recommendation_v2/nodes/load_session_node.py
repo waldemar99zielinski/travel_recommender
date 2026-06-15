@@ -2,42 +2,15 @@ from __future__ import annotations
 
 from typing import Callable
 
-from pydantic import ValidationError
-
-from recommender.graphs.recommendation_v2.filter_models import (
-    RecommendationV2TravelDestinationFilter,
-)
 from recommender.graphs.recommendation_v2.models import RecommendationV2GraphState
 from recommender.graphs.recommendation_v2.stream_events import emit_stream_event, EventType
-from storage.models.chat_record import ChatRecord
+from recommender.graphs.recommendation_v2.utils.travel_destination_filter_node_utils import (
+    latest_travel_destination_filter_from_history,
+)
 from storage.stores.chat_store import ChatStore
 from utils.logger import LoggerManager
 
 logger = LoggerManager.get_logger(__name__)
-
-
-def _load_previously_extracted_travel_destination_filter(
-    persisted_rows: list[ChatRecord],
-) -> RecommendationV2TravelDestinationFilter | None:
-    if not persisted_rows:
-        return None
-
-    last_row = persisted_rows[-1]
-    if not last_row.travel_destination_filter:
-        return None
-
-    try:
-        return RecommendationV2TravelDestinationFilter.model_validate(
-            last_row.travel_destination_filter,
-        )
-    except ValidationError:
-        logger.warning(
-            "Skipping invalid last travel_destination_filter for user_id=%s, session_id=%s, chat_history_number=%s",
-            last_row.user_id,
-            last_row.session_id,
-            last_row.chat_history_number,
-        )
-        return None
 
 
 def create_session_memory_load_node(
@@ -72,7 +45,7 @@ def create_session_memory_load_node(
             persisted_rows[-1].synthesized_query if len(persisted_rows) > 0 else None
         )
         previously_extracted_travel_destination_filter = (
-            _load_previously_extracted_travel_destination_filter(persisted_rows)
+            latest_travel_destination_filter_from_history(persisted_rows)
         )
 
         return {

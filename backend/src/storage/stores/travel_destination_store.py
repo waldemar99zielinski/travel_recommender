@@ -163,49 +163,39 @@ class TravelDestinationStore:
         semantic_query: str,
         keywords: list[str],
         *,
-        keyword_boost: float = 0.3,
+        seasonality_months: Sequence[str] = (),
         limit: int | None = None,
     ) -> list[ScoredTravelDestination]:
-        """Run semantic search and boost results that match concrete keywords.
+        """Run recommendation retrieval: semantic search, IQR keyword boost, and seasonality re-ranking."""
+        query_embedding = self._embed_query(semantic_query)
+        normalized_months = _normalize_months(seasonality_months)
 
-        Finds destinations by semantic similarity, then applies a ranking-score
-        boost to any destination whose region/description also matches the given
-        keywords. If no keywords are provided, falls through to pure semantic search.
-        """
-        semantic_results = self.semantic_search(semantic_query)
+        with self.unit_of_work.read() as session:
+            repository = TravelDestinationRepository(
+                session,
+                embedding_dimension=self.embedding_dimension,
+            )
+            semantic_results = repository.semantic_search(query_embedding=query_embedding)
+            keyword_destination_ids = repository.keyword_matching_destination_ids(keywords)
 
-        if not keywords:
-            return semantic_results
+        if not semantic_results:
+            return []
 
-        keyword_query = " ".join(keywords).strip()
-        if not keyword_query:
-            return semantic_results
+        iqr = _interquartile_range([result.semantic_score for result in semantic_results])
+        boosted_results = _apply_keyword_iqr_boost(
+            semantic_results,
+            keyword_destination_ids=keyword_destination_ids,
+            boost=iqr,
+        )
+        reranked_results = _apply_seasonality_reranking(
+            boosted_results,
+            months=normalized_months,
+        )
+        reranked_results.sort(key=lambda result: result.ranking_score, reverse=True)
 
-        keyword_results = self.exact_text_search(keyword_query)
-        keyword_destination_ids: set[str] = {
-            result.destination.id for result in keyword_results
-        }
-        if not keyword_destination_ids:
-            return semantic_results
-
-        boosted: list[ScoredTravelDestination] = []
-        for result in semantic_results:
-            if result.destination.id in keyword_destination_ids:
-                boosted_ranking = result.ranking_score + keyword_boost
-                boosted.append(
-                    ScoredTravelDestination(
-                        destination=result.destination,
-                        embedding_distance=result.embedding_distance,
-                        semantic_score=result.semantic_score,
-                        logistics_score=result.logistics_score,
-                        ranking_score=boosted_ranking,
-                    )
-                )
-            else:
-                boosted.append(result)
-
-        boosted.sort(key=lambda x: x.ranking_score, reverse=True)
-        return boosted
+        if limit is not None:
+            return reranked_results[:limit]
+        return reranked_results
 
     def vector_search(
         self,
@@ -227,3 +217,122 @@ class TravelDestinationStore:
             )
 
         return query_embedding
+
+
+_VALID_MONTHS = {
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+}
+
+
+def _apply_keyword_iqr_boost(
+    results: list[ScoredTravelDestination],
+    *,
+    keyword_destination_ids: set[str],
+    boost: float,
+) -> list[ScoredTravelDestination]:
+    boosted_results: list[ScoredTravelDestination] = []
+    for result in results:
+        keyword_indicator = 1.0 if result.destination.id in keyword_destination_ids else 0.0
+        boosted_score = result.semantic_score + (keyword_indicator * boost)
+        boosted_results.append(
+            ScoredTravelDestination(
+                destination=result.destination,
+                embedding_distance=result.embedding_distance,
+                semantic_score=result.semantic_score,
+                logistics_score=result.logistics_score,
+                ranking_score=boosted_score,
+            )
+        )
+    return boosted_results
+
+
+def _apply_seasonality_reranking(
+    results: list[ScoredTravelDestination],
+    *,
+    months: Sequence[str],
+) -> list[ScoredTravelDestination]:
+    if not months:
+        return results
+
+    normalized_semantic_scores = _min_max_normalize(
+        [result.ranking_score for result in results]
+    )
+    raw_seasonality_scores = [
+        sum(float(getattr(result.destination, month)) for month in months)
+        for result in results
+    ]
+    normalized_seasonality_scores = _min_max_normalize(raw_seasonality_scores)
+
+    reranked_results: list[ScoredTravelDestination] = []
+    for result, semantic_score, seasonality_score in zip(
+        results,
+        normalized_semantic_scores,
+        normalized_seasonality_scores,
+        strict=True,
+    ):
+        combined_score = (0.7 * semantic_score) + (0.3 * seasonality_score)
+        reranked_results.append(
+            ScoredTravelDestination(
+                destination=result.destination,
+                embedding_distance=result.embedding_distance,
+                semantic_score=result.semantic_score,
+                logistics_score=seasonality_score,
+                ranking_score=combined_score,
+            )
+        )
+    return reranked_results
+
+
+def _interquartile_range(values: Sequence[float]) -> float:
+    if not values:
+        return 0.0
+
+    sorted_values = sorted(float(value) for value in values)
+    q1 = _percentile(sorted_values, 0.25)
+    q3 = _percentile(sorted_values, 0.75)
+    return q3 - q1
+
+
+def _percentile(sorted_values: Sequence[float], percentile: float) -> float:
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+
+    index = percentile * (len(sorted_values) - 1)
+    lower_index = int(index)
+    upper_index = min(lower_index + 1, len(sorted_values) - 1)
+    fraction = index - lower_index
+    return sorted_values[lower_index] + (
+        (sorted_values[upper_index] - sorted_values[lower_index]) * fraction
+    )
+
+
+def _min_max_normalize(values: Sequence[float]) -> list[float]:
+    if not values:
+        return []
+
+    minimum = min(values)
+    maximum = max(values)
+    if maximum == minimum:
+        return [1.0] * len(values)
+
+    return [(value - minimum) / (maximum - minimum) for value in values]
+
+
+def _normalize_months(months: Sequence[str]) -> tuple[str, ...]:
+    normalized_months: list[str] = []
+    for month in months:
+        normalized_month = month.lower().strip()
+        if normalized_month in _VALID_MONTHS and normalized_month not in normalized_months:
+            normalized_months.append(normalized_month)
+    return tuple(normalized_months)

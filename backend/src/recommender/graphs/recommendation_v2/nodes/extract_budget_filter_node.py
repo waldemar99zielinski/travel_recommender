@@ -52,9 +52,7 @@ def create_extract_budget_filter_node(
             )
         )
         budget_filter = RecommendationV2BudgetFilter(
-            min_cost_per_week=base_filter.budget.min_cost_per_week,
             cost_term=budget_result.cost_term,
-            max_cost_per_week=base_filter.budget.max_cost_per_week,
         )
 
         logger.verbose(
@@ -66,6 +64,7 @@ def create_extract_budget_filter_node(
 
         return {
             "extracted_budget_filter": budget_filter,
+            "budget_filter_removed": budget_result.filter_removed,
         }
 
     return extract_budget_filter_node

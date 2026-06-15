@@ -13,6 +13,7 @@ from recommender.graphs.recommendation_v2.stream_events import (
 from recommender.graphs.recommendation_v2.utils.recommendation_generation_node_utils import (
     apply_budget_filters,
     apply_parent_region_filters,
+    resolve_seasonality_months,
 )
 from storage.stores.travel_destination_store import TravelDestinationStore
 from utils.logger import LoggerManager
@@ -50,13 +51,16 @@ def create_recommendation_generation_node(
         scored_destinations = travel_destination_store.keyword_boosted_search(
             query,
             keywords=keywords,
+            seasonality_months=resolve_seasonality_months(
+                state.gathered_travel_destination_filter,
+            ),
         )
 
         filtered_scored_destinations = apply_parent_region_filters(
             scored_destinations,
             state.gathered_travel_destination_filter,
         )
-        
+
         cost_statistics = travel_destination_store.cost_per_week_statistics()
         filtered_scored_destinations = apply_budget_filters(
             filtered_scored_destinations,

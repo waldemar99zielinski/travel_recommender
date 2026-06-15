@@ -29,9 +29,11 @@ def create_gather_requirements_node() -> Callable[[RecommendationV2GraphState], 
 
         travel_destination_filter = compose_travel_destination_filter(
             extracted_parent_region_filters=state.extracted_parent_region_filters,
-            extracted_direct_region_filters=state.extracted_direct_region_filters,
             extracted_seasonality_filter=state.extracted_seasonality_filter,
             extracted_budget_filter=state.extracted_budget_filter,
+            parent_region_filter_removed=state.parent_region_filter_removed,
+            seasonality_filter_removed=state.seasonality_filter_removed,
+            budget_filter_removed=state.budget_filter_removed,
             fallback=state.previously_extracted_travel_destination_filter,
         )
 
