@@ -98,8 +98,7 @@ def create_test_client_for_env(env: ApiEnvironment) -> TestClient:
         configuration=configuration,
         embedding_model=FakeEmbeddingModel(),
         storage=FakeStorage(),
-        recommendation_v0_service=fake,
-        recommendation_v1_service=fake,
+        recommendation_v2_service=fake,
         session_service=FakeSessionService(),
     )
     return TestClient(app)
@@ -124,24 +123,6 @@ def _parse_sse_events(text: str) -> list[dict]:
 
 
 class TestRecommendationEndpoints(unittest.TestCase):
-    def test_chat_v0_endpoint_returns_sse_stream(self) -> None:
-        payload = {
-            "session": {"user_id": "user-1", "session_id": "session-1"},
-            "message": "Recommend a calm trip",
-        }
-
-        with create_test_client() as client:
-            response = client.post("/api/v0/recommendations/chat", json=payload)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers["content-type"], "text/event-stream; charset=utf-8")
-
-        events = _parse_sse_events(response.text)
-        self.assertGreaterEqual(len(events), 2)
-        self.assertEqual(events[0]["event"], "init")
-        recommendation_event = next(e for e in events if e["event"] == "recommendation")
-        self.assertEqual(recommendation_event["data"]["user_request"], "Recommend a calm trip")
-
     def test_chat_endpoint_returns_sse_stream(self) -> None:
         payload = {
             "session": {"user_id": "user-1", "session_id": "session-1"},
@@ -149,7 +130,7 @@ class TestRecommendationEndpoints(unittest.TestCase):
         }
 
         with create_test_client() as client:
-            response = client.post("/api/v1/recommendations/chat", json=payload)
+            response = client.post("/api/v2/recommendations/chat", json=payload)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["content-type"], "text/event-stream; charset=utf-8")
@@ -180,39 +161,11 @@ class TestRecommendationEndpoints(unittest.TestCase):
         }
 
         with create_test_client() as client:
-            response = client.post("/api/v1/recommendations/chat", json=payload)
+            response = client.post("/api/v2/recommendations/chat", json=payload)
 
         self.assertEqual(response.status_code, 422)
         body = response.json()
         self.assertEqual(body["code"], "validation_error")
-
-    def test_chat_v0_endpoint_returns_not_implemented_in_production(self) -> None:
-        payload = {
-            "session": {"user_id": "user-1", "session_id": "session-1"},
-            "message": "Recommend a calm trip",
-        }
-
-        with create_test_client_for_env(ApiEnvironment.production) as client:
-            response = client.post("/api/v0/recommendations/chat", json=payload)
-
-        self.assertEqual(response.status_code, 501)
-        body = response.json()
-        self.assertEqual(body["code"], "not_implemented")
-        self.assertEqual(body["details"], {"environment": "production", "version": "v0"})
-
-    def test_chat_v1_endpoint_returns_not_implemented_in_production(self) -> None:
-        payload = {
-            "session": {"user_id": "user-1", "session_id": "session-1"},
-            "message": "Recommend a calm trip",
-        }
-
-        with create_test_client_for_env(ApiEnvironment.production) as client:
-            response = client.post("/api/v1/recommendations/chat", json=payload)
-
-        self.assertEqual(response.status_code, 501)
-        body = response.json()
-        self.assertEqual(body["code"], "not_implemented")
-        self.assertEqual(body["details"], {"environment": "production", "version": "v1"})
 
 if __name__ == "__main__":
     unittest.main()
