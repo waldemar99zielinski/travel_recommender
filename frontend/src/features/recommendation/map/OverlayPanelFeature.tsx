@@ -4,6 +4,10 @@ import { OverlayPanel } from "@/components/overlay/OverlayPanel";
 import { RegionDetailContent } from "@/components/overlay/content/RegionDetailContent";
 import { normalizeRegionId } from "@/components/map/model/mapSelectors";
 import { useRecommendationFeatureContext } from "@/features/recommendation/context/useRecommendationFeatureContext";
+import {
+    getLatestTurnWithRecommendations,
+    hasRecommendations,
+} from "@/models/chat.models";
 
 const DEFAULT_DESTINATION_RESEARCH_LOADING_DURATION_MS = 30_000;
 
@@ -18,7 +22,10 @@ export function OverlayPanelFeature() {
         mapState: { selectedRegionId, setSelectedRegionId },
     } = useRecommendationFeatureContext();
 
-    const latestChatTurn = onGoingChatTurn ?? chatRecords.at(-1) ?? null;
+    const currentAssistantTurn = onGoingChatTurn ?? chatRecords.at(-1) ?? null;
+    const recommendationSourceTurn = hasRecommendations(currentAssistantTurn)
+        ? currentAssistantTurn
+        : getLatestTurnWithRecommendations(chatRecords);
 
     const normalizedSelectedId =
         selectedRegionId != null ? normalizeRegionId(selectedRegionId) : null;
@@ -31,9 +38,9 @@ export function OverlayPanelFeature() {
               ) ?? null;
 
     const selectedDestinationResearch =
-        normalizedSelectedId == null || latestChatTurn == null
+        normalizedSelectedId == null || recommendationSourceTurn == null
             ? null
-            : latestChatTurn.travel_destinations_evaluations?.find(
+            : recommendationSourceTurn.travel_destinations_evaluations?.find(
                   (evaluation) =>
                       normalizeRegionId(evaluation.region_id) === normalizedSelectedId,
               ) ?? null;

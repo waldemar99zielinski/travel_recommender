@@ -5,6 +5,10 @@ import { useTranslation } from "react-i18next";
 
 import type { ChatConversationProps } from "@/components/chat/Chat.interfaces";
 import { ChatMessageCard } from "@/components/chat/components/ChatMessageCard";
+import {
+    getLatestTurnWithRecommendations,
+    hasRecommendations,
+} from "@/models/chat.models";
 
 export function ChatConversation({
     chatRecords,
@@ -21,8 +25,10 @@ export function ChatConversation({
     const shouldShowEmptyState = !hasTurns;
     const shouldShowStandaloneLoading = isLoading && onGoingChatTurn == null;
     const shouldShowOnGoingFilter = onGoingChatTurn?.travel_destination_filter != null;
-    const shouldShowOnGoingRecommendations =
-        (onGoingChatTurn?.recommendations?.length ?? 0) > 0;
+    const currentAssistantTurn = onGoingChatTurn ?? chatRecords.at(-1) ?? null;
+    const recommendationSourceTurn = hasRecommendations(currentAssistantTurn)
+        ? currentAssistantTurn
+        : getLatestTurnWithRecommendations(chatRecords);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -43,7 +49,19 @@ export function ChatConversation({
                             index === chatRecords.length - 1 && !shouldShowOnGoingFilter
                         }
                         showRecommendations={
-                            index === chatRecords.length - 1 && !shouldShowOnGoingRecommendations
+                            onGoingChatTurn == null &&
+                            index === chatRecords.length - 1 &&
+                            recommendationSourceTurn != null
+                        }
+                        recommendations={
+                            onGoingChatTurn == null && index === chatRecords.length - 1
+                                ? recommendationSourceTurn?.recommendations
+                                : undefined
+                        }
+                        travelDestinationsEvaluations={
+                            onGoingChatTurn == null && index === chatRecords.length - 1
+                                ? recommendationSourceTurn?.travel_destinations_evaluations
+                                : undefined
                         }
                         onRecommendationSelect={onRecommendationSelect}
                     />
@@ -57,7 +75,11 @@ export function ChatConversation({
                     loadingStep={loadingStep}
                     isDestinationResearchLoading={isDestinationResearchLoading}
                     showTravelDestinationFilter={shouldShowOnGoingFilter}
-                    showRecommendations={shouldShowOnGoingRecommendations}
+                    showRecommendations={recommendationSourceTurn != null}
+                    recommendations={recommendationSourceTurn?.recommendations}
+                    travelDestinationsEvaluations={
+                        recommendationSourceTurn?.travel_destinations_evaluations
+                    }
                     onRecommendationSelect={onRecommendationSelect}
                 />
             )}

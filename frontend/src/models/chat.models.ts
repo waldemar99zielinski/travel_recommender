@@ -21,6 +21,8 @@ export interface ChatRecordDto {
     travel_destination_filter?: TravelDestinationFilter | null;
 }
 
+export type ChatTurnLike = ChatRecordDto | Partial<ChatRecordDto>;
+
 const chatRecordTravelDestinationFilterSchema = z.custom<TravelDestinationFilter | null | undefined>(
     (value) => value == null || typeof value === "object",
 );
@@ -42,4 +44,22 @@ export const chatRecordDtoSchema = z.object({
 
 export function validateChatRecordDto(payload: unknown): ChatRecordDto {
     return chatRecordDtoSchema.parse(payload);
+}
+
+export function hasRecommendations(turn: ChatTurnLike | null | undefined): boolean {
+    return (turn?.recommendations?.length ?? 0) > 0;
+}
+
+export function getLatestTurnWithRecommendations(
+    turns: ReadonlyArray<ChatTurnLike | null | undefined>,
+): ChatTurnLike | null {
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+        const turn = turns[index];
+
+        if (turn != null && hasRecommendations(turn)) {
+            return turn;
+        }
+    }
+
+    return null;
 }

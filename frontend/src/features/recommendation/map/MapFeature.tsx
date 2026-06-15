@@ -7,6 +7,10 @@ import {
 import { Map } from "@/components/map/Map";
 import { OverlayPanelFeature } from "@/features/recommendation/map/OverlayPanelFeature";
 import { useRecommendationFeatureContext } from "@/features/recommendation/context/useRecommendationFeatureContext";
+import {
+    getLatestTurnWithRecommendations,
+    hasRecommendations,
+} from "@/models/chat.models";
 import { recommendationItemDtoSchema } from "@/models/recommendation.models";
 import { createLogger } from "@/shared/lib";
 
@@ -36,10 +40,13 @@ export function MapFeature() {
         },
     } = useRecommendationFeatureContext();
 
-    const latestChatTurn = onGoingChatTurn ?? chatRecords[chatRecords.length - 1] ?? null;
+    const currentAssistantTurn = onGoingChatTurn ?? chatRecords.at(-1) ?? null;
+    const recommendationSourceTurn = hasRecommendations(currentAssistantTurn)
+        ? currentAssistantTurn
+        : getLatestTurnWithRecommendations(chatRecords);
     const parsedRecommendations = recommendationItemDtoSchema
         .array()
-        .safeParse(latestChatTurn?.recommendations ?? []);
+        .safeParse(recommendationSourceTurn?.recommendations ?? []);
     const latestRecommendations = parsedRecommendations.success
         ? parsedRecommendations.data
         : [];
