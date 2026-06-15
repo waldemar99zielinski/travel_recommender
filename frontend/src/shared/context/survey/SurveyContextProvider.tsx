@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
+import { appConfiguration } from "@/shared/configuration/appConfiguration";
 import { SurveyContext } from "@/shared/context/survey/surveyContext";
 import { useSurveyContextValue } from "@/shared/context/survey/useSurveyContextValue";
 import { createLogger } from "@/shared/lib";
@@ -13,8 +14,14 @@ type SurveyContextProviderProps = {
 export function SurveyContextProvider({ children }: SurveyContextProviderProps) {
     const contextValue = useSurveyContextValue();
     const { fetchSurveyQuestions } = contextValue;
+    const isSurveyEnabled = appConfiguration.surveyEnabled;
 
     useEffect(() => {
+        if (!isSurveyEnabled) {
+            logger.debug("Survey feature disabled, skipping question fetch");
+            return;
+        }
+
         const loadSurveyQuestions = async () => {
             logger.trace("Fetching survey questions");
 
@@ -30,7 +37,7 @@ export function SurveyContextProvider({ children }: SurveyContextProviderProps) 
         };
 
         void loadSurveyQuestions();
-    }, [fetchSurveyQuestions]);
+    }, [fetchSurveyQuestions, isSurveyEnabled]);
 
     return <SurveyContext.Provider value={contextValue}>{children}</SurveyContext.Provider>;
 }

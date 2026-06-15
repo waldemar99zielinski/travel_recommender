@@ -4,6 +4,7 @@ declare global {
             environment?: "dev" | "production";
             baseUrl?: string;
             regionsDataUrl?: string;
+            surveyEnabled?: boolean | string;
         };
     }
 }

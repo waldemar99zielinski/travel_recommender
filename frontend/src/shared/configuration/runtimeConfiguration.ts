@@ -4,6 +4,7 @@ export interface RuntimeConfiguration {
     environment?: AppEnvironment;
     baseUrl?: string;
     regionsDataUrl?: string;
+    surveyEnabled?: boolean | string;
 }
 
 function resolveRuntimeConfiguration(): RuntimeConfiguration {
