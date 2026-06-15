@@ -4,6 +4,7 @@ import { AppConfigContextProvider } from "@/shared/context/app-config/AppConfigC
 import { DestinationContextProvider } from "@/shared/context/destination/DestinationContextProvider";
 import { HealthContextProvider } from "@/shared/context/health/HealthContextProvider";
 import { SessionContextProvider } from "@/shared/context/session/SessionContextProvider";
+import { SurveyContextProvider } from "@/shared/context/survey/SurveyContextProvider";
 
 type AppContextProviderProps = {
     children: ReactNode;
@@ -14,7 +15,9 @@ export function AppContextProvider({ children }: AppContextProviderProps) {
         <AppConfigContextProvider>
             <HealthContextProvider>
                 <DestinationContextProvider>
-                    <SessionContextProvider>{children}</SessionContextProvider>
+                    <SessionContextProvider>
+                        <SurveyContextProvider>{children}</SurveyContextProvider>
+                    </SessionContextProvider>
                 </DestinationContextProvider>
             </HealthContextProvider>
         </AppConfigContextProvider>

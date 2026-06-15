@@ -18,6 +18,7 @@ from storage.db.session import create_session_factory
 from storage.db.unit_of_work import StorageUnitOfWork
 from storage.stores.chat_store import ChatStore
 from storage.stores.storage_metadata_store import StorageMetadataStore
+from storage.stores.survey_store import SurveyStore
 from storage.stores.travel_destination_store import TravelDestinationStore
 
 
@@ -63,6 +64,7 @@ class Storage:
         )
         self.storage_metadata = StorageMetadataStore(unit_of_work=self.unit_of_work)
         self.chat = ChatStore(unit_of_work=self.unit_of_work)
+        self.survey = SurveyStore(unit_of_work=self.unit_of_work)
 
     def check_health(self) -> StorageHealthReport:
         """Return current storage health report for observability and readiness checks."""

@@ -19,6 +19,7 @@ from api.routers import recommendations
 from api.routers import recommendations_v0
 from api.routers import recommendations_v2
 from api.routers import sessions
+from api.routers import survey
 
 
 def create_app(
@@ -56,6 +57,7 @@ def create_app(
     app.include_router(recommendations_v2.router)
 
     app.include_router(sessions.router)
+    app.include_router(survey.router)
 
     register_exception_handlers(app)
     return app

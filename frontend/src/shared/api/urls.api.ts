@@ -21,6 +21,11 @@ export interface SessionApiUrlBuilder {
     removeSession(userId: string, sessionId: string): string;
 }
 
+export interface SurveyApiUrlBuilder {
+    listQuestions(): string;
+    createResult(): string;
+}
+
 export function createDestinationApiUrlBuilder(baseUrl: string): DestinationApiUrlBuilder {
     return {
         listDestinations: () => `${baseUrl}/api/v1/destinations`,
@@ -53,6 +58,14 @@ export function createSessionApiUrlBuilder(baseUrl: string): SessionApiUrlBuilde
     };
 }
 
+export function createSurveyApiUrlBuilder(baseUrl: string): SurveyApiUrlBuilder {
+    return {
+        listQuestions: () => `${baseUrl}/api/v1/survey/questions`,
+        createResult: () => `${baseUrl}/api/v1/survey/results`,
+    };
+}
+
 export const destinationApiUrlBuilder = createDestinationApiUrlBuilder(apiConfig.baseUrl);
 export const sessionApiUrlBuilder = createSessionApiUrlBuilder(apiConfig.baseUrl);
 export const healthApiUrlBuilder = createHealthApiUrlBuilder(apiConfig.baseUrl);
+export const surveyApiUrlBuilder = createSurveyApiUrlBuilder(apiConfig.baseUrl);
