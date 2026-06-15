@@ -22,12 +22,14 @@ from sqlmodel import SQLModel
 
 
 class SurveyResultsData(BaseModel):
-    """Mapping of question IDs to numeric scores with convenience accessors.
+    """Survey results stored as a flat JSONB dict in the database.
 
-    Stored as a flat JSONB dict ``{"1": 5.0, "2": 3.5}`` in the database.
+    Contains question scores (numeric keys, numeric values) as well as
+    metadata fields such as ``age`` and ``llm`` (string values).
+    Example: ``{"1": 5.0, "2": 3.5, "age": "25-29", "llm": "intermediate"}``.
     """
 
-    scores: dict[int, float] = PydanticField(default_factory=dict)
+    scores: dict[str, str | float | int] = PydanticField(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
@@ -37,34 +39,38 @@ class SurveyResultsData(BaseModel):
         return data
 
     @model_serializer(mode="wrap")
-    def _flatten_to_dict(self, handler) -> dict[str, float]:
+    def _flatten_to_dict(self, handler) -> dict[str, str | float | int]:
         wrapped = handler(self)
         return dict(wrapped.get("scores", {}))
 
     def get(self, question_id: int, default: float | None = None) -> float | None:
-        return self.scores.get(question_id, default)
+        val = self.scores.get(str(question_id), default)
+        return float(val) if isinstance(val, (int, float)) else default
 
     def set(self, question_id: int, score: float) -> None:
-        self.scores[question_id] = score
+        self.scores[str(question_id)] = score
 
     @property
     def average(self) -> float:
-        if not self.scores:
+        numeric = [v for v in self.scores.values() if isinstance(v, (int, float))]
+        if not numeric:
             return 0.0
-        return sum(self.scores.values()) / len(self.scores)
+        return sum(numeric) / len(numeric)
 
     @property
     def total(self) -> float:
-        return sum(self.scores.values())
+        numeric = [v for v in self.scores.values() if isinstance(v, (int, float))]
+        return sum(numeric)
 
     def __getitem__(self, question_id: int) -> float:
-        return self.scores[question_id]
+        val = self.scores[str(question_id)]
+        return float(val) if isinstance(val, (int, float)) else 0.0
 
     def __setitem__(self, question_id: int, score: float) -> None:
-        self.scores[question_id] = score
+        self.scores[str(question_id)] = score
 
     def __contains__(self, question_id: int) -> bool:
-        return question_id in self.scores
+        return str(question_id) in self.scores
 
 
 class _SurveyResultsDB(TypeDecorator):

@@ -7,8 +7,10 @@ import type {
 import type { FetchStatus } from "@/shared/hooks/apiHookTypes";
 
 export interface SurveyDraftState {
-    scores: Record<string, number>;
+    scores: Record<string, number | string>;
     comment: string;
+    ageRange: string | null;
+    llmExperience: string | null;
 }
 
 export interface SurveyContextValue {
@@ -26,6 +28,8 @@ export interface SurveyContextValue {
     allQuestionsAnswered: boolean;
     setSurveyScore: (questionId: number, score: number) => void;
     setSurveyComment: (comment: string) => void;
+    setSurveyAgeRange: (ageRange: string | null) => void;
+    setSurveyLlmExperience: (llmExperience: string | null) => void;
     clearSurveyDraft: () => void;
 
     submitSurveyData: SurveyResultResponseDto | null;
