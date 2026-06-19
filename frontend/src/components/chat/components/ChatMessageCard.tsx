@@ -62,6 +62,8 @@ export function ChatMessageCard({
     isDestinationResearchLoading = false,
     showTravelDestinationFilter = false,
     showRecommendations = false,
+    recommendations,
+    travelDestinationsEvaluations,
     onRecommendationSelect,
 }: ChatMessageCardProps) {
     const userRequest = turn.user_request?.trim();
@@ -94,6 +96,8 @@ export function ChatMessageCard({
                                 isDestinationResearchLoading={isDestinationResearchLoading}
                                 showTravelDestinationFilter={showTravelDestinationFilter}
                                 showRecommendations={showRecommendations}
+                                recommendations={recommendations}
+                                travelDestinationsEvaluations={travelDestinationsEvaluations}
                                 onRecommendationSelect={onRecommendationSelect}
                             />
                         </CardContent>

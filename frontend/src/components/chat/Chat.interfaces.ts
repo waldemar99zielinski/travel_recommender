@@ -43,6 +43,8 @@ export interface ChatMessageCardProps {
     isDestinationResearchLoading?: boolean;
     showTravelDestinationFilter?: boolean;
     showRecommendations?: boolean;
+    recommendations?: ChatRecordDto["recommendations"];
+    travelDestinationsEvaluations?: ChatRecordDto["travel_destinations_evaluations"];
     onRecommendationSelect?: (regionId: string) => void;
 }
 

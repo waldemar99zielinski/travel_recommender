@@ -25,6 +25,8 @@ interface ChatAssistantContentProps {
     isDestinationResearchLoading?: boolean;
     showTravelDestinationFilter?: boolean;
     showRecommendations?: boolean;
+    recommendations?: ChatRecordDto["recommendations"];
+    travelDestinationsEvaluations?: ChatRecordDto["travel_destinations_evaluations"];
     onRecommendationSelect?: (regionId: string) => void;
 }
 
@@ -36,12 +38,18 @@ export function ChatAssistantContent({
     isDestinationResearchLoading = false,
     showTravelDestinationFilter = false,
     showRecommendations = false,
+    recommendations,
+    travelDestinationsEvaluations,
     onRecommendationSelect,
 }: ChatAssistantContentProps) {
     const { t } = useTranslation();
     const travelDestinationFilter = turn.travel_destination_filter;
     const systemResponse = turn.system_response?.trim();
-    const hasRecommendations = showRecommendations && (turn.recommendations?.length ?? 0) > 0;
+    const displayedRecommendations = recommendations ?? turn.recommendations;
+    const displayedTravelDestinationsEvaluations =
+        travelDestinationsEvaluations ?? turn.travel_destinations_evaluations;
+    const hasRecommendations =
+        showRecommendations && (displayedRecommendations?.length ?? 0) > 0;
     const hasSupplementaryContent =
         (showTravelDestinationFilter && travelDestinationFilter != null) || hasRecommendations;
     const hasAssistantBody = isStreaming || Boolean(systemResponse);
@@ -55,8 +63,8 @@ export function ChatAssistantContent({
             )}
             {hasRecommendations && (
                 <ChatRecommendations
-                    recommendations={turn.recommendations}
-                    travelDestinationsEvaluations={turn.travel_destinations_evaluations}
+                    recommendations={displayedRecommendations}
+                    travelDestinationsEvaluations={displayedTravelDestinationsEvaluations}
                     isDestinationResearchLoading={isDestinationResearchLoading}
                     onRecommendationSelect={onRecommendationSelect}
                 />
