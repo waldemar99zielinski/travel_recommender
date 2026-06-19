@@ -22,3 +22,12 @@ export {
     useSessionContext,
     type SessionContextValue,
 } from "@/shared/context/session";
+export {
+    SurveyContextProvider,
+    useSurveyContext,
+    type SurveyContextValue,
+    type SurveyDraftState,
+    type SurveyQuestionDto,
+    type SurveyResultCreateRequestDto,
+    type SurveyResultResponseDto,
+} from "@/shared/context/survey";
