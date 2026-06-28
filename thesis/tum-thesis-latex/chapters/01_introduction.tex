@@ -1,0 +1,39 @@
+% !TeX root = ../main.tex
+
+\chapter{Introduction}\label{chapter:introduction}
+
+\section{Motivation}\label{section:introduction:motivation}
+Travel destination selection is a complex, multi criteria process in which users weigh explicit parameters, such as budget and seasonality, against subjective preferences, such as atmosphere and climate~\parencite{dietzDestinationCharacterization}. Conventional recommendation systems often rely on one-shot interaction patterns or predefined interface controls, which can limit how precisely users articulate these nuanced needs~\parencite{jannachEvaluatingCRS}. Consequently, the resulting recommendations may reflect the structure of the interface more strongly than the user's actual intent.
+
+Natural language offers an effective response to this limitation. As an intuitive input modality, it enables richer and more flexible expression of information needs without forcing users to adapt to a system's predefined interaction logic~\parencite{aliannejadiGenerativeIRInteractions}. A chat based design therefore lowers the entry barrier and supports progressive preference refinement over time. This iterative process is particularly relevant for travel planning, because users may initially be unaware of their own needs or unable to express them precisely, especially in the early stages of decision making~\parencite{aleneziTravelPersonality}.
+
+However, relying exclusively on conversational interfaces introduces new usability challenges. While they offer high input flexibility, these systems typically present recommendations as dense, unstructured text. Confronted with large amounts of text, users often struggle to grasp the main points and properly interpret the proposed recommendations.
+
+Integrating a graphical presentation layer mitigates these comprehension barriers. Visual representations of destinations make recommendation outcomes immediately inspectable and easier to rank. By translating dense textual explanations into an accessible visual format, graphical elements perfectly complement conversation, reducing cognitive load and improving the overall clarity of the suggestions.
+
+Ultimately, there is a clear need for a travel recommendation system that frees users from the limitations of predefined search criteria while presenting results in an easy to understand format. The core challenge lies in bridging the gap between the expressive freedom of open-ended input and the structural clarity required to evaluate complex options. This thesis is motivated by this tension, exploring how to design interaction models that allow users to naturally articulate their needs without being overwhelmed by the effort required to interpret the outcome.
+\section{Problem Statement}\label{section:introduction:problem-statement}
+
+The central problem addressed in this thesis is how to derive reasonable travel destination recommendations from natural language user queries while keeping the recommendation process grounded in available travel destination data. Users naturally describe travel needs in open-ended language, but the system must convert these expressions into recommendation decisions that can be supported by concrete destination information. The problem therefore lies in bridging the gap between flexible human communication and the structured representations required for reliable recommendation.
+
+This problem is not trivial because natural language queries often combine explicit constraints with qualitative preferences. A user may specify factual conditions, such as budget, season, or travel duration, together with more subjective expectations regarding activities, atmosphere, or the general character of a destination. These requirements are not always expressed in a complete or directly machine interpretable form. Consequently, the system must identify relevant preferences, determine which parts of the request can be mapped to structured data, and use the available destination information to generate recommendations that remain plausible and justified.
+
+At the same time, data grounding imposes an important constraint on the recommendation process. A conversational interface may allow users to formulate preferences freely, but recommendation quality depends on whether those preferences can be matched to actual destination records rather than answered through unsupported language generation alone. The system must therefore transform natural language input into actionable retrieval and filtering operations while preserving enough meaning from the original request to produce useful results. In addition, because travel recommendation is often iterative, the system should maintain contextual continuity across multiple turns when users refine or partially revise earlier preferences.
+
+Based on this problem formulation, this thesis investigates how a conversational recommendation pipeline and a hybrid user interface can be combined to support natural language travel queries and produce recommendations that remain both understandable to the user and grounded in destination data.
+
+
+\section{Research Objectives}\label{section:introduction:research-objectives}
+The thesis is guided by the following research objectives:
+
+\begin{enumerate}
+  \item Investigate techniques for extracting user intents and travel preferences from unstructured natural language queries and mapping them to structured travel data to generate data-grounded recommendations.
+  \item Examine how a hybrid user interface can bridge agentic AI reasoning and user interaction by presenting intermediate decision making processes and recommendation outcomes in an interpretable format.
+  \item Investigate mechanisms for maintaining contextual awareness across multi-turn conversations, enabling the continuous refinement of travel recommendations through natural language interactions.
+  \item Design and develop a prototype travel destination recommendation system based on a hybrid user interface and agentic AI, incorporating intent extraction and data-grounded recommendations.
+\end{enumerate}
+
+\section{Thesis Structure TODO}\label{section:introduction:thesis-structure}
+\autoref{chapter:background} introduces the conceptual foundations required for the thesis, including recommendation systems, large language models, agentic artificial intelligence, and hybrid interfaces. \autoref{chapter:related-work} positions the thesis relative to existing work on travel recommendation systems and agentic recommendation approaches.
+
+\autoref{chapter:system-architecture} presents the architecture of the proposed prototype, covering the backend, frontend, recommendation workflow, and communication between components. \autoref{chapter:evaluation} defines the evaluation strategy, which combines a synthetic assessment of recommendation quality and conversational memory with a user survey on interface quality and perceived usefulness. Finally, \autoref{chapter:conclusion} summarizes the contribution of the thesis and outlines limitations and directions for future work.

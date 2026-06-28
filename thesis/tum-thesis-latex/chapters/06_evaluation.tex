@@ -1,0 +1,47 @@
+% !TeX root = ../main.tex
+
+\chapter{Evaluation}\label{chapter:evaluation}
+
+This chapter defines the evaluation design used to assess the proposed system. The evaluation is divided into two complementary parts. The first part focuses on the internal recommendation workflow through a synthetic benchmark. The second part evaluates the user experience of the multi-agent prototype through a survey-based study.
+
+\section{Synthetic Evaluation}\label{section:evaluation:synthetic}
+The synthetic evaluation focuses solely on the recommendation flow. Its purpose is to compare simpler recommendation baselines with the proposed multi-agent framework under controlled conditions that make relevance and conversational consistency easier to inspect.
+
+\subsection{Synthetic Ground-Truth Dataset Construction}\label{subsection:evaluation:ground-truth}
+The synthetic benchmark is based on a constructed ground-truth dataset representing realistic travel recommendation scenarios. The intention is to define user personas with hard constraints and soft travel preferences, and to pair these personas with destination outcomes that serve as a reference for evaluation.
+
+The benchmark should include both single-turn and multi-turn cases. Multi-turn scenarios are especially important because they make it possible to test whether the system correctly preserves earlier constraints when later messages modify only parts of the request.
+
+% TODO: document the exact procedure for generating the synthetic benchmark, including prompt design, validation, and the format of the final golden dataset.
+
+\subsection{Evaluation Framework: Recommendation Relevance}\label{subsection:evaluation:relevance}
+The relevance-oriented part of the evaluation compares the naive baseline approaches and the multi-agent recommendation framework on the same dialogue scenarios. The main question is whether the returned recommendations satisfy explicit constraints and align with softer stated preferences.
+
+This comparison should make it possible to analyze not only final recommendation quality, but also how much the explicit workflow decomposition contributes relative to simpler prompt-based designs.
+
+\subsection{Evaluation Framework: Context Persistence and Memory}\label{subsection:evaluation:memory}
+The second synthetic evaluation perspective focuses on conversational memory. Here, the objective is to test whether earlier user constraints continue to influence later recommendation turns and whether the system avoids contradictions when preferences evolve over time.
+
+This part of the evaluation is important because a travel recommendation assistant becomes substantially less useful if users must repeatedly restate previously established constraints.
+
+\section{User Survey-Based Evaluation}\label{section:evaluation:user-survey}
+The second part of the evaluation examines the user experience of the multi-agent recommendation framework and the usability of the application interface. Unlike the synthetic benchmark, this part focuses on perceived interaction quality rather than controlled comparison against baseline systems.
+
+The survey uses five-point Likert-scale items ranging from 1 (strongly disagree) to 5 (strongly agree). The planned questionnaire covers the following dimensions:
+
+\begin{enumerate}
+  \item \textbf{Interface Adequacy:} ``I found the application interface intuitive to use.''
+  \item \textbf{Conversational Interaction Quality:} ``The system accurately understood my travel requests and preferences.''
+  \item \textbf{Conversational Flow:} ``The conversation with the system felt natural and logically connected.''
+  \item \textbf{Conversational Consistency:} ``The system did not lose or misinterpret information that I provided during the conversation.''
+  \item \textbf{Recommendation Relevance:} ``The recommended destinations matched my interests and travel needs.''
+  \item \textbf{Recommendation Usefulness:} ``The recommendations helped me identify destinations I would consider visiting.''
+  \item \textbf{Recommendation Transparency:} ``The region descriptions helped me understand how the recommended regions matched my travel preferences.''
+  \item \textbf{System Responsiveness:} ``The system provided adequate feedback while processing my requests, and the waiting times were acceptable.''
+  \item \textbf{Hybrid Interface Satisfaction:} ``The combination of conversational interaction and map-based visualization and region descriptions enhanced my experience.''
+  \item \textbf{Overall Satisfaction:} ``Overall, I am satisfied with the travel destination recommendation application.''
+\end{enumerate}
+
+Taken together, these questions evaluate whether the proposed hybrid interaction design improves usability, transparency, and overall user satisfaction.
+
+% TODO: add participant recruitment, study procedure, sample size, and analysis method once the evaluation protocol is finalized.

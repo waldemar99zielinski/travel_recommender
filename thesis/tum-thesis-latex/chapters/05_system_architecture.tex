@@ -1,0 +1,117 @@
+% !TeX root = ../main.tex
+
+\chapter{System Architecture}\label{chapter:system-architecture}
+
+This chapter outlines the architecture of the prototype travel destination recommendation system developed in this thesis. The system is organized around three main concerns: a backend that performs data access and recommendation orchestration, a frontend that combines conversational and graphical interaction, and a communication layer that connects both sides while supporting responsive feedback.
+
+\section{Overview}\label{section:system-architecture:overview}
+At a high level, the system accepts natural language travel requests, interprets them into actionable constraints, retrieves suitable destination candidates, and presents the results through a hybrid interface. The architecture is designed to support iterative refinement. Instead of treating each request as an isolated query, the system maintains conversational context so that later turns can narrow, revise, or extend earlier preferences.
+
+The architecture also reflects the central design assumption of this thesis: recommendation quality depends not only on the final destination list, but also on whether the system can keep recommendation generation grounded in data and make the interaction understandable to the user.
+
+\section{Backend}\label{section:system-architecture:backend}
+The backend is responsible for managing recommendation logic, conversational state, data access, and language-model-based processing. It acts as the coordination layer between user requests and the underlying travel destination data.
+
+\subsection{Technologies Overview}\label{subsection:system-architecture:backend-technologies}
+The backend is implemented as a service-oriented layer that exposes recommendation functionality through an application programming interface. Its main responsibilities are request handling, orchestration of language-model interactions, execution of retrieval operations, and persistence of conversational context.
+
+% TODO: replace this high-level description with the concrete backend framework, runtime environment, and deployment details used in the prototype.
+
+\subsection{Data}\label{subsection:system-architecture:data}
+The quality of the recommendation pipeline depends directly on the quality and structure of the destination data. Because user requests can mix explicit constraints with qualitative preferences, the data layer must support both structured filtering and richer textual retrieval.
+
+\subsubsection{Base Dataset and Its Limitations}\label{subsubsection:system-architecture:base-dataset}
+The initial dataset provides the core set of travel destinations used by the prototype. However, a base dataset alone may be insufficient for natural language recommendation if it lacks descriptive fields, normalized attributes, or coverage of user-relevant aspects such as seasonal suitability, activity profiles, or budget-related characteristics.
+
+% TODO: document the concrete source of the base dataset and its observed coverage limitations.
+
+\subsubsection{Requirements for Dataset Extension}\label{subsubsection:system-architecture:dataset-extension}
+To support natural language queries, the dataset should be extended in a way that captures concepts users actually mention in conversation. This includes not only factual attributes but also descriptive representations that make semantic retrieval possible. The extension process should therefore improve attribute completeness, textual richness, and consistency of destination descriptors.
+
+\subsubsection{Interaction with the Storage Layer and Agentic Tool Exposure}\label{subsubsection:system-architecture:storage-tooling}
+The storage layer serves as the authoritative source of destination data and is accessed through controlled retrieval operations. In an agentic setup, these operations can be exposed as tools so that recommendation components retrieve concrete records instead of relying on unsupported generation. This design helps maintain grounding while still allowing flexible interpretation of user requests.
+
+\subsection{Embeddings and Language Model Interactions}\label{subsection:system-architecture:embeddings-llm}
+Embeddings are used to represent textual information in a form suitable for semantic retrieval. Within the prototype, they complement direct attribute-based filtering by enabling approximate matching between user requests and destination descriptions. Language-model interactions are then used to interpret the request, derive retrieval cues, and synthesize the final response from retrieved evidence.
+
+This separation is important. Embeddings support retrieval over descriptive similarity, whereas language models support interpretation and response construction. Combining both can improve flexibility, but it also requires careful orchestration so that response generation remains tied to retrieved data.
+
+\subsection{Recommender}\label{subsection:system-architecture:recommender}
+The recommender is the central decision-making component of the system. It translates user intent into candidate selection and ranking procedures while preserving enough structure to support explanation and refinement.
+
+\subsubsection{Design Objectives}\label{subsubsection:system-architecture:design-objectives}
+The recommender is designed around four objectives: grounding recommendations in destination data, supporting iterative conversational refinement, separating hard constraints from softer preferences where possible, and producing outputs that can be surfaced clearly in the hybrid interface.
+
+\subsubsection{Baseline Recommendation Approaches}\label{subsubsection:system-architecture:baselines}
+Two simpler baselines are considered in order to contextualize the proposed multi-agent workflow.
+
+\paragraph{Single-Agent Recommendation with Full Prompt Context.}
+In the first baseline, the entire conversational context and available destination information are provided directly to a single language model prompt. This design is simple, but it provides limited control over how constraints are extracted, retrieved, and applied.
+
+\paragraph{Single-Agent Recommendation with Tool-Based Retrieval and Few-Shot Prompting.}
+The second baseline still uses a single recommendation agent, but it supplements generation with tool-based retrieval from the structured data layer and with few-shot prompting. This design introduces grounding, yet it does not impose an explicit internal workflow for separating interpretation, retrieval, and response construction.
+
+\subsubsection{Multi-Agent Recommendation Framework}\label{subsubsection:system-architecture:multi-agent-framework}
+The main contribution of the prototype is a multi-agent recommendation framework in which specialized steps are separated into distinct responsibilities.
+
+\paragraph{Context-Aware Interpretation of User Requests.}
+The first step interprets the user's current message in light of the existing conversation. This includes identifying whether the user introduces new constraints, relaxes earlier preferences, requests clarification, or asks for a reformulation of existing recommendations.
+
+\paragraph{User Preference Extraction and Constraint Derivation.}
+After interpretation, the system derives structured recommendation constraints from the request. These may include regional preferences, seasonal preferences, and budget-related preferences. Distinguishing between explicit constraints and softer indications of interest is important because both categories should influence recommendation generation differently.
+
+\paragraph{Aggregation of Travel Constraints into a Unified Recommendation Context.}
+The extracted information is merged with previously stored conversational state. This aggregation step creates a unified recommendation context that can be reused in subsequent turns and reduces the risk that relevant earlier information is ignored.
+
+\paragraph{Hybrid Retrieval and Candidate Recommendation Generation.}
+Candidate generation combines semantic retrieval based on embeddings, direct keyword or text-based retrieval, and structured filtering over destination attributes. The resulting candidates are then ranked in a way that reflects both hard constraints and softer preference alignment.
+
+\paragraph{Recommendation Enrichment and Response Construction.}
+After candidate generation, the recommendation output is enriched with explanatory content that can be displayed in the user interface. This step should preserve the distinction between retrieved evidence and generated phrasing so that the final response remains both readable and grounded.
+
+\paragraph{Conversational Memory Persistence and Recommendation Refinement.}
+The final step stores the updated recommendation context for future turns. This allows users to continue refining the recommendation without restating the full query and makes multi-turn recommendation quality a first-class system objective.
+
+\subsection{Exposed API}\label{subsection:system-architecture:api}
+The backend exposes its functionality through an application programming interface that separates state management from user interaction.
+
+\paragraph{User Session.}
+Session-related endpoints create and maintain the conversational scope within which user preferences and recommendation history are stored.
+
+\paragraph{Travel Destinations.}
+Destination-related endpoints provide controlled access to the underlying travel data and support retrieval operations required by the recommendation workflow.
+
+\paragraph{Recommendation.}
+Recommendation-related endpoints trigger the recommendation pipeline, return results, and provide incremental status information to the frontend where required.
+
+\section{Frontend}\label{section:system-architecture:frontend}
+The frontend is the user-facing part of the prototype. Its purpose is not only to display final recommendations, but also to support the interaction pattern through which users formulate, inspect, and refine travel preferences.
+
+\subsection{Technologies Overview}\label{subsection:system-architecture:frontend-technologies}
+The frontend is implemented as a web-based client that integrates conversational and graphical views into a single interaction flow.
+
+% TODO: replace this high-level description with the concrete frontend framework, state management approach, and rendering stack used in the prototype.
+
+\subsection{User Interface Design}\label{subsection:system-architecture:ui-design}
+The user interface is designed around the principle that recommendation should remain inspectable. Users should be able to express preferences conversationally, but they should also receive structured visual feedback that helps them understand the recommendation outcome and continue the interaction productively.
+
+\subsection{Conversational Interaction Layer}\label{subsection:system-architecture:conversational-layer}
+The conversational layer captures natural language input and presents system responses in dialogue form. Its main role is to support nuanced preference expression, follow-up questions, and iterative refinement of travel constraints across multiple turns.
+
+\subsection{Graphical Interaction Layer}\label{subsection:system-architecture:graphical-layer}
+The graphical layer complements the conversation with structured visual elements. In the context of this thesis, this includes map-based or region-based exploration and other interface components that help users compare alternatives or inspect recommendation outputs beyond plain text.
+
+\subsection{Recommendation Presentation}\label{subsection:system-architecture:recommendation-presentation}
+Recommendation presentation combines textual explanation with structured destination information. This part of the interface is critical because it connects backend recommendation logic with user understanding. A recommendation is only actionable if users can quickly see which destinations were suggested, how they relate to stated preferences, and what can be refined next.
+
+\section{Communication Between Components}\label{section:system-architecture:communication}
+The backend and frontend interact through a communication model that must support both correctness and responsiveness.
+
+\subsection{HTTP Request-Response Communication}\label{subsection:system-architecture:http}
+Conventional request-response communication is suitable for many operations in the system, including session creation, retrieval of destination data, and submission of recommendation requests. It provides a simple and well-understood mechanism for integrating the frontend with backend services.
+
+\subsection{Limitations of Basic Request-Response Interaction}\label{subsection:system-architecture:request-response-limitations}
+For recommendation retrieval, a purely blocking request-response model can be limiting because the user receives feedback only after the entire processing pipeline is complete. In a multi-step recommendation workflow, this can obscure progress and make waiting times feel less predictable, especially when several retrieval and generation operations are involved.
+
+\subsection{Server-Sent Events for Incremental Feedback}\label{subsection:system-architecture:sse}
+To address this limitation, the system can use server-sent events to stream intermediate status updates from the backend to the frontend. This does not change the recommendation logic itself, but it improves the interaction quality by making long-running processing steps more visible and by helping users understand that the system is actively progressing through the request.
