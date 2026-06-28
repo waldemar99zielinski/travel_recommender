@@ -4,11 +4,13 @@ import { Outlet } from "react-router-dom";
 
 import { SurveyButton } from "@/components/survey/SurveyButton";
 import { SurveyOverlay } from "@/components/survey/SurveyOverlay";
+import { appConfiguration } from "@/shared/configuration/appConfiguration";
 import { useSurveyContext } from "@/shared/context";
 
 export function AppLayout() {
     const { t } = useTranslation();
     const { isSurveyOpen, closeSurvey } = useSurveyContext();
+    const isSurveyEnabled = appConfiguration.surveyEnabled;
 
     return (
         <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
@@ -21,13 +23,13 @@ export function AppLayout() {
                     <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         {t("app.title")}
                     </Typography>
-                    <SurveyButton />
+                    {isSurveyEnabled && <SurveyButton />}
                 </Toolbar>
             </AppBar>
             <Box component="main" sx={{ flex: 1, minHeight: 0 }}>
                 <Outlet />
             </Box>
-            <SurveyOverlay open={isSurveyOpen} onClose={closeSurvey} />
+            {isSurveyEnabled && <SurveyOverlay open={isSurveyOpen} onClose={closeSurvey} />}
         </Box>
     );
 }
