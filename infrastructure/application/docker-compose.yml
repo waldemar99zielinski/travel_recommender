@@ -44,6 +44,6 @@ services:
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-production}
       API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
       REGIONS_DATA_URL: ${REGIONS_DATA_URL:-/regions.json}
+      SURVEY_ENABLED: ${SURVEY_ENABLED:-false}
     ports:
       - "${FRONTEND_PORT:-8080}:80"
-

@@ -14,6 +14,7 @@ For the nginx Docker image, use `.env.runtime.example` and provide runtime value
 - `APP_ENVIRONMENT`
 - `API_BASE_URL`
 - `REGIONS_DATA_URL`
+- `SURVEY_ENABLED`
 
 Example:
 
