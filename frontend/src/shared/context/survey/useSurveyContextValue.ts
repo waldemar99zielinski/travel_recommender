@@ -22,6 +22,8 @@ function createEmptySurveyDraft(): SurveyDraftState {
     return {
         scores: {},
         comment: "",
+        ageRange: null,
+        llmExperience: null,
     };
 }
 
@@ -37,7 +39,9 @@ export function useSurveyContextValue(): SurveyContextValue {
     const surveyQuestions = surveyQuestionsData ?? [];
     const allQuestionsAnswered =
         surveyQuestions.length > 0 &&
-        surveyQuestions.every((question) => surveyDraft.scores[String(question.id)] != null);
+        surveyQuestions.every((question) => surveyDraft.scores[String(question.id)] != null) &&
+        surveyDraft.ageRange != null &&
+        surveyDraft.llmExperience != null;
 
     const setSurveyScore = useCallback((questionId: number, score: number) => {
         setSurveyDraft((prev) => ({
@@ -53,6 +57,20 @@ export function useSurveyContextValue(): SurveyContextValue {
         setSurveyDraft((prev) => ({
             ...prev,
             comment,
+        }));
+    }, []);
+
+    const setSurveyAgeRange = useCallback((ageRange: string | null) => {
+        setSurveyDraft((prev) => ({
+            ...prev,
+            ageRange,
+        }));
+    }, []);
+
+    const setSurveyLlmExperience = useCallback((llmExperience: string | null) => {
+        setSurveyDraft((prev) => ({
+            ...prev,
+            llmExperience,
         }));
     }, []);
 
@@ -81,12 +99,20 @@ export function useSurveyContextValue(): SurveyContextValue {
             throw new Error("Cannot submit survey before all questions are answered");
         }
 
+        if (surveyDraft.ageRange == null || surveyDraft.llmExperience == null) {
+            throw new Error("Age range and LLM experience are required");
+        }
+
         const session = await ensureSession();
         const comment = surveyDraft.comment.trim();
         const response = await createSurveyResultRequest({
             user_id: session.user_id,
             session_id: session.session_id,
-            scores: surveyDraft.scores,
+            scores: {
+                ...surveyDraft.scores,
+                age: surveyDraft.ageRange!,
+                llm: surveyDraft.llmExperience!,
+            },
             comment: comment.length === 0 ? null : comment,
         });
 
@@ -123,6 +149,8 @@ export function useSurveyContextValue(): SurveyContextValue {
         allQuestionsAnswered,
         setSurveyScore,
         setSurveyComment,
+        setSurveyAgeRange,
+        setSurveyLlmExperience,
         clearSurveyDraft,
         submitSurveyData,
         submitSurveyStatus,

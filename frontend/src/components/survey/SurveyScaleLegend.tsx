@@ -13,7 +13,7 @@ const surveyScaleItems = [
 export function SurveyScaleLegend() {
     return (
         <Stack spacing={1.25}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body1" color="text.secondary">
                 Rate each statement on a 1 to 5 scale.
             </Typography>
 

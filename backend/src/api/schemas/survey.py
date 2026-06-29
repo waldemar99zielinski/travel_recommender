@@ -14,7 +14,7 @@ class SurveyQuestionDto(BaseModel):
 class SurveyResultCreateRequestDto(BaseModel):
     user_id: UUID
     session_id: UUID
-    scores: dict[int, float] = Field(default_factory=dict)
+    scores: dict[str, str | float | int] = Field(default_factory=dict)
     comment: str | None = None
 
 
@@ -22,5 +22,5 @@ class SurveyResultResponseDto(BaseModel):
     id: int
     user_id: UUID
     session_id: UUID
-    scores: dict[int, float]
+    scores: dict[str, str | float | int]
     comment: str | None

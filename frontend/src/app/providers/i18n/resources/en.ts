@@ -1,14 +1,14 @@
 export const translationEn = {
     app: {
-        title: "Hybrid Travel Recommender",
+        title: "Hybrid Travel Destination Recommender",
     },
     recommendation: {
         loadingMapData: "Loading map data...",
         noRegionsFound: "No regions were found.",
     },
     chat: {
-        emptyState: "Start by sending a message.",
-        inputPlaceholder: "Type a message...",
+        emptyState: "Tell me where you want to go, your budget, the kinds of activities you enjoy, and let's find a destination tailored exactly to you.",
+        inputPlaceholder: "Type a message.",
         genericError: "Unable to complete your request right now.",
         send: "Send",
         loading: "Waiting for response",
@@ -72,6 +72,11 @@ export const translationEn = {
             recommended: "Recommended regions",
             included: "Included regions",
             excluded: "Excluded regions",
+            highest: "Highest score",
+            high: "High score",
+            middle: "Medium score",
+            low: "Low score",
+            lowest: "Lowest score",
         },
         popup: {
             regionId: "Region id: {{id}}",
